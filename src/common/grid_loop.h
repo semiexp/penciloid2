@@ -47,33 +47,33 @@ public:
 	void SetInconsistent();
 
 	// Returns the status of edge <edge>.
-	// <edge> should be a legitimate location.
-	EdgeState GetEdge(Location edge) const;
+	// <edge> should be a legitimate position.
+	EdgeState GetEdge(Position edge) const;
 
 	// Returns the status of edge <edge>.
 	// If <edge> is out of range, EDGE_BLANK will be returned.
-	EdgeState GetEdgeSafe(Location edge) const;
+	EdgeState GetEdgeSafe(Position edge) const;
 
 	// Makes the status of edge <edge> <state>.
 	// Status of other decidable edges will be also changed.
-	void DecideEdge(Location edge, EdgeState state);
+	void DecideEdge(Position edge, EdgeState state);
 
 	// Returns the another end of the chain, which starts from <point> to the direction <dir>.
 	// <point> should be one of the ends of the chain.
-	Location GetAnotherEnd(Location point, Direction dir) const;
+	Position GetAnotherEnd(Position point, Direction dir) const;
 
 	// Returns the length of the chain, which starts from <point> to the direction <dir>.
 	// <point> should be one of the ends of the chain.
-	EdgeCount GetChainLength(Location point, Direction dir) const;
+	EdgeCount GetChainLength(Position point, Direction dir) const;
 
 	// Returns two end vertices of the chain which edge <edge> belongs to.
 	// Non-const version changes internal status to perform "path compression".
-	std::pair<Location, Location> GetEndsOfChain(Location edge);
-	std::pair<Location, Location> GetEndsOfChain(Location edge) const;
+	std::pair<Position, Position> GetEndsOfChain(Position edge);
+	std::pair<Position, Position> GetEndsOfChain(Position edge) const;
 
-	// Check around location <pos>.
+	// Check around position <pos>.
 	// This method internally invokes Inspect(pos).
-	void Check(Location pos);
+	void Check(Position pos);
 
 	// Perform Check(pos) for all possible (vertex / cell / edge).
 	void CheckAllVertex();
@@ -85,16 +85,16 @@ public:
 	//
 
 	// This method (of the subclass) will be called when the status of edge <edge> was decided.
-	void HasDecided(Location edge) {}
+	void HasDecided(Position edge) {}
 
-	// This method (of the subclass) should call Check(Location) for constraint propagation.
+	// This method (of the subclass) should call Check(Position) for constraint propagation.
 	// This will be called "something has happened" to edge <edge>, e.g. the status of <edge> was decided.
-	void CheckNeighborhood(Location edge);
+	void CheckNeighborhood(Position edge);
 
-	// This method (of the subclass) should inspect around location <pos>.
-	// <pos> does not necessarily represent the location of an edge.
+	// This method (of the subclass) should inspect around position <pos>.
+	// <pos> does not necessarily represent the position of an edge.
 	// Don't call this method directly (instead, use Check(pos) ).
-	void Inspect(Location pos) {}
+	void Inspect(Position pos) {}
 
 private:
 

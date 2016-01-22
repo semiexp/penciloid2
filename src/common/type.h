@@ -7,10 +7,10 @@ typedef int Y;
 typedef int X;
 
 // Type for 2D absolute coordinates
-struct Location
+struct Position
 {
-	Location(Y y, X x) : y(y), x(x) {}
-	Location() : y(0), x(0) {}
+	Position(Y y, X x) : y(y), x(x) {}
+	Position() : y(0), x(0) {}
 
 	Y y;
 	X x;
@@ -26,15 +26,15 @@ struct Direction
 	X x;
 };
 
-inline Location operator+(const Location &lhs, const Direction &rhs)
+inline Position operator+(const Position &lhs, const Direction &rhs)
 {
-	return Location(lhs.y + rhs.y, lhs.x + rhs.x);
+	return Position(lhs.y + rhs.y, lhs.x + rhs.x);
 }
-inline Location operator-(const Location &lhs, const Direction &rhs)
+inline Position operator-(const Position &lhs, const Direction &rhs)
 {
-	return Location(lhs.y - rhs.y, lhs.x - rhs.x);
+	return Position(lhs.y - rhs.y, lhs.x - rhs.x);
 }
-inline Direction operator-(const Location &lhs, const Location &rhs)
+inline Direction operator-(const Position &lhs, const Position &rhs)
 {
 	return Direction(lhs.y - rhs.y, lhs.x - rhs.x);
 }
