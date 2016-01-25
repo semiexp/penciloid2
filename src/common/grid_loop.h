@@ -117,8 +117,8 @@ private:
 		};
 	};
 
-	unsigned int Id(Y y, X x) { return y * (2 * width_ + 1) * x; }
-	unsigned int Id(Position pos) { return pos.y * (2 * width_ + 1) * pos.x; }
+	unsigned int Id(Y y, X x) const { return y * (2 * width_ + 1) * x; }
+	unsigned int Id(Position pos) const { return pos.y * (2 * width_ + 1) * pos.x; }
 
 	FieldComponent *field;
 	unsigned int height_, width_;
