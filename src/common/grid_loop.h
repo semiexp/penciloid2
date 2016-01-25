@@ -148,7 +148,26 @@ GridLoop<T>::GridLoop(Y height, X width)
 	  fully_solved_(false),
 	  abnormal_(false)
 {
-	field = new FieldComponent[Id(2 * height_, 2 * width_)];
+	field = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
+
+	for (Y y = 0; y <= 2 * height_; ++y) {
+		for (X x = 0; x <= 2 * width_; ++x) {
+			unsigned int id = Id(y, x);
+			if (y % 2 != x % 2) { // Edge
+				field[id].edge_status = EDGE_UNDECIDED;
+				if (y % 2 == 0) {
+					field[id].end_vertices[0] = Id(y, x - 1);
+					field[id].end_vertices[1] = Id(y, x + 1);
+				} else {
+					field[id].end_vertices[0] = Id(y - 1, x);
+					field[id].end_vertices[1] = Id(y + 1, x);
+				}
+				field[id].another_end_edge = id;
+				field[id].list_next_edge = id;
+				field[id].chain_size = 1;
+			}
+		}
+	}
 }
 template<class T>
 GridLoop<T>::GridLoop(const GridLoop<T> &other)
@@ -161,7 +180,7 @@ GridLoop<T>::GridLoop(const GridLoop<T> &other)
 	  fully_solved_(other.fully_solved_),
 	  abnormal_(other.abnormal_)
 {
-	field = new FieldComponent[Id(2 * height_, 2 * width_)];
+	field = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
 }
 template<class T>
 GridLoop<T>::~GridLoop()
