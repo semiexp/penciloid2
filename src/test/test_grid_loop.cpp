@@ -12,6 +12,7 @@ void RunAllGridLoopTest()
 {
 	GridLoopBasicAccessors();
 	GridLoopDecideEdgeBasic();
+	GridLoopDecideEdgeTwoLines();
 }
 void GridLoopBasicAccessors()
 {
@@ -35,6 +36,16 @@ void GridLoopDecideEdgeBasic()
 
 	assert(field.GetEdge(Position(2, 1)) == PlainGridLoop::EDGE_LINE);
 	assert(field.GetEdge(Position(4, 3)) == PlainGridLoop::EDGE_BLANK);
+}
+void GridLoopDecideEdgeTwoLines()
+{
+	PlainGridLoop field(3, 3);
+
+	field.DecideEdge(Position(2, 1), PlainGridLoop::EDGE_LINE);
+	field.DecideEdge(Position(3, 2), PlainGridLoop::EDGE_LINE);
+
+	assert(field.GetEdge(Position(1, 2)) == PlainGridLoop::EDGE_BLANK);
+	assert(field.GetEdge(Position(2, 3)) == PlainGridLoop::EDGE_BLANK);
 }
 }
 }
