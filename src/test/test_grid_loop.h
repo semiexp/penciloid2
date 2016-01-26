@@ -5,5 +5,6 @@ namespace test
 void GridLoopBasicAccessors();
 void GridLoopDecideEdgeBasic();
 void GridLoopInspectVertex();
+void GridLoopCopy();
 }
 }
