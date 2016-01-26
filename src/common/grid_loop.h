@@ -275,6 +275,8 @@ void GridLoop<T>::DecideChain(unsigned int id, EdgeState status)
 	unsigned int id_start = id;
 	do {
 		field_[id].edge_status = status;
+		++decided_edges_;
+		if (status == EDGE_LINE) ++decided_lines_;
 		id = field_[id].list_next_edge;
 	} while (id != id_start);
 }
@@ -391,9 +393,12 @@ void GridLoop<T>::InspectVertex(Position vertex)
 		int cand_dir = -1;
 		for (int i = 0; i < 4; ++i) {
 			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED && IsEndOfAChain(vertex + dirs[i]) && IsEndOfAChainVertex(Id(vertex + dirs[i]), Id(vertex))) {
-				if (line_another_end != GetAnotherEnd(vertex, dirs[i]) || line_size != GetChainLength(vertex, dirs[i])) {
+				if (line_size == decided_lines_ || line_another_end != GetAnotherEnd(vertex, dirs[i])) {
+					Position pos2 = GetAnotherEnd(vertex, dirs[i]);
 					if (cand_dir == -1) cand_dir = i;
 					else cand_dir = -2;
+				} else {
+					DecideEdge(vertex + dirs[i], EDGE_BLANK);
 				}
 			}
 		}
