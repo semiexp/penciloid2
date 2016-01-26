@@ -59,6 +59,26 @@ void GridLoopInspectVertex()
 
 		assert(field.GetEdge(Position(2, 3)) == PlainGridLoop::EDGE_LINE);
 	}
+	{
+		// 3 blanks from a vertex: the another edge will also be blank
+		PlainGridLoop field(3, 3);
+
+		field.DecideEdge(Position(3, 2), PlainGridLoop::EDGE_BLANK);
+		field.DecideEdge(Position(2, 1), PlainGridLoop::EDGE_BLANK);
+		field.DecideEdge(Position(1, 2), PlainGridLoop::EDGE_BLANK);
+
+		assert(field.GetEdge(Position(2, 3)) == PlainGridLoop::EDGE_BLANK);
+	}
+	{
+		// around corner
+		PlainGridLoop field(3, 3);
+
+		field.DecideEdge(Position(0, 1), PlainGridLoop::EDGE_BLANK);
+		field.DecideEdge(Position(6, 1), PlainGridLoop::EDGE_LINE);
+
+		assert(field.GetEdge(Position(1, 0)) == PlainGridLoop::EDGE_BLANK);
+		assert(field.GetEdge(Position(5, 0)) == PlainGridLoop::EDGE_LINE);
+	}
 }
 }
 }
