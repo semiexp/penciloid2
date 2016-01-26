@@ -127,6 +127,7 @@ private:
 
 	bool IsEndOfAChain(Position edge) const { return IsEndOfAChain(Id(edge)); }
 	bool IsEndOfAChain(unsigned int edge_id) const { return field_[field_[edge_id].another_end_edge].another_end_edge == edge_id; }
+	bool IsEndOfAChainVertex(unsigned int edge_id, unsigned int vertex_id) const;
 	unsigned int GetAnotherEndAsId(Position point, Direction dir) const;
 
 	void Check(unsigned int id);
@@ -234,7 +235,22 @@ void GridLoop<T>::DecideEdge(Position edge, EdgeState status)
 		CheckNeighborhoodOfChain(id);
 	}
 }
+template<class T>
+Position GridLoop<T>::GetAnotherEnd(Position point, Direction dir) const
+{
+	unsigned int edge_id = Id(point + dir);
+	return AsPosition(field_[edge_id].end_vertices[0] + field_[edge_id].end_vertices[1] - Id(point));
+}
+template<class T>
+typename GridLoop<T>::EdgeCount GridLoop<T>::GetChainLength(Position point, Direction dir) const
+{
+	return field_[Id(point + dir)].chain_size;
+}
 
+template<class T>
+bool GridLoop<T>::IsEndOfAChainVertex(unsigned int edge_id, unsigned int vertex_id) const {
+	return field_[edge_id].end_vertices[0] == vertex_id || field_[edge_id].end_vertices[1] == vertex_id;
+}
 template<class T>
 unsigned int GridLoop<T>::GetAnotherEndAsId(Position point, Direction dir) const {
 	unsigned int edge_id = Id(point + dir);
@@ -272,6 +288,8 @@ void GridLoop<T>::Join(Position vertex, Direction dir1, Direction dir2)
 	unsigned int edge1_id = Id(vertex + dir1);
 	unsigned int edge2_id = Id(vertex + dir2);
 
+	if (field_[edge1_id].end_vertices[0] != Id(vertex) && field_[edge1_id].end_vertices[1] != Id(vertex)) return;
+	if (field_[edge2_id].end_vertices[0] != Id(vertex) && field_[edge2_id].end_vertices[1] != Id(vertex)) return;
 	if (!IsEndOfAChain(edge1_id) || !IsEndOfAChain(edge2_id)) return;
 
 	unsigned int end1_vertex = GetAnotherEndAsId(vertex, dir1);
@@ -284,11 +302,11 @@ void GridLoop<T>::Join(Position vertex, Direction dir1, Direction dir2)
 	}
 
 	// change the status of edges if necessary
-	if (field_[edge1_id].edge_status == EDGE_BLANK && field_[edge2_id].edge_status != EDGE_BLANK) {
+	if (field_[edge1_id].edge_status == EDGE_UNDECIDED && field_[edge2_id].edge_status != EDGE_UNDECIDED) {
 		DecideChain(edge1_id, field_[edge2_id].edge_status);
 		CheckNeighborhoodOfChain(edge1_id);
 	}
-	if (field_[edge2_id].edge_status == EDGE_BLANK && field_[edge1_id].edge_status != EDGE_BLANK) {
+	if (field_[edge2_id].edge_status == EDGE_UNDECIDED && field_[edge1_id].edge_status != EDGE_UNDECIDED) {
 		DecideChain(edge2_id, field_[edge1_id].edge_status);
 		CheckNeighborhoodOfChain(edge2_id);
 	}
@@ -336,10 +354,66 @@ void GridLoop<T>::InspectVertex(Position vertex)
 	}
 
 	if (n_line == 2) {
+		int line_1 = -1, line_2 = -1;
+
 		for (int i = 0; i < 4; ++i) {
 			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED) {
 				DecideEdge(vertex + dirs[i], EDGE_BLANK);
 			}
+
+			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_LINE) {
+				if (line_1 == -1) line_1 = i;
+				else line_2 = i;
+			}
+		}
+
+		Join(vertex, dirs[line_1], dirs[line_2]);
+		return;
+	}
+
+	if (n_line == 1) {
+		EdgeCount line_size = 0;
+		Position line_another_end(-1, -1);
+		int line_dir = 0;
+		for (int i = 0; i < 4; ++i) {
+			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_LINE) {
+				line_size = GetChainLength(vertex, dirs[i]);
+				line_another_end = GetAnotherEnd(vertex, dirs[i]);
+				line_dir = i;
+			}
+		}
+
+		int cand_dir = -1;
+		for (int i = 0; i < 4; ++i) {
+			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED && IsEndOfAChain(vertex + dirs[i]) && IsEndOfAChainVertex(Id(vertex + dirs[i]), Id(vertex))) {
+				if (line_another_end != GetAnotherEnd(vertex, dirs[i]) || line_size != GetChainLength(vertex, dirs[i])) {
+					if (cand_dir == -1) cand_dir = i;
+					else cand_dir = -2;
+				}
+			}
+		}
+
+		if (cand_dir == -1) {
+			SetInconsistent();
+		} else if (cand_dir != -2) {
+			Join(vertex, dirs[line_dir], dirs[cand_dir]);
+		}
+
+		return;
+	}
+
+	if (n_line == 0) {
+		if (n_undecided == 2) {
+			int undecided_1 = -1, undecided_2 = -1;
+
+			for (int i = 0; i < 4; ++i) {
+				if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED) {
+					if (undecided_1 == -1) undecided_1 = i;
+					else undecided_2 = i;
+				}
+			}
+
+			Join(vertex, dirs[undecided_1], dirs[undecided_2]);
 		}
 	}
 }
