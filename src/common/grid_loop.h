@@ -73,7 +73,7 @@ public:
 
 	// Check around position <pos>.
 	// This method internally invokes Inspect(pos).
-	void Check(Position pos);
+	void Check(Position pos) { Check(Id(pos)); }
 
 	// Perform Check(pos) for all possible (vertex / cell / edge).
 	void CheckAllVertex();
@@ -117,17 +117,34 @@ private:
 		};
 	};
 
-	unsigned int Id(Y y, X x) const { return y * (2 * width_ + 1) * x; }
-	unsigned int Id(Position pos) const { return pos.y * (2 * width_ + 1) * pos.x; }
+	bool IsVertex(Position pos) const { return pos.y % 2 == 0 && pos.x % 2 == 0; }
+	bool IsEdge(Position pos) const { return pos.y % 2 != pos.x % 2; }
+	bool IsPositionOnField(Position pos) const { return 0 <= pos.y && pos.y <= 2 * height_ && 0 <= pos.x && pos.x <= 2 * width_; }
 
-	FieldComponent *field;
-	unsigned int height_, width_;
-	unsigned int decided_edges_, decided_lines_;
+	unsigned int Id(Y y, X x) const { return y * (2 * width_ + 1) + x; }
+	unsigned int Id(Position pos) const { return pos.y * (2 * width_ + 1) + pos.x; }
+	Position AsPosition(unsigned int id) const { return Position(id / (2 * width_ + 1), id % (2 * width_ + 1)); }
+
+	bool IsEndOfAChain(Position edge) const { return IsEndOfAChain(Id(edge)); }
+	bool IsEndOfAChain(unsigned int edge_id) const { return field_[field_[edge_id].another_end_edge].another_end_edge == edge_id; }
+	unsigned int GetAnotherEndAsId(Position point, Direction dir) const;
+
+	void Check(unsigned int id);
+	void DecideChain(unsigned int id, EdgeState status);
+	void CheckNeighborhoodOfChain(unsigned int id);
+	// Merge the edge at (vertex + dir1) and at (vertex + dir2)
+	void Join(Position vertex, Direction dir1, Direction dir2);
+	void InspectVertex(Position vertex);
+
+	FieldComponent *field_;
+	Y height_;
+	X width_;
+	EdgeCount decided_edges_, decided_lines_;
 	bool inconsistent_, fully_solved_, abnormal_;
 };
 template<class T>
 GridLoop<T>::GridLoop()
-	: field(nullptr),
+	: field_(nullptr),
 	  height_(0),
 	  width_(0),
 	  decided_edges_(0),
@@ -139,7 +156,7 @@ GridLoop<T>::GridLoop()
 }
 template<class T>
 GridLoop<T>::GridLoop(Y height, X width)
-	: field(nullptr),
+	: field_(nullptr),
 	  height_(height), 
 	  width_(width),
 	  decided_edges_(0),
@@ -148,30 +165,30 @@ GridLoop<T>::GridLoop(Y height, X width)
 	  fully_solved_(false),
 	  abnormal_(false)
 {
-	field = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
+	field_ = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
 
 	for (Y y = 0; y <= 2 * height_; ++y) {
 		for (X x = 0; x <= 2 * width_; ++x) {
 			unsigned int id = Id(y, x);
 			if (y % 2 != x % 2) { // Edge
-				field[id].edge_status = EDGE_UNDECIDED;
+				field_[id].edge_status = EDGE_UNDECIDED;
 				if (y % 2 == 0) {
-					field[id].end_vertices[0] = Id(y, x - 1);
-					field[id].end_vertices[1] = Id(y, x + 1);
+					field_[id].end_vertices[0] = Id(y, x - 1);
+					field_[id].end_vertices[1] = Id(y, x + 1);
 				} else {
-					field[id].end_vertices[0] = Id(y - 1, x);
-					field[id].end_vertices[1] = Id(y + 1, x);
+					field_[id].end_vertices[0] = Id(y - 1, x);
+					field_[id].end_vertices[1] = Id(y + 1, x);
 				}
-				field[id].another_end_edge = id;
-				field[id].list_next_edge = id;
-				field[id].chain_size = 1;
+				field_[id].another_end_edge = id;
+				field_[id].list_next_edge = id;
+				field_[id].chain_size = 1;
 			}
 		}
 	}
 }
 template<class T>
 GridLoop<T>::GridLoop(const GridLoop<T> &other)
-	: field(nullptr),
+	: field_(nullptr),
 	  height_(other.height_),
 	  width_(other.width_),
 	  decided_edges_(other.decided_edges_),
@@ -180,33 +197,176 @@ GridLoop<T>::GridLoop(const GridLoop<T> &other)
 	  fully_solved_(other.fully_solved_),
 	  abnormal_(other.abnormal_)
 {
-	field = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
+	field_ = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
 }
 template<class T>
 GridLoop<T>::~GridLoop()
 {
-	if (field) delete[] field;
+	if (field_) delete[] field_;
 }
 template<class T> 
 typename GridLoop<T>::EdgeState GridLoop<T>::GetEdge(Position edge) const
 {
-	return field[Id(edge)].edge_status;
+	return field_[Id(edge)].edge_status;
+}
+template<class T>
+typename GridLoop<T>::EdgeState GridLoop<T>::GetEdgeSafe(Position edge) const
+{
+	if (IsPositionOnField(edge)) return GetEdge(edge);
+	return EDGE_BLANK;
 }
 template<class T>
 void GridLoop<T>::DecideEdge(Position edge, EdgeState status)
 {
 	unsigned int id = Id(edge);
-	if (field[id].edge_status == status) return;
-	if (field[id].edge_status != EDGE_UNDECIDED) {
+	if (field_[id].edge_status == status) return;
+	if (field_[id].edge_status != EDGE_UNDECIDED) {
 		SetInconsistent();
 		return;
 	}
 
 	// TODO: Handle consequent updates
 	if (status == EDGE_LINE) {
-		field[id].edge_status = EDGE_LINE;
+		DecideChain(id, EDGE_LINE);
+		CheckNeighborhoodOfChain(id);
 	} else if (status == EDGE_BLANK) {
-		field[id].edge_status = EDGE_BLANK;
+		DecideChain(id, EDGE_BLANK);
+		CheckNeighborhoodOfChain(id);
+	}
+}
+
+template<class T>
+unsigned int GridLoop<T>::GetAnotherEndAsId(Position point, Direction dir) const {
+	unsigned int edge_id = Id(point + dir);
+	return field_[edge_id].end_vertices[0] + field_[edge_id].end_vertices[1] - Id(point);
+}
+template <class T>
+void GridLoop<T>::Check(unsigned int id)
+{
+	// TODO: implement queue
+	Position pos = AsPosition(id);
+	static_cast<T*>(this)->Inspect(pos);
+	if (IsVertex(pos)) InspectVertex(pos);
+}
+template <class T>
+void GridLoop<T>::DecideChain(unsigned int id, EdgeState status)
+{
+	unsigned int id_start = id;
+	do {
+		field_[id].edge_status = status;
+		id = field_[id].list_next_edge;
+	} while (id != id_start);
+}
+template <class T>
+void GridLoop<T>::CheckNeighborhoodOfChain(unsigned int id)
+{
+	unsigned int id_start = id;
+	do {
+		static_cast<T*>(this)->CheckNeighborhood(AsPosition(id));
+		id = field_[id].list_next_edge;
+	} while (id != id_start);
+}
+template <class T>
+void GridLoop<T>::Join(Position vertex, Direction dir1, Direction dir2)
+{
+	unsigned int edge1_id = Id(vertex + dir1);
+	unsigned int edge2_id = Id(vertex + dir2);
+
+	if (!IsEndOfAChain(edge1_id) || !IsEndOfAChain(edge2_id)) return;
+
+	unsigned int end1_vertex = GetAnotherEndAsId(vertex, dir1);
+	unsigned int end2_vertex = GetAnotherEndAsId(vertex, dir2);
+	unsigned int end1_edge = field_[edge1_id].another_end_edge;
+	unsigned int end2_edge = field_[edge2_id].another_end_edge;
+
+	if (end1_vertex == end2_vertex) {
+		// TODO
+	}
+
+	// change the status of edges if necessary
+	if (field_[edge1_id].edge_status == EDGE_BLANK && field_[edge2_id].edge_status != EDGE_BLANK) {
+		DecideChain(edge1_id, field_[edge2_id].edge_status);
+		CheckNeighborhoodOfChain(edge1_id);
+	}
+	if (field_[edge2_id].edge_status == EDGE_BLANK && field_[edge1_id].edge_status != EDGE_BLANK) {
+		DecideChain(edge2_id, field_[edge1_id].edge_status);
+		CheckNeighborhoodOfChain(edge2_id);
+	}
+
+	// concatinate 2 lists
+	std::swap(field_[edge1_id].list_next_edge, field_[edge2_id].list_next_edge);
+
+	// update chain_size
+	field_[end1_edge].chain_size = field_[end2_edge].chain_size =
+		field_[edge1_id].chain_size + field_[edge2_id].chain_size;
+
+	// update end_vertices
+	field_[end1_edge].end_vertices[0] = end1_vertex;
+	field_[end1_edge].end_vertices[1] = end2_vertex;
+	field_[end2_edge].end_vertices[0] = end1_vertex;
+	field_[end2_edge].end_vertices[1] = end2_vertex;
+
+	// update another_end_edge
+	field_[end1_edge].another_end_edge = end2_edge;
+	field_[end2_edge].another_end_edge = end1_edge;
+
+	Check(end1_vertex);
+	Check(end2_vertex);
+}
+template <class T>
+void GridLoop<T>::InspectVertex(Position vertex)
+{
+	static const Direction dirs[] = {
+		Direction(1, 0),
+		Direction(0, 1),
+		Direction(-1, 0),
+		Direction(0, -1)
+	};
+
+	unsigned int n_line = 0, n_undecided = 0;
+	for (int i = 0; i < 4; ++i) {
+		EdgeState status = GetEdgeSafe(vertex + dirs[i]);
+		if (status == EDGE_LINE) ++n_line;
+		if (status == EDGE_UNDECIDED) ++n_undecided;
+	}
+
+	if (n_line >= 3) {
+		SetInconsistent();
+		return;
+	}
+
+	if (n_line == 2) {
+		for (int i = 0; i < 4; ++i) {
+			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED) {
+				DecideEdge(vertex + dirs[i], EDGE_BLANK);
+			}
+		}
+	}
+}
+
+template <class T>
+void GridLoop<T>::CheckNeighborhood(Position edge)
+{
+	if (edge.y % 2 == 1) {
+		Check(edge + Direction(-1, 0));
+		Check(edge + Direction(1, 0));
+
+		Check(edge + Direction(0, -1));
+		Check(edge + Direction(0, 1));
+		Check(edge + Direction(-2, -1));
+		Check(edge + Direction(-2, 1));
+		Check(edge + Direction(2, -1));
+		Check(edge + Direction(2, 1));
+	} else {
+		Check(edge + Direction(0, -1));
+		Check(edge + Direction(0, 1));
+
+		Check(edge + Direction(-1, 0));
+		Check(edge + Direction(1, 0));
+		Check(edge + Direction(-1, -2));
+		Check(edge + Direction(1, -2));
+		Check(edge + Direction(-1, 2));
+		Check(edge + Direction(1, 2));
 	}
 }
 
