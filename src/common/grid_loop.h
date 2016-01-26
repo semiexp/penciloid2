@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <algorithm>
 
 #include "type.h"
@@ -204,6 +205,7 @@ GridLoop<T>::GridLoop(const GridLoop<T> &other)
 	  abnormal_(other.abnormal_)
 {
 	field_ = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
+	memcpy(field_, other.field_, (Id(2 * height_, 2 * width_) + 1) * sizeof(FieldComponent));
 }
 template<class T>
 GridLoop<T>::~GridLoop()
