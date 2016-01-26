@@ -419,6 +419,16 @@ void GridLoop<T>::InspectVertex(Position vertex)
 			}
 
 			Join(vertex, dirs[undecided_1], dirs[undecided_2]);
+		} else if (n_undecided == 1) {
+			int undecided_1 = -1;
+
+			for (int i = 0; i < 4; ++i) {
+				if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED) {
+					undecided_1 = i;
+				}
+			}
+
+			DecideEdge(vertex + dirs[undecided_1], EDGE_BLANK);
 		}
 	}
 }
