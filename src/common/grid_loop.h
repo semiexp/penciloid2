@@ -186,6 +186,11 @@ GridLoop<T>::GridLoop(Y height, X width)
 			}
 		}
 	}
+
+	Join(Position(0, 0), Direction(1, 0), Direction(0, 1));
+	Join(Position(2 * height, 0), Direction(-1, 0), Direction(0, 1));
+	Join(Position(0, 2 * width), Direction(1, 0), Direction(0, -1));
+	Join(Position(2 * height, 2 * width), Direction(-1, 0), Direction(0, -1));
 }
 template<class T>
 GridLoop<T>::GridLoop(const GridLoop<T> &other)
