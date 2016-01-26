@@ -12,7 +12,7 @@ void RunAllGridLoopTest()
 {
 	GridLoopBasicAccessors();
 	GridLoopDecideEdgeBasic();
-	GridLoopDecideEdgeTwoLines();
+	GridLoopInspectVertex();
 }
 void GridLoopBasicAccessors()
 {
@@ -37,15 +37,28 @@ void GridLoopDecideEdgeBasic()
 	assert(field.GetEdge(Position(2, 1)) == PlainGridLoop::EDGE_LINE);
 	assert(field.GetEdge(Position(4, 3)) == PlainGridLoop::EDGE_BLANK);
 }
-void GridLoopDecideEdgeTwoLines()
+void GridLoopInspectVertex()
 {
-	PlainGridLoop field(3, 3);
+	{
+		// two lines from a vertex: another edges will be blank
+		PlainGridLoop field(3, 3);
 
-	field.DecideEdge(Position(2, 1), PlainGridLoop::EDGE_LINE);
-	field.DecideEdge(Position(3, 2), PlainGridLoop::EDGE_LINE);
+		field.DecideEdge(Position(2, 1), PlainGridLoop::EDGE_LINE);
+		field.DecideEdge(Position(3, 2), PlainGridLoop::EDGE_LINE);
 
-	assert(field.GetEdge(Position(1, 2)) == PlainGridLoop::EDGE_BLANK);
-	assert(field.GetEdge(Position(2, 3)) == PlainGridLoop::EDGE_BLANK);
+		assert(field.GetEdge(Position(1, 2)) == PlainGridLoop::EDGE_BLANK);
+		assert(field.GetEdge(Position(2, 3)) == PlainGridLoop::EDGE_BLANK);
+	}
+	{
+		// one line and two blanks from a vertex: the another edge will be a line
+		PlainGridLoop field(3, 3);
+
+		field.DecideEdge(Position(3, 2), PlainGridLoop::EDGE_BLANK);
+		field.DecideEdge(Position(2, 1), PlainGridLoop::EDGE_LINE);
+		field.DecideEdge(Position(1, 2), PlainGridLoop::EDGE_BLANK);
+
+		assert(field.GetEdge(Position(2, 3)) == PlainGridLoop::EDGE_LINE);
+	}
 }
 }
 }
