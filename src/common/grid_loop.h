@@ -270,6 +270,8 @@ void GridLoop<T>::Check(unsigned int id)
 {
 	// TODO: implement queue
 	Position pos = AsPosition(id);
+	if (!IsPositionOnField(id)) return;
+
 	static_cast<T*>(this)->Inspect(pos);
 	if (IsVertex(pos)) InspectVertex(pos);
 }
