@@ -79,6 +79,16 @@ void GridLoopInspectVertex()
 		assert(field.GetEdge(Position(1, 0)) == PlainGridLoop::EDGE_BLANK);
 		assert(field.GetEdge(Position(5, 0)) == PlainGridLoop::EDGE_LINE);
 	}
+	{
+		// small loop avoidance
+		PlainGridLoop field(3, 3);
+
+		field.DecideEdge(Position(3, 6), PlainGridLoop::EDGE_LINE);
+		field.DecideEdge(Position(0, 3), PlainGridLoop::EDGE_BLANK);
+		field.DecideEdge(Position(1, 0), PlainGridLoop::EDGE_LINE);
+
+		assert(field.GetEdge(Position(2, 1)) == PlainGridLoop::EDGE_BLANK);
+	}
 }
 }
 }
