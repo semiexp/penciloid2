@@ -26,6 +26,14 @@ struct Direction
 	X x;
 };
 
+inline bool operator==(const Position &lhs, const Position &rhs)
+{
+	return lhs.y == rhs.y && lhs.x == rhs.x;
+}
+inline bool operator!=(const Position &lhs, const Position &rhs)
+{
+	return lhs.y != rhs.y || lhs.x != rhs.x;
+}
 inline Position operator+(const Position &lhs, const Direction &rhs)
 {
 	return Position(lhs.y + rhs.y, lhs.x + rhs.x);
