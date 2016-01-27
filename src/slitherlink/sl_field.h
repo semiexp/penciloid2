@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "../common/grid_loop.h"
 #include "sl_database.h"
 
@@ -35,5 +37,6 @@ private:
 
 	unsigned int CellId(Position pos) { return pos.y * width() + pos.x; }
 };
+std::ostream& operator<<(std::ostream &stream, Field &field);
 }
 }

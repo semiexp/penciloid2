@@ -1,6 +1,7 @@
 #include "sl_field.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "sl_database.h"
 
@@ -68,6 +69,32 @@ void Field::Inspect(Position pos)
 			}
 		}
 	}
+}
+std::ostream& operator<<(std::ostream &stream, Field &field)
+{
+	for (Y y = 0; y <= 2 * field.height(); ++y) {
+		for (X x = 0; x <= 2 * field.width(); ++x) {
+			if (y % 2 == 0 && x % 2 == 0) {
+				stream << "+";
+			} else if (y % 2 == 0 && x % 2 == 1) {
+				Field::EdgeState status = field.GetEdge(Position(y, x));
+				if (status == Field::EDGE_UNDECIDED) stream << "   ";
+				else if (status == Field::EDGE_LINE) stream << "---";
+				else if (status == Field::EDGE_BLANK) stream << " X ";
+			} else if (y % 2 == 1 && x % 2 == 0) {
+				Field::EdgeState status = field.GetEdge(Position(y, x));
+				if (status == Field::EDGE_UNDECIDED) stream << " ";
+				else if (status == Field::EDGE_LINE) stream << "|";
+				else if (status == Field::EDGE_BLANK) stream << "X";
+			} else if (y % 2 == 1 && x % 2 == 1) {
+				Field::Clue clue = field.GetClue(Position(y / 2, x / 2));
+				if (clue == Field::kNoClue) stream << "   ";
+				else stream << " " << clue << " ";
+			}
+		}
+		stream << "\n";
+	}
+	return stream;
 }
 }
 }
