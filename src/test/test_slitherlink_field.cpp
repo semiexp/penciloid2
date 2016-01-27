@@ -25,7 +25,7 @@ void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const ch
 			}
 		}
 	}
-
+	
 	for (Y y = 0; y <= 2 * height; ++y) {
 		for (X x = 0; x <= 2 * width; ++x) {
 			if (y % 2 != x % 2) {
@@ -51,6 +51,7 @@ namespace test
 void RunAllSlitherlinkFieldTest()
 {
 	SlitherlinkFieldAddClue();
+	SlitherlinkFieldTheorem();
 }
 void SlitherlinkFieldAddClue()
 {
@@ -121,6 +122,32 @@ void SlitherlinkFieldAddClue()
 		"+ +-+x+",
 		"    x x",
 		"+ +x+x+",
+	}, &db);
+}
+void SlitherlinkFieldTheorem()
+{
+	using namespace slitherlink;
+
+	Database db;
+	db.CreateDefault();
+
+	DoAddClueTest(3, 3, {
+		"+ + + +",
+		"  x    ",
+		"+ + + +",
+		"|3|3|  ",
+		"+ + + +",
+		"  x    ",
+		"+ + + +",
+	}, &db);
+	DoAddClueTest(3, 4, {
+		"+ + +-+x+",
+		"     3| x",
+		"+ + + + +",
+		"  |3     ",
+		"+x+-+ + +",
+		"  x      ",
+		"+ + + + +",
 	}, &db);
 }
 }
