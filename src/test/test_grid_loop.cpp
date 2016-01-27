@@ -1,4 +1,5 @@
 #include "test_grid_loop.h"
+#include "test.h"
 
 #include <cassert>
 
