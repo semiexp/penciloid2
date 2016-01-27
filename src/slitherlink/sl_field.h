@@ -36,7 +36,11 @@ private:
 	Database *database_;
 
 	unsigned int CellId(Position pos) { return pos.y * width() + pos.x; }
+
+	void ApplyTheorem(Position pos);
 };
+
 std::ostream& operator<<(std::ostream &stream, Field &field);
+
 }
 }

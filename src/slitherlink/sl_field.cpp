@@ -36,6 +36,7 @@ void Field::AddClue(Position pos, Clue clue)
 	}
 
 	field_clue_[CellId(pos)] = clue;
+	ApplyTheorem(Position(pos.y * 2 + 1, pos.x * 2 + 1));
 	Check(Position(pos.y * 2 + 1, pos.x * 2 + 1));
 }
 void Field::Inspect(Position pos)
@@ -70,6 +71,42 @@ void Field::Inspect(Position pos)
 		}
 	}
 }
+void Field::ApplyTheorem(Position pos)
+{
+	// pos: coordinate of GridLoop
+	static const Direction dir[] = {
+		Direction(1, 0),
+		Direction(0, 1),
+		Direction(-1, 0),
+		Direction(0, -1)
+	};
+
+	if (GetClue(Position(pos.y / 2, pos.x / 2)) == 3) {
+		// Adjacent 3s
+		for (int i = 0; i < 4; ++i) {
+			Position pos2 = Position(pos.y / 2, pos.x / 2) + dir[i];
+			if (0 <= pos2.y && pos2.y < height() && 0 <= pos2.x && pos2.x < width() && GetClue(pos2) == 3) {
+				DecideEdge(pos + dir[i], EDGE_LINE);
+				DecideEdge(pos + dir[i] + dir[i] + dir[i], EDGE_LINE);
+				DecideEdge(pos - dir[i], EDGE_LINE);
+				DecideEdge(pos + dir[i] + dir[i ^ 1] + dir[i ^ 1], EDGE_BLANK);
+				DecideEdge(pos + dir[i] - dir[i ^ 1] - dir[i ^ 1], EDGE_BLANK);
+			}
+		}
+
+		// Diagonal 3s
+		for (int i = 0; i < 4; ++i) {
+			Position pos2 = Position(pos.y / 2, pos.x / 2) + dir[i] + dir[(i + 1) & 3];
+			if (0 <= pos2.y && pos2.y < height() && 0 <= pos2.x && pos2.x < width() && GetClue(pos2) == 3) {
+				DecideEdge(pos - dir[i], EDGE_LINE);
+				DecideEdge(pos - dir[(i + 1) & 3], EDGE_LINE);
+				DecideEdge(pos + dir[i] + dir[i] + dir[i] + dir[(i + 1) & 3] + dir[(i + 1) & 3], EDGE_LINE);
+				DecideEdge(pos + dir[i] + dir[i] + dir[(i + 1) & 3] + dir[(i + 1) & 3] + dir[(i + 1) & 3], EDGE_LINE);
+			}
+		}
+	}
+}
+
 std::ostream& operator<<(std::ostream &stream, Field &field)
 {
 	for (Y y = 0; y <= 2 * field.height(); ++y) {
