@@ -15,6 +15,7 @@ void RunAllGridLoopTest()
 	GridLoopDecideEdgeBasic();
 	GridLoopInspectVertex();
 	GridLoopCopy();
+	GridLoopClosedLoop();
 }
 void GridLoopBasicAccessors()
 {
@@ -101,6 +102,17 @@ void GridLoopCopy()
 	PlainGridLoop field2(field);
 
 	assert(field2.GetEdge(Position(2, 3)) == PlainGridLoop::EDGE_LINE);
+}
+void GridLoopClosedLoop()
+{
+	PlainGridLoop field(3, 3);
+	
+	field.DecideEdge(Position(0, 1), PlainGridLoop::EDGE_LINE);
+	field.DecideEdge(Position(1, 0), PlainGridLoop::EDGE_LINE);
+	field.DecideEdge(Position(2, 1), PlainGridLoop::EDGE_LINE);
+	field.DecideEdge(Position(1, 2), PlainGridLoop::EDGE_LINE);
+
+	assert(field.IsFullySolved() == true);
 }
 }
 }
