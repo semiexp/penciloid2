@@ -34,6 +34,9 @@ void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const ch
 				else if (test_target[y][x] == ' ') expected = Field::EDGE_UNDECIDED;
 				else expected = Field::EDGE_LINE;
 
+				if (field.GetEdge(Position(y, x)) != expected) {
+					y = y;
+				}
 				assert(field.GetEdge(Position(y, x)) == expected);
 			}
 		}
@@ -91,6 +94,33 @@ void SlitherlinkFieldAddClue()
 		"+ + + +",
 		"       ",
 		"+ + + +",
+	}, &db);
+	DoAddClueTest(3, 3, {
+		"+x+x+-+",
+		"x0x2| |",
+		"+x+-+x+",
+		"x | x |",
+		"+ + + +",
+		"       ",
+		"+ + + +",
+	}, &db);
+	DoAddClueTest(3, 3, {
+		"+-+-+-+",
+		"|2x1x |",
+		"+x+x+ +",
+		"| x    ",
+		"+ + + +",
+		"       ",
+		"+ + + +",
+	}, &db);
+	DoAddClueTest(3, 3, {
+		"+-+-+-+",
+		"|2x1x |",
+		"+x+x+-+",
+		"| x2| x",
+		"+ +-+x+",
+		"    x x",
+		"+ +x+x+",
 	}, &db);
 }
 }
