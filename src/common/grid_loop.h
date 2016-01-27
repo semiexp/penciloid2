@@ -304,15 +304,12 @@ void GridLoop<T>::Join(Position vertex, Direction dir1, Direction dir2)
 	if (field_[edge1_id].end_vertices[0] != Id(vertex) && field_[edge1_id].end_vertices[1] != Id(vertex)) return;
 	if (field_[edge2_id].end_vertices[0] != Id(vertex) && field_[edge2_id].end_vertices[1] != Id(vertex)) return;
 	if (!IsEndOfAChain(edge1_id) || !IsEndOfAChain(edge2_id)) return;
+	if (field_[edge1_id].another_end_edge == edge2_id) return; // avoid joining the same chain again
 
 	unsigned int end1_vertex = GetAnotherEndAsId(vertex, dir1);
 	unsigned int end2_vertex = GetAnotherEndAsId(vertex, dir2);
 	unsigned int end1_edge = field_[edge1_id].another_end_edge;
 	unsigned int end2_edge = field_[edge2_id].another_end_edge;
-
-	if (end1_vertex == end2_vertex) {
-		// TODO
-	}
 
 	// change the status of edges if necessary
 	if (field_[edge1_id].edge_status == EDGE_UNDECIDED && field_[edge2_id].edge_status != EDGE_UNDECIDED) {
@@ -322,6 +319,24 @@ void GridLoop<T>::Join(Position vertex, Direction dir1, Direction dir2)
 	if (field_[edge2_id].edge_status == EDGE_UNDECIDED && field_[edge1_id].edge_status != EDGE_UNDECIDED) {
 		DecideChain(edge2_id, field_[edge1_id].edge_status);
 		CheckNeighborhoodOfChain(edge2_id);
+	}
+
+	if (end1_vertex == end2_vertex) {
+		// TODO
+		if (field_[edge1_id].edge_status == EDGE_UNDECIDED) {
+			if (decided_lines_ != 0) {
+				DecideChain(edge1_id, EDGE_BLANK);
+				DecideChain(edge2_id, EDGE_BLANK);
+				CheckNeighborhoodOfChain(edge1_id);
+				CheckNeighborhoodOfChain(edge2_id);
+			}
+		} else if (field_[edge1_id].edge_status == EDGE_LINE) {
+			if (decided_lines_ != field_[edge1_id].chain_size + field_[edge2_id].chain_size) {
+				SetInconsistent();
+			} else {
+				fully_solved_ = true;
+			}
+		}
 	}
 
 	// concatinate 2 lists
