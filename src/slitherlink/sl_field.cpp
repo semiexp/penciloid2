@@ -35,12 +35,12 @@ void Field::AddClue(Position pos, Clue clue)
 	}
 
 	field_clue_[CellId(pos)] = clue;
-	Check(pos);
+	Check(Position(pos.y * 2 + 1, pos.x * 2 + 1));
 }
 void Field::Inspect(Position pos)
 {
 	if (!(pos.y % 2 == 1 && pos.x % 2 == 1)) return;
-	if (GetClue(pos) == kNoClue) return;
+	if (GetClue(Position(pos.y / 2, pos.x / 2)) == kNoClue) return;
 
 	unsigned int db_id = 0;
 	for (int i = 11; i >= 0; --i) {
@@ -51,7 +51,8 @@ void Field::Inspect(Position pos)
 		else if (status == EDGE_BLANK) db_id = db_id * 3 + Database::kBlank;
 	}
 
-	unsigned int db_result = database_->Get(db_id, GetClue(pos));
+	Clue c = GetClue(Position(pos.y / 2, pos.x / 2));
+	unsigned int db_result = database_->Get(db_id, GetClue(Position(pos.y / 2, pos.x / 2)));
 	if (db_result == 0xffffffffU) {
 		SetInconsistent();
 		return;

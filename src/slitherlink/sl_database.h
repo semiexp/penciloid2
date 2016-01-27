@@ -25,7 +25,7 @@ public:
 	// where ev[i] = (kUndecided if the edge at (cell + kNeighbor[i]) is undecided, ...)
 	// returns \sum_{i=0}^11 ev'[i] * (4^i) or 0xffffffff (if inconsistent)
 	inline unsigned int Get(unsigned int edge_pattern, unsigned int clue) {
-		return edge_pattern + clue * kDatabaseSizeForEachClue; // 531441 = 3^12
+		return data_[edge_pattern + clue * kDatabaseSizeForEachClue];
 	}
 
 private:
