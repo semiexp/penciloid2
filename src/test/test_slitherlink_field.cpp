@@ -10,7 +10,7 @@
 namespace
 {
 // Place clues and check edges
-void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const char*> test_target, penciloid::slitherlink::Database *db)
+void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const char*> test_target, penciloid::slitherlink::Database *db, bool inconsistent = false, bool fully_solved = false)
 {
 	using namespace penciloid;
 	using namespace penciloid::slitherlink;
@@ -41,6 +41,9 @@ void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const ch
 			}
 		}
 	}
+
+	assert(field.IsInconsistent() == inconsistent);
+	assert(field.IsFullySolved() == fully_solved);
 }
 }
 
