@@ -333,6 +333,7 @@ void GridLoop<T>::Join(Position vertex, Direction dir1, Direction dir2)
 				DecideChain(edge2_id, EDGE_BLANK);
 				CheckNeighborhoodOfChain(edge1_id);
 				CheckNeighborhoodOfChain(edge2_id);
+				return;
 			}
 		} else if (field_[edge1_id].edge_status == EDGE_LINE) {
 			if (decided_lines_ != field_[edge1_id].chain_size + field_[edge2_id].chain_size) {
@@ -424,6 +425,7 @@ void GridLoop<T>::InspectVertex(Position vertex)
 					else cand_dir = -2;
 				} else {
 					DecideEdge(vertex + dirs[i], EDGE_BLANK);
+					return;
 				}
 			}
 		}
