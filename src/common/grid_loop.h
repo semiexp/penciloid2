@@ -315,10 +315,14 @@ void GridLoop<T>::Join(Position vertex, Direction dir1, Direction dir2)
 	if (field_[edge1_id].edge_status == EDGE_UNDECIDED && field_[edge2_id].edge_status != EDGE_UNDECIDED) {
 		DecideChain(edge1_id, field_[edge2_id].edge_status);
 		CheckNeighborhoodOfChain(edge1_id);
+		Join(vertex, dir1, dir2); // assure that two edges are still disjoint (or end this function call)
+		return;
 	}
 	if (field_[edge2_id].edge_status == EDGE_UNDECIDED && field_[edge1_id].edge_status != EDGE_UNDECIDED) {
 		DecideChain(edge2_id, field_[edge1_id].edge_status);
 		CheckNeighborhoodOfChain(edge2_id);
+		Join(vertex, dir1, dir2);
+		return;
 	}
 
 	if (end1_vertex == end2_vertex) {
