@@ -149,6 +149,15 @@ void SlitherlinkFieldTheorem()
 		"  x      ",
 		"+ + + + +",
 	}, &db);
+	DoAddClueTest(3, 3, {
+		"+-+-+-+",
+		"| x x |",
+		"+x+-+x+",
+		"|3|3| |",
+		"+-+x+ +",
+		"x1x    ",
+		"+x+x+ +",
+	}, &db);
 }
 }
 }
