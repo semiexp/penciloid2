@@ -5,5 +5,6 @@ namespace test
 void SlitherlinkFieldAddClue();
 void SlitherlinkFieldTheorem();
 void SlitherlinkFieldFullySolvableProblem();
+void SlitherlinkFieldSolveProblem();
 }
 }
