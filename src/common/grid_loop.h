@@ -229,6 +229,13 @@ typename GridLoop<T>::EdgeState GridLoop<T>::GetEdgeSafe(Position edge) const
 template<class T>
 void GridLoop<T>::DecideEdge(Position edge, EdgeState status)
 {
+	if (!IsPositionOnField(edge)) {
+		if (status != EDGE_BLANK) {
+			SetInconsistent();
+		}
+		return;
+	}
+
 	unsigned int id = Id(edge);
 	if (field_[id].edge_status == status) return;
 	if (field_[id].edge_status != EDGE_UNDECIDED) {
