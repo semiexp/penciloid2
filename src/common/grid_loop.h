@@ -136,6 +136,7 @@ private:
 	void Check(unsigned int id);
 	void DecideChain(unsigned int id, EdgeState status);
 	void CheckNeighborhoodOfChain(unsigned int id);
+	void HasFullySolved();
 	// Merge the edge at (vertex + dir1) and at (vertex + dir2)
 	void Join(Position vertex, Direction dir1, Direction dir2);
 	void InspectVertex(Position vertex);
@@ -296,6 +297,17 @@ void GridLoop<T>::CheckNeighborhoodOfChain(unsigned int id)
 	} while (id != id_start);
 }
 template <class T>
+void GridLoop<T>::HasFullySolved()
+{
+	for (Y y = 0; y <= 2 * height_; ++y) {
+		for (X x = 0; x <= 2 * width_; ++x) {
+			if (y % 2 != x % 2 && GetEdge(Position(y, x)) == EDGE_UNDECIDED) {
+				DecideEdge(Position(y, x), EDGE_BLANK);
+			}
+		}
+	}
+}
+template <class T>
 void GridLoop<T>::Join(Position vertex, Direction dir1, Direction dir2)
 {
 	unsigned int edge1_id = Id(vertex + dir1);
@@ -340,6 +352,7 @@ void GridLoop<T>::Join(Position vertex, Direction dir1, Direction dir2)
 				SetInconsistent();
 			} else {
 				fully_solved_ = true;
+				HasFullySolved();
 			}
 		}
 	}
