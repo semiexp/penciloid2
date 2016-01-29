@@ -113,6 +113,7 @@ void GridLoopClosedLoop()
 	field.DecideEdge(Position(1, 2), PlainGridLoop::EDGE_LINE);
 
 	assert(field.IsFullySolved() == true);
+	assert(field.GetEdge(Position(0, 5)) == PlainGridLoop::EDGE_BLANK);
 }
 }
 }
