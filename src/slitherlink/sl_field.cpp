@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 
+#include "sl_problem.h"
 #include "sl_database.h"
 
 namespace penciloid
@@ -12,15 +13,29 @@ namespace slitherlink
 Field::Field() : GridLoop<Field>(), field_clue_(nullptr), database_(nullptr)
 {
 }
-Field::Field(Y height, X width) : GridLoop<Field>(height, width), field_clue_(nullptr), database_(nullptr)
+Field::Field(Y height, X width, Database *database) : GridLoop<Field>(height, width), field_clue_(nullptr), database_(database)
 {
-	field_clue_ = new Clue[int(height) * int(width)];
-	std::fill(field_clue_, field_clue_ + int(height) * int(width), kNoClue);
+	int cell_count = static_cast<int>(height) * static_cast<int>(width);
+	field_clue_ = new Clue[cell_count];
+	std::fill(field_clue_, field_clue_ + cell_count, kNoClue);
 }
 Field::Field(const Field& other) : GridLoop<Field>(other), field_clue_(nullptr), database_(other.database_)
 {
-	field_clue_ = new Clue[int(height()) * int(width())];
-	memcpy(field_clue_, other.field_clue_, int(height()) * int(width()) * sizeof(Clue));
+	int cell_count = static_cast<int>(height()) * static_cast<int>(width());
+	field_clue_ = new Clue[cell_count];
+	memcpy(field_clue_, other.field_clue_, cell_count * sizeof(Clue));
+}
+Field::Field(const Problem& problem, Database *database) : GridLoop<Field>(problem.height(), problem.width()), field_clue_(nullptr), database_(database)
+{
+	int cell_count = static_cast<int>(height()) * static_cast<int>(width());
+	field_clue_ = new Clue[cell_count];
+	std::fill(field_clue_, field_clue_ + cell_count, kNoClue);
+
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			if (problem.GetClue(Position(y, x)) != Problem::kNoClue) AddClue(Position(y, x), problem.GetClue(Position(y, x)));
+		}
+	}
 }
 Field::~Field()
 {
@@ -41,6 +56,7 @@ void Field::AddClue(Position pos, Clue clue)
 }
 void Field::Inspect(Position pos)
 {
+	if (database_ == nullptr) return;
 	if (!(pos.y % 2 == 1 && pos.x % 2 == 1)) return;
 	if (GetClue(Position(pos.y / 2, pos.x / 2)) == kNoClue) return;
 

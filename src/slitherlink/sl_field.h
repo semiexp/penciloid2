@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "../common/grid_loop.h"
+#include "sl_problem.h"
 #include "sl_database.h"
 
 namespace penciloid
@@ -16,7 +17,8 @@ public:
 	static const Clue kNoClue = -1;
 
 	Field();
-	Field(Y height, X width);
+	Field(Y height, X width, Database *database = nullptr);
+	Field(const Problem& problem, Database *database = nullptr);
 
 	Field(const Field &other);
 	Field(Field &&other);
