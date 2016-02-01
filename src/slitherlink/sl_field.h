@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 
 #include "../common/grid_loop.h"
