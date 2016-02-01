@@ -5,18 +5,18 @@ namespace penciloid
 namespace slitherlink
 {
 const Direction Database::kNeighbor[12] = {
-	Direction(-2, -1),
-	Direction(-2, 1),
-	Direction(-1, -2),
-	Direction(-1, 0),
-	Direction(-1, 2),
-	Direction(0, -1),
-	Direction(0, 1),
-	Direction(1, -2),
-	Direction(1, 0),
-	Direction(1, 2),
-	Direction(2, -1),
-	Direction(2, 1),
+	Direction(Y(-2), X(-1)),
+	Direction(Y(-2), X(1)),
+	Direction(Y(-1), X(-2)),
+	Direction(Y(-1), X(0)),
+	Direction(Y(-1), X(2)),
+	Direction(Y(0), X(-1)),
+	Direction(Y(0), X(1)),
+	Direction(Y(1), X(-2)),
+	Direction(Y(1), X(0)),
+	Direction(Y(1), X(2)),
+	Direction(Y(2), X(-1)),
+	Direction(Y(2), X(1)),
 };
 
 Database::Database() : data_(nullptr)

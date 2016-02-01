@@ -37,7 +37,7 @@ private:
 	Clue *field_clue_;
 	Database *database_;
 
-	unsigned int CellId(Position pos) { return pos.y * width() + pos.x; }
+	unsigned int CellId(Position pos) { return int(pos.y) * int(width()) + int(pos.x); }
 
 	void ApplyTheorem(Position pos);
 };

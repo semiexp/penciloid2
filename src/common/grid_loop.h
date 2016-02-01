@@ -124,9 +124,9 @@ private:
 	bool IsEdge(Position pos) const { return pos.y % 2 != pos.x % 2; }
 	bool IsPositionOnField(Position pos) const { return 0 <= pos.y && pos.y <= 2 * height_ && 0 <= pos.x && pos.x <= 2 * width_; }
 
-	unsigned int Id(Y y, X x) const { return y * (2 * width_ + 1) + x; }
-	unsigned int Id(Position pos) const { return pos.y * (2 * width_ + 1) + pos.x; }
-	Position AsPosition(unsigned int id) const { return Position(id / (2 * width_ + 1), id % (2 * width_ + 1)); }
+	unsigned int Id(Y y, X x) const { return int(y) * (2 * int(width_) + 1) + int(x); }
+	unsigned int Id(Position pos) const { return int(pos.y) * (2 * int(width_) + 1) + int(pos.x); }
+	Position AsPosition(unsigned int id) const { return Position(Y(id / (2 * int(width_) + 1)), X(id % (2 * int(width_) + 1))); }
 
 	bool IsEndOfAChain(Position edge) const { return IsEndOfAChain(Id(edge)); }
 	bool IsEndOfAChain(unsigned int edge_id) const { return field_[field_[edge_id].another_end_edge].another_end_edge == edge_id; }
@@ -172,10 +172,10 @@ GridLoop<T>::GridLoop(Y height, X width)
 {
 	field_ = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
 
-	for (Y y = 0; y <= 2 * height_; ++y) {
-		for (X x = 0; x <= 2 * width_; ++x) {
+	for (Y y(0); y <= 2 * height_; ++y) {
+		for (X x(0); x <= 2 * width_; ++x) {
 			unsigned int id = Id(y, x);
-			if (y % 2 != x % 2) { // Edge
+			if (int(y % 2) != int(x % 2)) { // Edge
 				field_[id].edge_status = EDGE_UNDECIDED;
 				if (y % 2 == 0) {
 					field_[id].end_vertices[0] = Id(y, x - 1);
@@ -191,10 +191,10 @@ GridLoop<T>::GridLoop(Y height, X width)
 		}
 	}
 
-	Join(Position(0, 0), Direction(1, 0), Direction(0, 1));
-	Join(Position(2 * height, 0), Direction(-1, 0), Direction(0, 1));
-	Join(Position(0, 2 * width), Direction(1, 0), Direction(0, -1));
-	Join(Position(2 * height, 2 * width), Direction(-1, 0), Direction(0, -1));
+	Join(Position(Y(0), X(0)), Direction(Y(1), X(0)), Direction(Y(0), X(1)));
+	Join(Position(2 * height, X(0)), Direction(Y(-1), X(0)), Direction(Y(0), X(1)));
+	Join(Position(Y(0), 2 * width), Direction(Y(1), X(0)), Direction(Y(0), X(-1)));
+	Join(Position(2 * height, 2 * width), Direction(Y(-1), X(0)), Direction(Y(0), X(-1)));
 }
 template<class T>
 GridLoop<T>::GridLoop(const GridLoop<T> &other)
@@ -306,9 +306,9 @@ void GridLoop<T>::CheckNeighborhoodOfChain(unsigned int id)
 template <class T>
 void GridLoop<T>::HasFullySolved()
 {
-	for (Y y = 0; y <= 2 * height_; ++y) {
-		for (X x = 0; x <= 2 * width_; ++x) {
-			if (y % 2 != x % 2 && GetEdge(Position(y, x)) == EDGE_UNDECIDED) {
+	for (Y y(0); y <= 2 * height_; ++y) {
+		for (X x(0); x <= 2 * width_; ++x) {
+			if (int(y % 2) != int(x % 2) && GetEdge(Position(y, x)) == EDGE_UNDECIDED) {
 				DecideEdge(Position(y, x), EDGE_BLANK);
 			}
 		}
@@ -388,10 +388,10 @@ template <class T>
 void GridLoop<T>::InspectVertex(Position vertex)
 {
 	static const Direction dirs[] = {
-		Direction(1, 0),
-		Direction(0, 1),
-		Direction(-1, 0),
-		Direction(0, -1)
+		Direction(Y(1), X(0)),
+		Direction(Y(0), X(1)),
+		Direction(Y(-1), X(0)),
+		Direction(Y(0), X(-1))
 	};
 
 	unsigned int n_line = 0, n_undecided = 0;
@@ -426,7 +426,7 @@ void GridLoop<T>::InspectVertex(Position vertex)
 
 	if (n_line == 1) {
 		EdgeCount line_size = 0;
-		Position line_another_end(-1, -1);
+		Position line_another_end(Y(-1), X(-1));
 		int line_dir = 0;
 		for (int i = 0; i < 4; ++i) {
 			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_LINE) {
@@ -489,25 +489,25 @@ template <class T>
 void GridLoop<T>::CheckNeighborhood(Position edge)
 {
 	if (edge.y % 2 == 1) {
-		Check(edge + Direction(-1, 0));
-		Check(edge + Direction(1, 0));
+		Check(edge + Direction(Y(-1), X(0)));
+		Check(edge + Direction(Y(1), X(0)));
 
-		Check(edge + Direction(0, -1));
-		Check(edge + Direction(0, 1));
-		Check(edge + Direction(-2, -1));
-		Check(edge + Direction(-2, 1));
-		Check(edge + Direction(2, -1));
-		Check(edge + Direction(2, 1));
+		Check(edge + Direction(Y(0), X(-1)));
+		Check(edge + Direction(Y(0), X(1)));
+		Check(edge + Direction(Y(-2), X(-1)));
+		Check(edge + Direction(Y(-2), X(1)));
+		Check(edge + Direction(Y(2), X(-1)));
+		Check(edge + Direction(Y(2), X(1)));
 	} else {
-		Check(edge + Direction(0, -1));
-		Check(edge + Direction(0, 1));
+		Check(edge + Direction(Y(0), X(-1)));
+		Check(edge + Direction(Y(0), X(1)));
 
-		Check(edge + Direction(-1, 0));
-		Check(edge + Direction(1, 0));
-		Check(edge + Direction(-1, -2));
-		Check(edge + Direction(1, -2));
-		Check(edge + Direction(-1, 2));
-		Check(edge + Direction(1, 2));
+		Check(edge + Direction(Y(-1), X(0)));
+		Check(edge + Direction(Y(1), X(0)));
+		Check(edge + Direction(Y(-1), X(-2)));
+		Check(edge + Direction(Y(1), X(-2)));
+		Check(edge + Direction(Y(-1), X(2)));
+		Check(edge + Direction(Y(1), X(2)));
 	}
 }
 

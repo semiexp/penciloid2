@@ -14,13 +14,13 @@ Field::Field() : GridLoop<Field>(), field_clue_(nullptr), database_(nullptr)
 }
 Field::Field(Y height, X width) : GridLoop<Field>(height, width), field_clue_(nullptr), database_(nullptr)
 {
-	field_clue_ = new Clue[height * width];
-	std::fill(field_clue_, field_clue_ + height * width, kNoClue);
+	field_clue_ = new Clue[int(height) * int(width)];
+	std::fill(field_clue_, field_clue_ + int(height) * int(width), kNoClue);
 }
 Field::Field(const Field& other) : GridLoop<Field>(other), field_clue_(nullptr), database_(other.database_)
 {
-	field_clue_ = new Clue[height() * width()];
-	memcpy(field_clue_, other.field_clue_, height() * width() * sizeof(Clue));
+	field_clue_ = new Clue[int(height()) * int(width())];
+	memcpy(field_clue_, other.field_clue_, int(height()) * int(width()) * sizeof(Clue));
 }
 Field::~Field()
 {
@@ -75,10 +75,10 @@ void Field::ApplyTheorem(Position pos)
 {
 	// pos: coordinate of GridLoop
 	static const Direction dir[] = {
-		Direction(1, 0),
-		Direction(0, 1),
-		Direction(-1, 0),
-		Direction(0, -1)
+		Direction(Y(1), X(0)),
+		Direction(Y(0), X(1)),
+		Direction(Y(-1), X(0)),
+		Direction(Y(0), X(-1))
 	};
 
 	if (GetClue(Position(pos.y / 2, pos.x / 2)) == 3) {
@@ -109,8 +109,8 @@ void Field::ApplyTheorem(Position pos)
 
 std::ostream& operator<<(std::ostream &stream, Field &field)
 {
-	for (Y y = 0; y <= 2 * field.height(); ++y) {
-		for (X x = 0; x <= 2 * field.width(); ++x) {
+	for (Y y(0); y <= 2 * field.height(); ++y) {
+		for (X x(0); x <= 2 * field.width(); ++x) {
 			if (y % 2 == 0 && x % 2 == 0) {
 				stream << "+";
 			} else if (y % 2 == 0 && x % 2 == 1) {

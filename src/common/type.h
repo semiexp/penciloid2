@@ -1,12 +1,14 @@
 #pragma once
 
+#include "strict_typedef.h"
+
 namespace penciloid
 {
 // Type for y-coordinates
-typedef int Y;
+STRICT_TYPEDEF(int, Y);
 
 // Type for x-coordinates
-typedef int X;
+STRICT_TYPEDEF(int, X);
 
 // Type for 2D absolute coordinates
 struct Position
