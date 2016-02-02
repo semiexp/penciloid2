@@ -77,7 +77,7 @@ public:
 
 	// Check around position <pos>.
 	// This method internally invokes Inspect(pos).
-	void Check(Position pos) { Check(Id(pos)); }
+	void Check(Position pos);
 
 	// Perform Check(pos) for all possible (vertex / cell / edge).
 	void CheckAllVertex();
@@ -134,7 +134,7 @@ private:
 	bool IsEndOfAChainVertex(unsigned int edge_id, unsigned int vertex_id) const;
 	unsigned int GetAnotherEndAsId(Position point, Direction dir) const;
 
-	void Check(unsigned int id);
+	void Check(unsigned int id) { Check(AsPosition(id)); }
 	void DecideChain(unsigned int id, EdgeState status);
 	void CheckNeighborhoodOfChain(unsigned int id);
 	void HasFullySolved();
@@ -275,10 +275,9 @@ unsigned int GridLoop<T>::GetAnotherEndAsId(Position point, Direction dir) const
 	return field_[edge_id].end_vertices[0] + field_[edge_id].end_vertices[1] - Id(point);
 }
 template <class T>
-void GridLoop<T>::Check(unsigned int id)
+void GridLoop<T>::Check(Position pos)
 {
 	// TODO: implement queue
-	Position pos = AsPosition(id);
 	if (!IsPositionOnField(pos)) return;
 
 	static_cast<T*>(this)->Inspect(pos);
