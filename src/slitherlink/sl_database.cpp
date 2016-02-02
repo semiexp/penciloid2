@@ -65,6 +65,15 @@ void Database::CreateDefault()
 				data_[offset + id] = data_[offset + ref_id1] & data_[offset + ref_id2];
 			}
 		}
+
+		for (unsigned int id = 0; id < kDatabaseSizeForEachClue; ++id){
+			int pattern[12];
+
+			IdToPattern(id, &pattern);
+			for (int i = 0; i < 12; ++i) {
+				if (pattern[i] != kUndecided) data_[offset + id] &= ~(3 << (2 * i));
+			}
+		}
 	}
 }
 void Database::Release()
