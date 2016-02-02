@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <algorithm>
+#include <vector>
 
 #include "type.h"
 
@@ -297,11 +298,18 @@ void GridLoop<T>::DecideChain(unsigned int id, EdgeState status)
 template <class T>
 void GridLoop<T>::CheckNeighborhoodOfChain(unsigned int id)
 {
+	std::vector<unsigned int> check_target;
+
 	unsigned int id_start = id;
 	do {
-		static_cast<T*>(this)->CheckNeighborhood(AsPosition(id));
+		check_target.push_back(id);
+		// static_cast<T*>(this)->CheckNeighborhood(AsPosition(id));
 		id = field_[id].list_next_edge;
 	} while (id != id_start);
+
+	for (unsigned int i : check_target) {
+		static_cast<T*>(this)->CheckNeighborhood(AsPosition(i));
+	}
 }
 template <class T>
 void GridLoop<T>::HasFullySolved()
