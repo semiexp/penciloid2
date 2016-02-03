@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "../common/grid_loop.h"
+#include "sl_type.h"
 #include "sl_problem.h"
 #include "sl_database.h"
 
@@ -13,9 +14,6 @@ namespace slitherlink
 class Field : public GridLoop<Field>
 {
 public:
-	typedef int Clue;
-	static const Clue kNoClue = -1;
-
 	Field();
 	Field(Y height, X width, Database *database = nullptr);
 	Field(const Problem& problem, Database *database = nullptr);

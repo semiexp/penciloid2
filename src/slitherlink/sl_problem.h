@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common/type.h"
+#include "sl_type.h"
 
 namespace penciloid
 {
@@ -9,10 +10,6 @@ namespace slitherlink
 class Problem
 {
 public:
-	typedef int Clue;
-
-	static const Clue kNoClue = -1;
-
 	Problem();
 
 	// Initialize a problem with the empty board

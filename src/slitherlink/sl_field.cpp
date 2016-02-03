@@ -33,7 +33,7 @@ Field::Field(const Problem& problem, Database *database) : GridLoop<Field>(probl
 
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
-			if (problem.GetClue(Position(y, x)) != Problem::kNoClue) AddClue(Position(y, x), problem.GetClue(Position(y, x)));
+			if (problem.GetClue(Position(y, x)) != kNoClue) AddClue(Position(y, x), problem.GetClue(Position(y, x)));
 		}
 	}
 }
@@ -78,7 +78,9 @@ void Field::Inspect(Position pos)
 
 	for (int i = 0; i < 12; ++i) {
 		int new_status = (db_result >> (2 * i)) & 3;
-		if (new_status == Database::kLine) DecideEdge(pos + Database::kNeighbor[i], EDGE_LINE);
+		if (new_status == Database::kLine) {
+			DecideEdge(pos + Database::kNeighbor[i], EDGE_LINE);
+		}
 		if (new_status == Database::kBlank) {
 			Position edge_pos = pos + Database::kNeighbor[i];
 			if (0 <= edge_pos.y && edge_pos.y <= 2 * height() && 0 <= edge_pos.x && edge_pos.x <= 2 * width()) {
@@ -140,8 +142,8 @@ std::ostream& operator<<(std::ostream &stream, Field &field)
 				else if (status == Field::EDGE_LINE) stream << "|";
 				else if (status == Field::EDGE_BLANK) stream << "X";
 			} else if (y % 2 == 1 && x % 2 == 1) {
-				Field::Clue clue = field.GetClue(Position(y / 2, x / 2));
-				if (clue == Field::kNoClue) stream << "   ";
+				Clue clue = field.GetClue(Position(y / 2, x / 2));
+				if (clue == kNoClue) stream << "   ";
 				else stream << " " << clue << " ";
 			}
 		}
