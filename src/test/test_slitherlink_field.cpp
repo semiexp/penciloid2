@@ -21,7 +21,7 @@ void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const ch
 	for (Y y(0); y < height; ++y) {
 		for (X x(0); x < width; ++x) {
 			if ('0' <= test_target[y * 2 + 1][x * 2 + 1] && test_target[y * 2 + 1][x * 2 + 1] <= '3') {
-				field.AddClue(Position(y, x), test_target[y * 2 + 1][x * 2 + 1] - '0');
+				field.AddClue(Position(y, x), Clue(test_target[y * 2 + 1][x * 2 + 1] - '0'));
 			}
 		}
 	}
@@ -53,7 +53,7 @@ void DoProblemTest(penciloid::Y height, penciloid::X width, std::vector<const ch
 	for (Y y(0); y < height; ++y) {
 		for (X x(0); x < width; ++x) {
 			if ('0' <= test_problem[y][x] && test_problem[y][x] <= '3') {
-				field.AddClue(Position(y, x), test_problem[y][x] - '0');
+				field.AddClue(Position(y, x), Clue(test_problem[y][x] - '0'));
 			}
 		}
 	}

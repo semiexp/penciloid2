@@ -6,8 +6,8 @@ namespace penciloid
 {
 namespace slitherlink
 {
-typedef int Clue;
-const Clue kNoClue = -1;
+STRICT_TYPEDEF(int, Clue);
+const Clue kNoClue(-1);
 
 }
 }
