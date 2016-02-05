@@ -8,6 +8,6 @@ namespace slitherlink
 {
 STRICT_TYPEDEF(int, Clue);
 const Clue kNoClue(-1);
-
+const Clue kSomeClue(-2);
 }
 }
