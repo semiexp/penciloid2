@@ -7,7 +7,7 @@ namespace penciloid
 {
 namespace slitherlink
 {
-class CluePlacement : Grid<Clue>
+class CluePlacement : public Grid<Clue>
 {
 public:
 	CluePlacement();
