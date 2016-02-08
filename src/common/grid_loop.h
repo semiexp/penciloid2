@@ -212,6 +212,51 @@ GridLoop<T>::GridLoop(const GridLoop<T> &other)
 	memcpy(field_, other.field_, (Id(2 * height_, 2 * width_) + 1) * sizeof(FieldComponent));
 }
 template<class T>
+GridLoop<T>::GridLoop(GridLoop<T> &&other)
+	: field_(other.field_),
+	  height_(other.height_),
+	  width_(other.width_),
+	  decided_edges_(other.decided_edges_),
+	  decided_lines_(other.decided_lines_),
+	  inconsistent_(other.inconsistent_),
+	  fully_solved_(other.fully_solved_),
+	  abnormal_(other.abnormal_)
+{
+	other.field_ = nullptr;
+}
+template<class T>
+GridLoop<T> &GridLoop<T>::operator=(const GridLoop<T> &other)
+{
+	height_ = other.height_;
+	width_ = other.width_;
+	decided_edges_ = other.decided_edges_;
+	decided_lines_ = other.decided_lines_;
+	inconsistent_ = other.inconsistent_;
+	fully_solved_ = other.fully_solved_;
+	abnormal_ = other.abnormal_;
+
+	field_ = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
+	memcpy(field_, other.field_, (Id(2 * height_, 2 * width_) + 1) * sizeof(FieldComponent));
+
+	return *this;
+}
+template<class T>
+GridLoop<T> &GridLoop<T>::operator=(GridLoop<T> &&other)
+{
+	height_ = other.height_;
+	width_ = other.width_;
+	decided_edges_ = other.decided_edges_;
+	decided_lines_ = other.decided_lines_;
+	inconsistent_ = other.inconsitent_;
+	fully_solved_ = other.fully_solved_;
+	abnormal_ = other.abnormal_;
+
+	field_ = other.field_;
+	other.field_ = nullptr;
+
+	return *this;
+}
+template<class T>
 GridLoop<T>::~GridLoop()
 {
 	if (field_) delete[] field_;
