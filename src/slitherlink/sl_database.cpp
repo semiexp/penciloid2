@@ -67,6 +67,8 @@ void Database::CreateDefault()
 		}
 
 		for (unsigned int id = 0; id < kDatabaseSizeForEachClue; ++id){
+			if (data_[offset + id] == 0xffffffffU) continue;
+
 			int pattern[12];
 
 			IdToPattern(id, &pattern);
