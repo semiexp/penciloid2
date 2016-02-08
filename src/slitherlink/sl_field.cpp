@@ -25,6 +25,33 @@ Field::Field(const Field& other) : GridLoop<Field>(other), field_clue_(nullptr),
 	field_clue_ = new Clue[cell_count];
 	memcpy(field_clue_, other.field_clue_, cell_count * sizeof(Clue));
 }
+Field::Field(Field&& other) : GridLoop<Field>(other), field_clue_(other.field_clue_), database_(other.database_)
+{
+	other.field_clue_ = nullptr;
+}
+Field &Field::operator=(const Field& other)
+{
+	GridLoop<Field>::operator=(other);
+
+	if (field_clue_) delete[] field_clue_;
+	int cell_count = static_cast<int>(height()) * static_cast<int>(width());
+	field_clue_ = new Clue[cell_count];
+	memcpy(field_clue_, other.field_clue_, cell_count * sizeof(Clue));
+
+	database_ = other.database_;
+
+	return *this;
+}
+Field &Field::operator=(Field&& other)
+{
+	GridLoop<Field>::operator=(other);
+
+	field_clue_ = other.field_clue_;
+	other.field_clue_ = nullptr;
+	database_ = other.database_;
+
+	return *this;
+}
 Field::Field(const Problem& problem, Database *database) : GridLoop<Field>(problem.height(), problem.width()), field_clue_(nullptr), database_(database)
 {
 	int cell_count = static_cast<int>(height()) * static_cast<int>(width());
