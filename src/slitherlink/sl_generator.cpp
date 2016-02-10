@@ -9,6 +9,7 @@
 #include "sl_clue_placement.h"
 #include "sl_generator_option.h"
 #include "../common/grid_loop_helper.h"
+#include "../common/union_find.h"
 
 namespace penciloid
 {
@@ -154,6 +155,118 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 	}
 
 	return false;
+}
+
+CluePlacement GenerateCluePlacement(Y height, X width, int number_clues, Symmetry symmetry, std::mt19937 *rnd)
+{
+	UnionFind cell_groups(static_cast<int>(height) * static_cast<int>(width));
+	CluePlacement ret(height, width);
+
+	auto cell_id = [height, width](Y y, X x) {
+		return static_cast<int>(y) * static_cast<int>(width) + static_cast<int>(x);
+	};
+
+	if ((symmetry & kSymmetryTetrad) == kSymmetryTetrad && static_cast<int>(height) == static_cast<int>(width)) {
+		for (Y y(0); y < height; ++y) {
+			for (X x(0); x < width; ++x) {
+				int id = cell_id(y, x);
+				int id_rotated = cell_id(Y(x), X(height - y - 1));
+				cell_groups.Join(id, id_rotated);
+			}
+		}
+	}
+	if (symmetry & kSymmetryDyad) {
+		for (Y y(0); y < height; ++y) {
+			for (X x(0); x < width; ++x) {
+				int id = cell_id(y, x);
+				int id_rotated = cell_id(height - y - 1, width - x - 1);
+				cell_groups.Join(id, id_rotated);
+			}
+		}
+	}
+	if (symmetry & kSymmetryHorizontalLine) {
+		for (Y y(0); y < height; ++y) {
+			for (X x(0); x < width; ++x) {
+				int id = cell_id(y, x);
+				int id_flipped = cell_id(height - y - 1, x);
+				cell_groups.Join(id, id_flipped);
+			}
+		}
+	}
+	if (symmetry & kSymmetryVerticalLine) {
+		for (Y y(0); y < height; ++y) {
+			for (X x(0); x < width; ++x) {
+				int id = cell_id(y, x);
+				int id_flipped = cell_id(y, width - x - 1);
+				cell_groups.Join(id, id_flipped);
+			}
+		}
+	}
+
+	std::vector<std::pair<Position, int> > possible_clues;
+
+	for (Y y(0); y < height; ++y) {
+		for (X x(0); x < width; ++x) {
+			int id = cell_id(y, x);
+			if (cell_groups.Root(id) == id) {
+				possible_clues.push_back({ Position(y, x), cell_groups.UnionSize(id) });
+			}
+		}
+	}
+	while (number_clues > 0 && possible_clues.size() > 0) {
+		std::vector<double> scores;
+		double score_total = 0.0;
+
+		for (auto p : possible_clues) {
+			Position pos = p.first;
+
+			int score_base = 0;
+
+			for (Y dy(-2); dy <= 2; ++dy) {
+				for (X dx(-2); dx <= 2; ++dx) {
+					Position pos2 = pos + Direction(dy, dx);
+					if (0 <= pos2.y && pos2.y < height && 0 <= pos2.x && pos2.x < width) {
+						if (ret.GetClue(pos2) == kSomeClue) {
+							int dist = 0;
+							dist += (dy > 0 ? dy : -dy);
+							dist += (dx > 0 ? dx : -dx);
+
+							score_base += 5 - dist;
+							if (dist == 1) score_base += 2;
+						}
+					}
+				}
+			}
+
+			double cell_score = 64.0 * pow(2.0, (16.0 - score_base) / 2.0) + 4.0;
+			scores.push_back(cell_score);
+			score_total += cell_score;
+		}
+
+		double r = std::uniform_real_distribution<float>(0.0, static_cast<float>(score_total))(*rnd);
+		int next_idx = possible_clues.size() - 1;
+
+		for (int i = 0; i < scores.size(); ++i) {
+			if (r < scores[i]) {
+				next_idx = i;
+				break;
+			} else r -= scores[i];
+		}
+
+		Position representative_pos = possible_clues[next_idx].first;
+		int representative_id = cell_id(representative_pos.y, representative_pos.x);
+		for (Y y(0); y < height; ++y) {
+			for (X x(0); x < width; ++x) {
+				int id = cell_id(y, x);
+				if (cell_groups.Root(id) == cell_groups.Root(representative_id)) {
+					--number_clues;
+					ret.SetClue(Position(y, x), kSomeClue);
+				}
+			}
+		}
+	}
+
+	return ret;
 }
 }
 }

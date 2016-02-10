@@ -18,6 +18,9 @@ public:
 	// Returns the index of the leader of the union which p belongs to.
 	int Root(int p) { return parent_[p] < 0 ? p : (parent_[p] = Root(parent_[p])); }
 	
+	// Returns the size of the union which p belongs to.
+	int UnionSize(int p) { return -parent_[Root(p)]; }
+
 	// Returns true if p and q were initially in different unions.
 	bool Join(int p, int q) {
 		p = Root(p);
