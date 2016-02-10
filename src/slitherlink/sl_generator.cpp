@@ -8,6 +8,7 @@
 #include "sl_field.h"
 #include "sl_clue_placement.h"
 #include "sl_generator_option.h"
+#include "../common/grid_loop_helper.h"
 
 namespace penciloid
 {
@@ -127,7 +128,12 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 
 				if (!transition) continue;
 
-				// TODO: check with in-out theorem here
+				Field in_out_test_field = next_field_candidate;
+				ApplyInOutRule(&in_out_test_field);
+				CheckConnectability(&in_out_test_field);
+				if (in_out_test_field.IsInconsistent()) {
+					continue;
+				}
 
 				// update field & problem
 				if (previous_clue == kNoClue) --number_unplaced_clues;
