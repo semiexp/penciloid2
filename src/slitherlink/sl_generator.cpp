@@ -264,6 +264,9 @@ CluePlacement GenerateCluePlacement(Y height, X width, int number_clues, Symmetr
 				}
 			}
 		}
+
+		possible_clues[next_idx] = possible_clues[possible_clues.size() - 1];
+		possible_clues.pop_back();
 	}
 
 	return ret;
