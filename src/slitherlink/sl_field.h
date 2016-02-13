@@ -25,8 +25,8 @@ public:
 
 	~Field();
 
-	void AddClue(Position cell, Clue clue);
-	inline Clue GetClue(Position cell) { return field_clue_[CellId(cell)]; }
+	void AddClue(CellPosition cell, Clue clue);
+	inline Clue GetClue(CellPosition cell) { return field_clue_[CellId(cell)]; }
 
 	void Inspect(Position pos);
 
@@ -37,9 +37,10 @@ private:
 	Clue *field_clue_;
 	Database *database_;
 
-	unsigned int CellId(Position pos) { return int(pos.y) * int(width()) + int(pos.x); }
+	unsigned int CellId(CellPosition pos) { return int(pos.y) * int(width()) + int(pos.x); }
 
 	void ApplyTheorem(Position pos);
+	void CheckDiagonalChain(Position pos);
 };
 
 std::ostream& operator<<(std::ostream &stream, Field &field);

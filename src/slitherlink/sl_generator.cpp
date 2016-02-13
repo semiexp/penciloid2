@@ -35,14 +35,14 @@ bool HasUndecidedEdgeNearby(Field &field, Y y_base, X x_base)
 	}
 	return false;
 }
-bool HasZeroNearby(Field &field, Position pos)
+bool HasZeroNearby(Field &field, CellPosition pos)
 {
 	for (Y dy(-1); dy <= 1; ++dy) {
 		for (X dx(-1); dx <= 1; ++dx) {
 			Y y = pos.y + dy;
 			X x = pos.x + dx;
 
-			if (0 <= y && y < field.height() && 0 <= x && x < field.width() && field.GetClue(Position(y, x)) == Clue(0)) {
+			if (0 <= y && y < field.height() && 0 <= x && x < field.width() && field.GetClue(CellPosition(y, x)) == Clue(0)) {
 				return true;
 			}
 		}
@@ -65,9 +65,9 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 	int number_unplaced_clues = 0;
 	for (Y y(0); y < height; ++y) {
 		for (X x(0); x < width; ++x) {
-			Clue clue = placement.GetClue(Position(y, x));
+			Clue clue = placement.GetClue(CellPosition(y, x));
 			if (clue == kSomeClue) ++number_unplaced_clues;
-			else if (clue != kNoClue) current_problem.SetClue(Position(y, x), clue);
+			else if (clue != kNoClue) current_problem.SetClue(CellPosition(y, x), clue);
 		}
 	}
 
@@ -78,19 +78,19 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 		bool is_progress = false;
 
 		double temperature = 5.0;
-		std::vector<Position> position_candidates;
+		std::vector<CellPosition> position_candidates;
 
 		for (Y y(0); y < height; ++y) {
-			for (X x(0); x < width; ++x) if (placement.GetClue(Position(y, x)) == kSomeClue) {
+			for (X x(0); x < width; ++x) if (placement.GetClue(CellPosition(y, x)) == kSomeClue) {
 				if (HasUndecidedEdgeNearby(latest_field, y, x)) {
-					position_candidates.push_back(Position(y, x));
+					position_candidates.push_back(CellPosition(y, x));
 				}
 			}
 		}
 
 		std::shuffle(position_candidates.begin(), position_candidates.end(), *rnd);
 
-		for (Position &pos : position_candidates) {
+		for (CellPosition &pos : position_candidates) {
 			Clue previous_clue = current_problem.GetClue(pos);
 			bool is_zero_ok = !HasZeroNearby(latest_field, pos);
 
@@ -203,13 +203,13 @@ CluePlacement GenerateCluePlacement(Y height, X width, int number_clues, Symmetr
 		}
 	}
 
-	std::vector<std::pair<Position, int> > possible_clues;
+	std::vector<std::pair<CellPosition, int> > possible_clues;
 
 	for (Y y(0); y < height; ++y) {
 		for (X x(0); x < width; ++x) {
 			int id = cell_id(y, x);
 			if (cell_groups.Root(id) == id) {
-				possible_clues.push_back({ Position(y, x), cell_groups.UnionSize(id) });
+				possible_clues.push_back({ CellPosition(y, x), cell_groups.UnionSize(id) });
 			}
 		}
 	}
@@ -218,13 +218,13 @@ CluePlacement GenerateCluePlacement(Y height, X width, int number_clues, Symmetr
 		double score_total = 0.0;
 
 		for (auto p : possible_clues) {
-			Position pos = p.first;
+			CellPosition pos = p.first;
 
 			int score_base = 0;
 
 			for (Y dy(-2); dy <= 2; ++dy) {
 				for (X dx(-2); dx <= 2; ++dx) {
-					Position pos2 = pos + Direction(dy, dx);
+					CellPosition pos2 = pos + Direction(dy, dx);
 					if (0 <= pos2.y && pos2.y < height && 0 <= pos2.x && pos2.x < width) {
 						if (ret.GetClue(pos2) == kSomeClue) {
 							int dist = 0;
@@ -253,14 +253,14 @@ CluePlacement GenerateCluePlacement(Y height, X width, int number_clues, Symmetr
 			} else r -= scores[i];
 		}
 
-		Position representative_pos = possible_clues[next_idx].first;
+		CellPosition representative_pos = possible_clues[next_idx].first;
 		int representative_id = cell_id(representative_pos.y, representative_pos.x);
 		for (Y y(0); y < height; ++y) {
 			for (X x(0); x < width; ++x) {
 				int id = cell_id(y, x);
 				if (cell_groups.Root(id) == cell_groups.Root(representative_id)) {
 					--number_clues;
-					ret.SetClue(Position(y, x), kSomeClue);
+					ret.SetClue(CellPosition(y, x), kSomeClue);
 				}
 			}
 		}

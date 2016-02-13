@@ -60,7 +60,7 @@ Field::Field(const Problem& problem, Database *database) : GridLoop<Field>(probl
 
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
-			if (problem.GetClue(Position(y, x)) != kNoClue) AddClue(Position(y, x), problem.GetClue(Position(y, x)));
+			if (problem.GetClue(CellPosition(y, x)) != kNoClue) AddClue(CellPosition(y, x), problem.GetClue(CellPosition(y, x)));
 		}
 	}
 }
@@ -68,7 +68,7 @@ Field::~Field()
 {
 	if (field_clue_) delete[] field_clue_;
 }
-void Field::AddClue(Position pos, Clue clue)
+void Field::AddClue(CellPosition pos, Clue clue)
 {
 	if (GetClue(pos) != kNoClue) {
 		if (GetClue(pos) != clue) {
@@ -85,7 +85,7 @@ void Field::Inspect(Position pos)
 {
 	if (database_ == nullptr) return;
 	if (!(pos.y % 2 == 1 && pos.x % 2 == 1)) return;
-	if (GetClue(Position(pos.y / 2, pos.x / 2)) == kNoClue) return;
+	if (GetClue(CellPosition(pos.y / 2, pos.x / 2)) == kNoClue) return;
 
 	unsigned int db_id = 0;
 	for (int i = 11; i >= 0; --i) {
@@ -96,8 +96,8 @@ void Field::Inspect(Position pos)
 		else if (status == EDGE_BLANK) db_id = db_id * 3 + Database::kBlank;
 	}
 
-	Clue c = GetClue(Position(pos.y / 2, pos.x / 2));
-	unsigned int db_result = database_->Get(db_id, GetClue(Position(pos.y / 2, pos.x / 2)));
+	Clue c = GetClue(CellPosition(pos.y / 2, pos.x / 2));
+	unsigned int db_result = database_->Get(db_id, GetClue(CellPosition(pos.y / 2, pos.x / 2)));
 	if (db_result == 0xffffffffU) {
 		SetInconsistent();
 		return;
@@ -126,10 +126,10 @@ void Field::ApplyTheorem(Position pos)
 		Direction(Y(0), X(-1))
 	};
 
-	if (GetClue(Position(pos.y / 2, pos.x / 2)) == 3) {
+	if (GetClue(CellPosition(pos.y / 2, pos.x / 2)) == 3) {
 		// Adjacent 3s
 		for (int i = 0; i < 4; ++i) {
-			Position pos2 = Position(pos.y / 2, pos.x / 2) + dir[i];
+			CellPosition pos2 = CellPosition(pos.y / 2, pos.x / 2) + dir[i];
 			if (0 <= pos2.y && pos2.y < height() && 0 <= pos2.x && pos2.x < width() && GetClue(pos2) == 3) {
 				DecideEdge(pos + dir[i], EDGE_LINE);
 				DecideEdge(pos + dir[i] + dir[i] + dir[i], EDGE_LINE);
@@ -141,7 +141,7 @@ void Field::ApplyTheorem(Position pos)
 
 		// Diagonal 3s
 		for (int i = 0; i < 4; ++i) {
-			Position pos2 = Position(pos.y / 2, pos.x / 2) + dir[i] + dir[(i + 1) & 3];
+			CellPosition pos2 = CellPosition(pos.y / 2, pos.x / 2) + dir[i] + dir[(i + 1) & 3];
 			if (0 <= pos2.y && pos2.y < height() && 0 <= pos2.x && pos2.x < width() && GetClue(pos2) == 3) {
 				DecideEdge(pos - dir[i], EDGE_LINE);
 				DecideEdge(pos - dir[(i + 1) & 3], EDGE_LINE);
@@ -169,7 +169,7 @@ std::ostream& operator<<(std::ostream &stream, Field &field)
 				else if (status == Field::EDGE_LINE) stream << "|";
 				else if (status == Field::EDGE_BLANK) stream << "X";
 			} else if (y % 2 == 1 && x % 2 == 1) {
-				Clue clue = field.GetClue(Position(y / 2, x / 2));
+				Clue clue = field.GetClue(CellPosition(y / 2, x / 2));
 				if (clue == kNoClue) stream << "   ";
 				else stream << " " << clue << " ";
 			}

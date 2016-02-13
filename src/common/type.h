@@ -20,6 +20,16 @@ struct Position
 	X x;
 };
 
+// Type for 2D absolute coordinates for cells on grids
+struct CellPosition
+{
+	CellPosition(Y y, X x) : y(y), x(x) {}
+	CellPosition() : y(0), x(0) {}
+
+	Y y;
+	X x;
+};
+
 // Type for 2D relative coordinates
 struct Direction
 {
@@ -50,6 +60,28 @@ inline Direction operator-(const Position &lhs, const Position &rhs)
 {
 	return Direction(lhs.y - rhs.y, lhs.x - rhs.x);
 }
+
+inline bool operator==(const CellPosition &lhs, const CellPosition &rhs)
+{
+	return lhs.y == rhs.y && lhs.x == rhs.x;
+}
+inline bool operator!=(const CellPosition &lhs, const CellPosition &rhs)
+{
+	return lhs.y != rhs.y || lhs.x != rhs.x;
+}
+inline CellPosition operator+(const CellPosition &lhs, const Direction &rhs)
+{
+	return CellPosition(lhs.y + rhs.y, lhs.x + rhs.x);
+}
+inline CellPosition operator-(const CellPosition &lhs, const Direction &rhs)
+{
+	return CellPosition(lhs.y - rhs.y, lhs.x - rhs.x);
+}
+inline Direction operator-(const CellPosition &lhs, const CellPosition &rhs)
+{
+	return Direction(lhs.y - rhs.y, lhs.x - rhs.x);
+}
+
 inline Direction operator+(const Direction &lhs, const Direction &rhs)
 {
 	return Direction(lhs.y + rhs.y, lhs.x + rhs.x);

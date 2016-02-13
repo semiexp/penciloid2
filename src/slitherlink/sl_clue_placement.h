@@ -23,8 +23,8 @@ public:
 
 	~CluePlacement() {}
 
-	inline void SetClue(Position cell, Clue clue) { at(cell) = clue; }
-	inline Clue GetClue(Position cell) const { return at(cell); }
+	inline void SetClue(CellPosition cell, Clue clue) { at(cell) = clue; }
+	inline Clue GetClue(CellPosition cell) const { return at(cell); }
 };
 }
 }

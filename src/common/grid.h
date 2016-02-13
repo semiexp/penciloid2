@@ -24,10 +24,13 @@ public:
 protected:
 	T &at(Position pos) { return data_[GetIndex(pos)]; }
 	const T &at(Position pos) const { return data_[GetIndex(pos)]; }
+	T &at(CellPosition pos) { return data_[GetIndex(pos)]; }
+	const T &at(CellPosition pos) const { return data_[GetIndex(pos)]; }
 
 private:
 	unsigned int NumberOfCells() const { return static_cast<int>(height_)* static_cast<int>(width_); }
-	unsigned int GetIndex(Position pos) const { return static_cast<int>(pos.y) * static_cast<int>(width_) + static_cast<int>(pos.x); }
+	unsigned int GetIndex(Position pos) const { return static_cast<int>(pos.y) * static_cast<int>(width_)+static_cast<int>(pos.x); }
+	unsigned int GetIndex(CellPosition pos) const { return static_cast<int>(pos.y) * static_cast<int>(width_)+static_cast<int>(pos.x); }
 	T *data_;
 	Y height_;
 	X width_;
