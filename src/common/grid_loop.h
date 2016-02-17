@@ -60,6 +60,7 @@ public:
 
 	// Makes the status of edge <edge> <state>.
 	// Status of other decidable edges will be also changed.
+	// edge can be out of field range.
 	void DecideEdge(LoopPosition edge, EdgeState status);
 
 	// Returns the another end of the chain, which starts from <point> to the direction <dir>.
