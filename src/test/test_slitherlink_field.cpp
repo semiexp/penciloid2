@@ -34,7 +34,7 @@ void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const ch
 				else if (test_target[y][x] == ' ') expected = Field::EDGE_UNDECIDED;
 				else expected = Field::EDGE_LINE;
 
-				assert(field.GetEdge(Position(y, x)) == expected);
+				assert(field.GetEdge(LoopPosition(y, x)) == expected);
 			}
 		}
 	}

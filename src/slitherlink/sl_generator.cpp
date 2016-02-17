@@ -27,7 +27,7 @@ bool HasUndecidedEdgeNearby(Field &field, Y y_base, X x_base)
 			X x = x_base + dx;
 
 			if (0 <= y && y <= 2 * field.height() && 0 <= x && x <= 2 * field.width()) {
-				if (static_cast<int>(y) % 2 != static_cast<int>(x) % 2 && field.GetEdge(Position(y, x)) == Field::EDGE_UNDECIDED) {
+				if (static_cast<int>(y) % 2 != static_cast<int>(x) % 2 && field.GetEdge(LoopPosition(y, x)) == Field::EDGE_UNDECIDED) {
 					return true;
 				}
 			}

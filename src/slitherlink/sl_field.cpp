@@ -78,10 +78,10 @@ void Field::AddClue(CellPosition pos, Clue clue)
 	}
 
 	field_clue_[CellId(pos)] = clue;
-	ApplyTheorem(Position(pos.y * 2 + 1, pos.x * 2 + 1));
-	Check(Position(pos.y * 2 + 1, pos.x * 2 + 1));
+	ApplyTheorem(LoopPosition(pos.y * 2 + 1, pos.x * 2 + 1));
+	Check(LoopPosition(pos.y * 2 + 1, pos.x * 2 + 1));
 }
-void Field::Inspect(Position pos)
+void Field::Inspect(LoopPosition pos)
 {
 	if (database_ == nullptr) return;
 	if (!(pos.y % 2 == 1 && pos.x % 2 == 1)) return;
@@ -109,14 +109,14 @@ void Field::Inspect(Position pos)
 			DecideEdge(pos + Database::kNeighbor[i], EDGE_LINE);
 		}
 		if (new_status == Database::kBlank) {
-			Position edge_pos = pos + Database::kNeighbor[i];
+			LoopPosition edge_pos = pos + Database::kNeighbor[i];
 			if (0 <= edge_pos.y && edge_pos.y <= 2 * height() && 0 <= edge_pos.x && edge_pos.x <= 2 * width()) {
 				DecideEdge(pos + Database::kNeighbor[i], EDGE_BLANK);
 			}
 		}
 	}
 }
-void Field::ApplyTheorem(Position pos)
+void Field::ApplyTheorem(LoopPosition pos)
 {
 	// pos: coordinate of GridLoop
 	static const Direction dir[] = {
@@ -159,12 +159,12 @@ std::ostream& operator<<(std::ostream &stream, Field &field)
 			if (y % 2 == 0 && x % 2 == 0) {
 				stream << "+";
 			} else if (y % 2 == 0 && x % 2 == 1) {
-				Field::EdgeState status = field.GetEdge(Position(y, x));
+				Field::EdgeState status = field.GetEdge(LoopPosition(y, x));
 				if (status == Field::EDGE_UNDECIDED) stream << "   ";
 				else if (status == Field::EDGE_LINE) stream << "---";
 				else if (status == Field::EDGE_BLANK) stream << " X ";
 			} else if (y % 2 == 1 && x % 2 == 0) {
-				Field::EdgeState status = field.GetEdge(Position(y, x));
+				Field::EdgeState status = field.GetEdge(LoopPosition(y, x));
 				if (status == Field::EDGE_UNDECIDED) stream << " ";
 				else if (status == Field::EDGE_LINE) stream << "|";
 				else if (status == Field::EDGE_BLANK) stream << "X";

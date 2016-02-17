@@ -66,7 +66,7 @@ inline Direction operator-(const Direction &lhs, const Direction &rhs)
 }
 
 struct position_Position_t {};
-typedef position_base<position_Position_t> Position;
+typedef position_base<position_Position_t> LoopPosition;
 struct position_CellPosition_t {};
 typedef position_base<position_CellPosition_t> CellPosition;
 

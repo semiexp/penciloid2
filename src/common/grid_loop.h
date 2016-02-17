@@ -52,32 +52,32 @@ public:
 
 	// Returns the status of edge <edge>.
 	// <edge> should be a legitimate position.
-	EdgeState GetEdge(Position edge) const;
+	EdgeState GetEdge(LoopPosition edge) const;
 
 	// Returns the status of edge <edge>.
 	// If <edge> is out of range, EDGE_BLANK will be returned.
-	EdgeState GetEdgeSafe(Position edge) const;
+	EdgeState GetEdgeSafe(LoopPosition edge) const;
 
 	// Makes the status of edge <edge> <state>.
 	// Status of other decidable edges will be also changed.
-	void DecideEdge(Position edge, EdgeState status);
+	void DecideEdge(LoopPosition edge, EdgeState status);
 
 	// Returns the another end of the chain, which starts from <point> to the direction <dir>.
 	// <point> should be one of the ends of the chain.
-	Position GetAnotherEnd(Position point, Direction dir) const;
+	LoopPosition GetAnotherEnd(LoopPosition point, Direction dir) const;
 
 	// Returns the length of the chain, which starts from <point> to the direction <dir>.
 	// <point> should be one of the ends of the chain.
-	EdgeCount GetChainLength(Position point, Direction dir) const;
+	EdgeCount GetChainLength(LoopPosition point, Direction dir) const;
 
 	// Returns two end vertices of the chain which edge <edge> belongs to.
 	// Non-const version changes internal status to perform "path compression".
-	std::pair<Position, Position> GetEndsOfChain(Position edge);
-	std::pair<Position, Position> GetEndsOfChain(Position edge) const;
+	std::pair<LoopPosition, LoopPosition> GetEndsOfChain(LoopPosition edge);
+	std::pair<LoopPosition, LoopPosition> GetEndsOfChain(LoopPosition edge) const;
 
 	// Check around position <pos>.
 	// This method internally invokes Inspect(pos).
-	void Check(Position pos);
+	void Check(LoopPosition pos);
 
 	// Perform Check(pos) for all possible (vertex / cell / edge).
 	void CheckAllVertex();
@@ -89,16 +89,16 @@ public:
 	//
 
 	// This method (of the subclass) will be called when the status of edge <edge> was decided.
-	void HasDecided(Position edge) {}
+	void HasDecided(LoopPosition edge) {}
 
 	// This method (of the subclass) should call Check(Position) for constraint propagation.
 	// This will be called "something has happened" to edge <edge>, e.g. the status of <edge> was decided.
-	void CheckNeighborhood(Position edge);
+	void CheckNeighborhood(LoopPosition edge);
 
 	// This method (of the subclass) should inspect around position <pos>.
 	// <pos> does not necessarily represent the position of an edge.
 	// Don't call this method directly (instead, use Check(pos) ).
-	void Inspect(Position pos) {}
+	void Inspect(LoopPosition pos) {}
 
 private:
 	struct FieldComponent
@@ -121,26 +121,26 @@ private:
 		};
 	};
 
-	bool IsVertex(Position pos) const { return pos.y % 2 == 0 && pos.x % 2 == 0; }
-	bool IsEdge(Position pos) const { return pos.y % 2 != pos.x % 2; }
-	bool IsPositionOnField(Position pos) const { return 0 <= pos.y && pos.y <= 2 * height_ && 0 <= pos.x && pos.x <= 2 * width_; }
+	bool IsVertex(LoopPosition pos) const { return pos.y % 2 == 0 && pos.x % 2 == 0; }
+	bool IsEdge(LoopPosition pos) const { return pos.y % 2 != pos.x % 2; }
+	bool IsPositionOnField(LoopPosition pos) const { return 0 <= pos.y && pos.y <= 2 * height_ && 0 <= pos.x && pos.x <= 2 * width_; }
 
 	unsigned int Id(Y y, X x) const { return int(y) * (2 * int(width_) + 1) + int(x); }
-	unsigned int Id(Position pos) const { return int(pos.y) * (2 * int(width_) + 1) + int(pos.x); }
-	Position AsPosition(unsigned int id) const { return Position(Y(id / (2 * int(width_) + 1)), X(id % (2 * int(width_) + 1))); }
+	unsigned int Id(LoopPosition pos) const { return int(pos.y) * (2 * int(width_) + 1) + int(pos.x); }
+	LoopPosition AsPosition(unsigned int id) const { return LoopPosition(Y(id / (2 * int(width_) + 1)), X(id % (2 * int(width_) + 1))); }
 
-	bool IsEndOfAChain(Position edge) const { return IsEndOfAChain(Id(edge)); }
+	bool IsEndOfAChain(LoopPosition edge) const { return IsEndOfAChain(Id(edge)); }
 	bool IsEndOfAChain(unsigned int edge_id) const { return field_[field_[edge_id].another_end_edge].another_end_edge == edge_id; }
 	bool IsEndOfAChainVertex(unsigned int edge_id, unsigned int vertex_id) const;
-	unsigned int GetAnotherEndAsId(Position point, Direction dir) const;
+	unsigned int GetAnotherEndAsId(LoopPosition point, Direction dir) const;
 
 	void Check(unsigned int id) { Check(AsPosition(id)); }
 	void DecideChain(unsigned int id, EdgeState status);
 	void CheckNeighborhoodOfChain(unsigned int id);
 	void HasFullySolved();
 	// Merge the edge at (vertex + dir1) and at (vertex + dir2)
-	void Join(Position vertex, Direction dir1, Direction dir2);
-	void InspectVertex(Position vertex);
+	void Join(LoopPosition vertex, Direction dir1, Direction dir2);
+	void InspectVertex(LoopPosition vertex);
 
 	FieldComponent *field_;
 	Y height_;
@@ -192,10 +192,10 @@ GridLoop<T>::GridLoop(Y height, X width)
 		}
 	}
 
-	Join(Position(Y(0), X(0)), Direction(Y(1), X(0)), Direction(Y(0), X(1)));
-	Join(Position(2 * height, X(0)), Direction(Y(-1), X(0)), Direction(Y(0), X(1)));
-	Join(Position(Y(0), 2 * width), Direction(Y(1), X(0)), Direction(Y(0), X(-1)));
-	Join(Position(2 * height, 2 * width), Direction(Y(-1), X(0)), Direction(Y(0), X(-1)));
+	Join(LoopPosition(Y(0), X(0)), Direction(Y(1), X(0)), Direction(Y(0), X(1)));
+	Join(LoopPosition(2 * height, X(0)), Direction(Y(-1), X(0)), Direction(Y(0), X(1)));
+	Join(LoopPosition(Y(0), 2 * width), Direction(Y(1), X(0)), Direction(Y(0), X(-1)));
+	Join(LoopPosition(2 * height, 2 * width), Direction(Y(-1), X(0)), Direction(Y(0), X(-1)));
 }
 template<class T>
 GridLoop<T>::GridLoop(const GridLoop<T> &other)
@@ -262,18 +262,18 @@ GridLoop<T>::~GridLoop()
 	if (field_) delete[] field_;
 }
 template<class T> 
-typename GridLoop<T>::EdgeState GridLoop<T>::GetEdge(Position edge) const
+typename GridLoop<T>::EdgeState GridLoop<T>::GetEdge(LoopPosition edge) const
 {
 	return field_[Id(edge)].edge_status;
 }
 template<class T>
-typename GridLoop<T>::EdgeState GridLoop<T>::GetEdgeSafe(Position edge) const
+typename GridLoop<T>::EdgeState GridLoop<T>::GetEdgeSafe(LoopPosition edge) const
 {
 	if (IsPositionOnField(edge)) return GetEdge(edge);
 	return EDGE_BLANK;
 }
 template<class T>
-void GridLoop<T>::DecideEdge(Position edge, EdgeState status)
+void GridLoop<T>::DecideEdge(LoopPosition edge, EdgeState status)
 {
 	if (!IsPositionOnField(edge)) {
 		if (status != EDGE_BLANK) {
@@ -299,13 +299,13 @@ void GridLoop<T>::DecideEdge(Position edge, EdgeState status)
 	}
 }
 template<class T>
-Position GridLoop<T>::GetAnotherEnd(Position point, Direction dir) const
+LoopPosition GridLoop<T>::GetAnotherEnd(LoopPosition point, Direction dir) const
 {
 	unsigned int edge_id = Id(point + dir);
 	return AsPosition(field_[edge_id].end_vertices[0] + field_[edge_id].end_vertices[1] - Id(point));
 }
 template<class T>
-typename GridLoop<T>::EdgeCount GridLoop<T>::GetChainLength(Position point, Direction dir) const
+typename GridLoop<T>::EdgeCount GridLoop<T>::GetChainLength(LoopPosition point, Direction dir) const
 {
 	return field_[Id(point + dir)].chain_size;
 }
@@ -315,12 +315,12 @@ bool GridLoop<T>::IsEndOfAChainVertex(unsigned int edge_id, unsigned int vertex_
 	return field_[edge_id].end_vertices[0] == vertex_id || field_[edge_id].end_vertices[1] == vertex_id;
 }
 template<class T>
-unsigned int GridLoop<T>::GetAnotherEndAsId(Position point, Direction dir) const {
+unsigned int GridLoop<T>::GetAnotherEndAsId(LoopPosition point, Direction dir) const {
 	unsigned int edge_id = Id(point + dir);
 	return field_[edge_id].end_vertices[0] + field_[edge_id].end_vertices[1] - Id(point);
 }
 template <class T>
-void GridLoop<T>::Check(Position pos)
+void GridLoop<T>::Check(LoopPosition pos)
 {
 	// TODO: implement queue
 	if (!IsPositionOnField(pos)) return;
@@ -360,14 +360,14 @@ void GridLoop<T>::HasFullySolved()
 {
 	for (Y y(0); y <= 2 * height_; ++y) {
 		for (X x(0); x <= 2 * width_; ++x) {
-			if (int(y % 2) != int(x % 2) && GetEdge(Position(y, x)) == EDGE_UNDECIDED) {
-				DecideEdge(Position(y, x), EDGE_BLANK);
+			if (int(y % 2) != int(x % 2) && GetEdge(LoopPosition(y, x)) == EDGE_UNDECIDED) {
+				DecideEdge(LoopPosition(y, x), EDGE_BLANK);
 			}
 		}
 	}
 }
 template <class T>
-void GridLoop<T>::Join(Position vertex, Direction dir1, Direction dir2)
+void GridLoop<T>::Join(LoopPosition vertex, Direction dir1, Direction dir2)
 {
 	unsigned int edge1_id = Id(vertex + dir1);
 	unsigned int edge2_id = Id(vertex + dir2);
@@ -437,7 +437,7 @@ void GridLoop<T>::Join(Position vertex, Direction dir1, Direction dir2)
 	Check(end2_vertex);
 }
 template <class T>
-void GridLoop<T>::InspectVertex(Position vertex)
+void GridLoop<T>::InspectVertex(LoopPosition vertex)
 {
 	static const Direction dirs[] = {
 		Direction(Y(1), X(0)),
@@ -478,7 +478,7 @@ void GridLoop<T>::InspectVertex(Position vertex)
 
 	if (n_line == 1) {
 		EdgeCount line_size = 0;
-		Position line_another_end(Y(-1), X(-1));
+		LoopPosition line_another_end(Y(-1), X(-1));
 		int line_dir = 0;
 		for (int i = 0; i < 4; ++i) {
 			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_LINE) {
@@ -492,7 +492,7 @@ void GridLoop<T>::InspectVertex(Position vertex)
 		for (int i = 0; i < 4; ++i) {
 			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED && IsEndOfAChain(vertex + dirs[i]) && IsEndOfAChainVertex(Id(vertex + dirs[i]), Id(vertex))) {
 				if (line_size == decided_lines_ || line_another_end != GetAnotherEnd(vertex, dirs[i])) {
-					Position pos2 = GetAnotherEnd(vertex, dirs[i]);
+					LoopPosition pos2 = GetAnotherEnd(vertex, dirs[i]);
 					if (cand_dir == -1) cand_dir = i;
 					else cand_dir = -2;
 				} else {
@@ -538,7 +538,7 @@ void GridLoop<T>::InspectVertex(Position vertex)
 }
 
 template <class T>
-void GridLoop<T>::CheckNeighborhood(Position edge)
+void GridLoop<T>::CheckNeighborhood(LoopPosition edge)
 {
 	if (edge.y % 2 == 1) {
 		Check(edge + Direction(Y(-1), X(0)));
