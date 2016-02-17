@@ -26,6 +26,8 @@ void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const ch
 		}
 	}
 	
+	field.CheckAllCell();
+
 	for (Y y(0); y <= 2 * height; ++y) {
 		for (X x(0); x <= 2 * width; ++x) {
 			if (int(y % 2) != int(x % 2)) {
