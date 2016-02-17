@@ -11,20 +11,11 @@ STRICT_TYPEDEF(int, Y);
 STRICT_TYPEDEF(int, X);
 
 // Type for 2D absolute coordinates
-struct Position
+template <class T>
+struct position_base
 {
-	Position(Y y, X x) : y(y), x(x) {}
-	Position() : y(0), x(0) {}
-
-	Y y;
-	X x;
-};
-
-// Type for 2D absolute coordinates for cells on grids
-struct CellPosition
-{
-	CellPosition(Y y, X x) : y(y), x(x) {}
-	CellPosition() : y(0), x(0) {}
+	position_base(Y y, X x) : y(y), x(x) {}
+	position_base() : y(0), x(0) {}
 
 	Y y;
 	X x;
@@ -40,48 +31,31 @@ struct Direction
 	X x;
 };
 
-inline bool operator==(const Position &lhs, const Position &rhs)
+template <class T>
+inline bool operator==(const position_base<T> &lhs, const position_base<T> &rhs)
 {
 	return lhs.y == rhs.y && lhs.x == rhs.x;
 }
-inline bool operator!=(const Position &lhs, const Position &rhs)
+template <class T>
+inline bool operator!=(const position_base<T> &lhs, const position_base<T> &rhs)
 {
 	return lhs.y != rhs.y || lhs.x != rhs.x;
 }
-inline Position operator+(const Position &lhs, const Direction &rhs)
+template <class T>
+inline position_base<T> operator+(const position_base<T> &lhs, const Direction &rhs)
 {
-	return Position(lhs.y + rhs.y, lhs.x + rhs.x);
+	return position_base<T>(lhs.y + rhs.y, lhs.x + rhs.x);
 }
-inline Position operator-(const Position &lhs, const Direction &rhs)
+template <class T>
+inline position_base<T> operator-(const position_base<T> &lhs, const Direction &rhs)
 {
-	return Position(lhs.y - rhs.y, lhs.x - rhs.x);
+	return position_base<T>(lhs.y - rhs.y, lhs.x - rhs.x);
 }
-inline Direction operator-(const Position &lhs, const Position &rhs)
-{
-	return Direction(lhs.y - rhs.y, lhs.x - rhs.x);
-}
-
-inline bool operator==(const CellPosition &lhs, const CellPosition &rhs)
-{
-	return lhs.y == rhs.y && lhs.x == rhs.x;
-}
-inline bool operator!=(const CellPosition &lhs, const CellPosition &rhs)
-{
-	return lhs.y != rhs.y || lhs.x != rhs.x;
-}
-inline CellPosition operator+(const CellPosition &lhs, const Direction &rhs)
-{
-	return CellPosition(lhs.y + rhs.y, lhs.x + rhs.x);
-}
-inline CellPosition operator-(const CellPosition &lhs, const Direction &rhs)
-{
-	return CellPosition(lhs.y - rhs.y, lhs.x - rhs.x);
-}
-inline Direction operator-(const CellPosition &lhs, const CellPosition &rhs)
+template <class T>
+inline Direction operator-(const position_base<T> &lhs, const position_base<T> &rhs)
 {
 	return Direction(lhs.y - rhs.y, lhs.x - rhs.x);
 }
-
 inline Direction operator+(const Direction &lhs, const Direction &rhs)
 {
 	return Direction(lhs.y + rhs.y, lhs.x + rhs.x);
@@ -90,4 +64,10 @@ inline Direction operator-(const Direction &lhs, const Direction &rhs)
 {
 	return Direction(lhs.y - rhs.y, lhs.x - rhs.x);
 }
+
+struct position_Position_t {};
+typedef position_base<position_Position_t> Position;
+struct position_CellPosition_t {};
+typedef position_base<position_CellPosition_t> CellPosition;
+
 }
