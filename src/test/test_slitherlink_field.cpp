@@ -35,7 +35,6 @@ void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const ch
 				if (test_target[y][x] == 'x') expected = Field::EDGE_BLANK;
 				else if (test_target[y][x] == ' ') expected = Field::EDGE_UNDECIDED;
 				else expected = Field::EDGE_LINE;
-
 				assert(field.GetEdge(LoopPosition(y, x)) == expected);
 			}
 		}
@@ -75,6 +74,7 @@ void RunAllSlitherlinkFieldTest()
 	SlitherlinkFieldTheorem();
 	SlitherlinkFieldFullySolvableProblem();
 	SlitherlinkFieldSolveProblem();
+	SlitherlinkFieldDiagonalChain();
 }
 void SlitherlinkFieldAddClue()
 {
@@ -253,6 +253,64 @@ void SlitherlinkFieldSolveProblem()
 		"3---3--3--",
 		"----0-----",
 		"12-3-31-13",
+	}, &db);
+}
+void SlitherlinkFieldDiagonalChain()
+{
+	using namespace slitherlink;
+
+	Database db;
+	db.CreateDefault();
+
+	DoAddClueTest(Y(5), X(4), {
+		"+x+x+-+ +",
+		"x0x2|    ",
+		"+x+-+x+ +",
+		"x1| x    ",
+		"+x+ + + +",
+		"x  2     ",
+		"+ + + + +",
+		"     1x  ",
+		"+ + +x+ +",
+		"         ",
+		"+ + + + +",
+	}, &db);
+	DoAddClueTest(Y(4), X(4), {
+		"+x+x+-+ +",
+		"x0x2|    ",
+		"+x+-+x+ +",
+		"x1| x    ",
+		"+x+ + + +",
+		"x  2     ",
+		"+ + + + +",
+		"     2  |",
+		"+ + + +-+",
+	}, &db);
+	DoAddClueTest(Y(5), X(4), {
+		"+x+x+-+ +",
+		"x0x2|    ",
+		"+x+-+x+ +",
+		"x1| x    ",
+		"+x+ + + +",
+		"x  2    |",
+		"+ + + +x+",
+		"     2| |",
+		"+ + +x+-+",
+		"    x0x x",
+		"+ +x+x+x+",
+	}, &db);
+	DoAddClueTest(Y(5), X(4), {
+		"+x+x+-+ +",
+		"x0x2|    ",
+		"+x+-+x+ +",
+		"x1| x    ",
+		"+x+ + + +",
+		"x  2     ",
+		"+ + + + +",
+		"     3|  ",
+		"+ + +-+x+",
+		"      x  ",
+		"+ + + + +",
 	}, &db);
 }
 }

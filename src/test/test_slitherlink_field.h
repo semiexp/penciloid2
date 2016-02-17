@@ -8,5 +8,6 @@ void SlitherlinkFieldAddClue();
 void SlitherlinkFieldTheorem();
 void SlitherlinkFieldFullySolvableProblem();
 void SlitherlinkFieldSolveProblem();
+void SlitherlinkFieldDiagonalChain();
 }
 }
