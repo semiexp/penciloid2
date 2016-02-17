@@ -15,8 +15,14 @@ public:
 	static const Direction kNeighbor[12];
 
 	Database();
-	~Database();
 
+	Database(const Database &) = delete;
+	Database(Database &&) = delete;
+	Database &operator=(const Database &) = delete;
+	Database &operator=(Database&&) = delete;
+
+	~Database();
+	
 	void CreateDefault();
 	void Release();
 
