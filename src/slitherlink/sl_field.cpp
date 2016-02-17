@@ -115,6 +115,8 @@ void Field::Inspect(LoopPosition pos)
 			}
 		}
 	}
+
+	CheckDiagonalChain(pos);
 }
 void Field::ApplyTheorem(LoopPosition pos)
 {
@@ -151,7 +153,92 @@ void Field::ApplyTheorem(LoopPosition pos)
 		}
 	}
 }
+void Field::CheckDiagonalChain(LoopPosition pos)
+{
+	static const Direction kDirs[] = {
+		Direction(Y(1), X(0)),
+		Direction(Y(0), X(1)),
+		Direction(Y(-1), X(0)),
+		Direction(Y(0), X(-1))
+	};
 
+	if (GetClue(CellPosition(pos.y / 2, pos.x / 2)) == kNoClue) return;
+
+	static const auto check_and_update_parity = [](EdgeState s1, EdgeState s2, int prev_parity) {
+		if (s1 == EDGE_UNDECIDED || s2 == EDGE_UNDECIDED) return prev_parity;
+		if (s1 == s2) return 0;
+		return 1;
+	};
+	static const auto edge_state_by_parity = [](EdgeState s1, int parity) {
+		if (parity == 1) {
+			if (s1 == EDGE_LINE) return EDGE_BLANK;
+			else return EDGE_LINE;
+		}
+		return s1;
+	};
+
+	for (int d = 0; d < 4; ++d) {
+		Direction dir1 = kDirs[d], dir2 = kDirs[(d + 1) % 4];
+		LoopPosition cell_loop_pos = pos;
+		CellPosition cell_pos(pos.y / 2, pos.x / 2);
+
+		int vertex_parity = -1;
+		vertex_parity = check_and_update_parity(
+			GetEdgeSafe(cell_loop_pos - dir1),
+			GetEdgeSafe(cell_loop_pos - dir2),
+			vertex_parity
+			);
+		vertex_parity = check_and_update_parity(
+			GetEdgeSafe(cell_loop_pos - dir1 - dir2 * 2),
+			GetEdgeSafe(cell_loop_pos - dir2 - dir1 * 2),
+			vertex_parity
+			);
+
+		if (vertex_parity == -1) continue;
+
+		while (0 <= cell_pos.y && cell_pos.y < height() && 0 <= cell_pos.x && cell_pos.x < width()) {
+			if (GetClue(cell_pos) == kNoClue || GetClue(cell_pos) == 0) break;
+
+			if (GetClue(cell_pos) == 1) {
+				if (vertex_parity == 0) {
+					DecideEdge(cell_loop_pos - dir1, EDGE_BLANK);
+					DecideEdge(cell_loop_pos - dir2, EDGE_BLANK);
+				} else if (vertex_parity == 1) {
+					DecideEdge(cell_loop_pos + dir1, EDGE_BLANK);
+					DecideEdge(cell_loop_pos + dir2, EDGE_BLANK);
+				}
+				break;
+			}
+			if (GetClue(cell_pos) == 3) {
+				if (vertex_parity == 0) {
+					DecideEdge(cell_loop_pos - dir1, EDGE_LINE);
+					DecideEdge(cell_loop_pos - dir2, EDGE_LINE);
+				} else if (vertex_parity == 1) {
+					DecideEdge(cell_loop_pos + dir1, EDGE_LINE);
+					DecideEdge(cell_loop_pos + dir2, EDGE_LINE);
+				}
+				break;
+			}
+			if (GetClue(cell_pos) == 2) {
+				if (GetEdgeSafe(cell_loop_pos + dir1) != EDGE_UNDECIDED) {
+					DecideEdge(cell_loop_pos + dir2, edge_state_by_parity(GetEdgeSafe(cell_loop_pos + dir1), vertex_parity));
+				}
+				if (GetEdgeSafe(cell_loop_pos + dir2) != EDGE_UNDECIDED) {
+					DecideEdge(cell_loop_pos + dir1, edge_state_by_parity(GetEdgeSafe(cell_loop_pos + dir2), vertex_parity));
+				}
+				if (GetEdgeSafe(cell_loop_pos + dir1 + dir2 * 2) != EDGE_UNDECIDED) {
+					DecideEdge(cell_loop_pos + dir2 + dir1 * 2, edge_state_by_parity(GetEdgeSafe(cell_loop_pos + dir1 + dir2 * 2), vertex_parity));
+				}
+				if (GetEdgeSafe(cell_loop_pos + dir2 + dir1 * 2) != EDGE_UNDECIDED) {
+					DecideEdge(cell_loop_pos + dir1 + dir2 * 2, edge_state_by_parity(GetEdgeSafe(cell_loop_pos + dir2 + dir1 * 2), vertex_parity));
+				}
+			}
+
+			cell_pos = cell_pos + dir1 + dir2;
+			cell_loop_pos = cell_loop_pos + (dir1 + dir2) * 2;
+		}
+	}
+}
 std::ostream& operator<<(std::ostream &stream, Field &field)
 {
 	for (Y y(0); y <= 2 * field.height(); ++y) {
