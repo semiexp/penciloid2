@@ -64,7 +64,14 @@ inline Direction operator-(const Direction &lhs, const Direction &rhs)
 {
 	return Direction(lhs.y - rhs.y, lhs.x - rhs.x);
 }
-
+inline Direction operator*(const Direction &lhs, int rhs)
+{
+	return Direction(lhs.y * rhs, lhs.x * rhs);
+}
+inline Direction operator*(int lhs, const Direction &rhs)
+{
+	return rhs * lhs;
+}
 struct position_Position_t {};
 typedef position_base<position_Position_t> LoopPosition;
 struct position_CellPosition_t {};
