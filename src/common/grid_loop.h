@@ -330,6 +330,15 @@ void GridLoop<T>::Check(LoopPosition pos)
 	if (IsVertex(pos)) InspectVertex(pos);
 }
 template <class T>
+void GridLoop<T>::CheckAllCell()
+{
+	for (Y y(1); y < 2 * height_; ++y) {
+		for (X x(1); x < 2 * width_; ++x) {
+			Check(LoopPosition(y, x));
+		}
+	}
+}
+template <class T>
 void GridLoop<T>::DecideChain(unsigned int id, EdgeState status)
 {
 	unsigned int id_start = id;
