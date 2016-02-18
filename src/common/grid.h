@@ -21,9 +21,10 @@ public:
 	Y height() const { return height_; }
 	X width() const { return width_; }
 
-protected:
 	T &at(CellPosition pos) { return data_[GetIndex(pos)]; }
 	const T &at(CellPosition pos) const { return data_[GetIndex(pos)]; }
+	T &at(int pos) { return data_[pos]; }
+	const T &at(int pos) const { return data_[pos]; }
 
 private:
 	unsigned int NumberOfCells() const { return static_cast<int>(height_)* static_cast<int>(width_); }
