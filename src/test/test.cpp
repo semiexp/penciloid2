@@ -8,6 +8,8 @@ void RunAllTest()
 {
 	RunAllGridLoopTest();
 	RunAllSlitherlinkFieldTest();
+	RunAllAkariProblemTest();
+	RunAllAkariFieldTest();
 }
 }
 }
