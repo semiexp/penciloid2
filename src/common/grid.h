@@ -26,9 +26,10 @@ public:
 	T &at(int pos) { return data_[pos]; }
 	const T &at(int pos) const { return data_[pos]; }
 
+	unsigned int NumberOfCells() const { return static_cast<int>(height_) * static_cast<int>(width_); }
+	unsigned int GetIndex(CellPosition pos) const { return static_cast<int>(pos.y) * static_cast<int>(width_) + static_cast<int>(pos.x); }
+
 private:
-	unsigned int NumberOfCells() const { return static_cast<int>(height_)* static_cast<int>(width_); }
-	unsigned int GetIndex(CellPosition pos) const { return static_cast<int>(pos.y) * static_cast<int>(width_)+static_cast<int>(pos.x); }
 	T *data_;
 	Y height_;
 	X width_;
