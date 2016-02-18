@@ -128,7 +128,12 @@ void Field::DecideCell(CellPosition pos, CellState status)
 				DecideCell(p, CELL_LIT_BY_OTHER);
 			}
 		}
+		CheckNeighbor(pos);
 	} else if (status == CELL_LIT_BY_OTHER) {
+		if (current_status == CELL_NO_LIGHT_NOT_LIT) {
+			cells_.at(pos).status = CELL_LIT_BY_OTHER;
+			return;
+		}
 		cells_.at(pos).status = CELL_LIT_BY_OTHER;
 		ExcludeCellFromGroups(pos);
 		CheckNeighbor(pos);
