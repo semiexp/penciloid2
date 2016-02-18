@@ -28,10 +28,10 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width())
 
 	for (Y y(0); y < problem.height(); ++y) {
 		for (X x(0); x < problem.width(); ++x) {
-			if (problem.GetClue(CellPosition(y, x)) != kBlock) {
+			if (problem.GetClue(CellPosition(y, x)) == kEmpty) {
 				cells_.at(CellPosition(y, x)).group_horizontal_id = n_groups;
 			}
-			if ((problem.GetClue(CellPosition(y, x)) == kBlock || x == problem.width() - 1) && x != 0 && problem.GetClue(CellPosition(y, x - 1)) != kBlock) {
+			if ((problem.GetClue(CellPosition(y, x)) != kEmpty || x == problem.width() - 1) && x != 0 && problem.GetClue(CellPosition(y, x - 1)) == kEmpty) {
 				++n_groups;
 			}
 		}
@@ -40,10 +40,10 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width())
 
 	for (X x(0); x < problem.width(); ++x) {
 		for (Y y(0); y < problem.height(); ++y) {
-			if (problem.GetClue(CellPosition(y, x)) != kBlock) {
+			if (problem.GetClue(CellPosition(y, x)) == kEmpty) {
 				cells_.at(CellPosition(y, x)).group_vertical_id = n_groups;
 			}
-			if ((problem.GetClue(CellPosition(y, x)) == kBlock || y == problem.height() - 1) && y != 0 && problem.GetClue(CellPosition(y - 1, x)) != kBlock) {
+			if ((problem.GetClue(CellPosition(y, x)) != kEmpty || y == problem.height() - 1) && y != 0 && problem.GetClue(CellPosition(y - 1, x)) == kEmpty) {
 				++n_groups;
 			}
 		}
@@ -60,7 +60,7 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width())
 
 	for (Y y(0); y < problem.height(); ++y) {
 		for (X x(0); x < problem.width(); ++x) {
-			if (problem.GetClue(CellPosition(y, x)) == kBlock) continue;
+			if (problem.GetClue(CellPosition(y, x)) != kEmpty) continue;
 
 			int horizontal = cells_.at(CellPosition(y, x)).group_horizontal_id;
 			groups_[horizontal].xor_remaining_cell_id ^= cells_.GetIndex(CellPosition(y, x));
@@ -68,11 +68,17 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width())
 				groups_[horizontal].group_top = CellPosition(y, x);
 			}
 
-			int vertical = cells_.at(CellPosition(y, x)).group_horizontal_id;
+			int vertical = cells_.at(CellPosition(y, x)).group_vertical_id;
 			groups_[vertical].xor_remaining_cell_id ^= cells_.GetIndex(CellPosition(y, x));
 			if (groups_[vertical].cell_count++ == 0) {
 				groups_[vertical].group_top = CellPosition(y, x);
 			}
+		}
+	}
+
+	for (Y y(0); y < cells_.height(); ++y) {
+		for (X x(0); x < cells_.width(); ++x) {
+			CheckCell(CellPosition(y, x));
 		}
 	}
 }
@@ -104,10 +110,26 @@ void Field::DecideCell(CellPosition pos, CellState status)
 		SetInconsistent();
 		return;
 	}
+	if (current_status == CELL_NO_LIGHT_NOT_LIT) {
+		if (status == CELL_NO_LIGHT) return;
+	}
 
 	if (status == CELL_LIGHT) {
 		cells_.at(pos).status = CELL_LIGHT;
+
+		static const Direction kDirs[] = {
+			Direction(Y(1), X(0)),
+			Direction(Y(0), X(1)),
+			Direction(Y(-1), X(0)),
+			Direction(Y(0), X(-1))
+		};
+		for (int d = 0; d < 4; ++d) {
+			for (CellPosition p = pos + kDirs[d]; GetCellSafe(p) != CELL_BLOCK; p = p + kDirs[d]) {
+				DecideCell(p, CELL_LIT_BY_OTHER);
+			}
+		}
 	} else if (status == CELL_LIT_BY_OTHER) {
+		cells_.at(pos).status = CELL_LIT_BY_OTHER;
 		ExcludeCellFromGroups(pos);
 	} else if (status == CELL_NO_LIGHT) {
 		cells_.at(pos).status = CELL_NO_LIGHT_NOT_LIT;
@@ -117,6 +139,7 @@ void Field::DecideCell(CellPosition pos, CellState status)
 }
 void Field::CheckCell(CellPosition pos)
 {
+	if (!(0 <= pos.y && pos.y < cells_.height() && 0 <= pos.x && pos.x < cells_.width())) return;
 	if (cells_.at(pos).status == CELL_BLOCK) {
 		// check about the clue of this cell
 		int clue = cells_.at(pos).clue_number;
@@ -203,7 +226,7 @@ void Field::ExcludeCellFromGroups(CellPosition pos)
 	--groups_[horizontal].cell_count;
 	groups_[horizontal].xor_remaining_cell_id ^= id;
 
-	int vertical = cells_.at(pos).group_horizontal_id;
+	int vertical = cells_.at(pos).group_vertical_id;
 	--groups_[vertical].cell_count;
 	groups_[vertical].xor_remaining_cell_id ^= id;
 
