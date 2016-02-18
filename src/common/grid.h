@@ -28,7 +28,9 @@ public:
 
 	unsigned int NumberOfCells() const { return static_cast<int>(height_) * static_cast<int>(width_); }
 	unsigned int GetIndex(CellPosition pos) const { return static_cast<int>(pos.y) * static_cast<int>(width_) + static_cast<int>(pos.x); }
-
+	CellPosition AsPosition(unsigned int index) const {
+		return CellPosition(Y(index / static_cast<int>(width_)), X(index % static_cast<int>(width_)));
+	}
 private:
 	T *data_;
 	Y height_;
