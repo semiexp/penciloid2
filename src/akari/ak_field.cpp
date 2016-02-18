@@ -131,6 +131,7 @@ void Field::DecideCell(CellPosition pos, CellState status)
 	} else if (status == CELL_LIT_BY_OTHER) {
 		cells_.at(pos).status = CELL_LIT_BY_OTHER;
 		ExcludeCellFromGroups(pos);
+		CheckNeighbor(pos);
 	} else if (status == CELL_NO_LIGHT) {
 		cells_.at(pos).status = CELL_NO_LIGHT_NOT_LIT;
 		ExcludeCellFromGroups(pos);
@@ -183,7 +184,7 @@ void Field::CheckCell(CellPosition pos)
 		
 		// needs to be lit
 		int horizontal = cells_.at(pos).group_horizontal_id;
-		int vertical = cells_.at(pos).group_horizontal_id;
+		int vertical = cells_.at(pos).group_vertical_id;
 
 		if (groups_[horizontal].cell_count == 0 && groups_[vertical].cell_count == 1) {
 			DecideCell(cells_.AsPosition(groups_[vertical].xor_remaining_cell_id), CELL_LIGHT);

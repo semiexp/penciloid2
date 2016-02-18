@@ -21,7 +21,7 @@ Problem::Problem(Y height, X width, const char* clues[]) : grid_(height, width)
 {
 	for (Y y(0); y < height; ++y) {
 		for (X x(0); x < width; ++x) {
-			if ('0' <= clues[y][x] && clues[y][x] <= '3') {
+			if ('0' <= clues[y][x] && clues[y][x] <= '4') {
 				SetClue(CellPosition(y, x), Clue(clues[y][x] - '0'));
 			} else if (clues[y][x] == '#') {
 				SetClue(CellPosition(y, x), kBlock);
