@@ -6,10 +6,10 @@ namespace penciloid
 {
 namespace slitherlink
 {
-CluePlacement::CluePlacement() : Grid<Clue>()
+CluePlacement::CluePlacement() : grid_()
 {
 }
-CluePlacement::CluePlacement(Y height, X width) : Grid<Clue>(height, width)
+CluePlacement::CluePlacement(Y height, X width) : grid_(height, width)
 {
 	for (Y y(0); y < height; ++y) {
 		for (X x(0); x < width; ++x) {
@@ -17,7 +17,7 @@ CluePlacement::CluePlacement(Y height, X width) : Grid<Clue>(height, width)
 		}
 	}
 }
-CluePlacement::CluePlacement(Y height, X width, const char* clues[]) : Grid<Clue>(height, width)
+CluePlacement::CluePlacement(Y height, X width, const char* clues[]) : grid_(height, width)
 {
 	for (Y y(0); y < height; ++y) {
 		for (X x(0); x < width; ++x) {

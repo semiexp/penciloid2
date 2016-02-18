@@ -8,7 +8,7 @@ namespace penciloid
 {
 namespace slitherlink
 {
-class Problem : public Grid<Clue>
+class Problem
 {
 public:
 	Problem();
@@ -21,8 +21,13 @@ public:
 
 	~Problem() {}
 
-	inline void SetClue(CellPosition cell, Clue clue) { at(cell) = clue; }
-	inline Clue GetClue(CellPosition cell) const { return at(cell); }
+	inline Y height() const { return grid_.height(); }
+	inline X width() const { return grid_.width(); }
+	inline void SetClue(CellPosition cell, Clue clue) { grid_.at(cell) = clue; }
+	inline Clue GetClue(CellPosition cell) const { return grid_.at(cell); }
+
+private:
+	Grid<Clue> grid_;
 };
 }
 }
