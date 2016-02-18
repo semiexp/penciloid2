@@ -236,6 +236,8 @@ GridLoop<T> &GridLoop<T>::operator=(const GridLoop<T> &other)
 	fully_solved_ = other.fully_solved_;
 	abnormal_ = other.abnormal_;
 
+	if (field_) delete[] field_;
+
 	field_ = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
 	memcpy(field_, other.field_, (Id(2 * height_, 2 * width_) + 1) * sizeof(FieldComponent));
 
@@ -251,6 +253,8 @@ GridLoop<T> &GridLoop<T>::operator=(GridLoop<T> &&other)
 	inconsistent_ = other.inconsitent_;
 	fully_solved_ = other.fully_solved_;
 	abnormal_ = other.abnormal_;
+
+	if (field_) delete[] field_;
 
 	field_ = other.field_;
 	other.field_ = nullptr;
