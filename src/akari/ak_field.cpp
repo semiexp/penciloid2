@@ -95,6 +95,11 @@ Field::CellState Field::GetCellSafe(CellPosition pos) const
 	if (0 <= pos.y && pos.y < cells_.height() && 0 <= pos.x && pos.x < cells_.width()) return cells_.at(pos).status;
 	return CELL_BLOCK;
 }
+Clue Field::GetClueValue(CellPosition pos) const
+{
+	if (GetCell(pos) == CELL_BLOCK) return cells_.at(pos).clue_number;
+	return kEmpty;
+}
 void Field::DecideCell(CellPosition pos, CellState status)
 {
 	// is the transition possible?
@@ -238,6 +243,36 @@ void Field::ExcludeCellFromGroups(CellPosition pos)
 
 	CheckGroup(horizontal);
 	CheckGroup(vertical);
+}
+std::ostream& operator<<(std::ostream &stream, Field &field)
+{
+	for (Y y(0); y < field.height(); ++y) {
+		for (X x(0); x < field.width(); ++x) {
+			Clue c;
+			switch (field.GetCell(CellPosition(y, x)))
+			{
+			case Field::CELL_BLOCK:
+				c = field.GetClueValue(CellPosition(y, x));
+				if (c == kBlock) stream << "#";
+				else stream << static_cast<int>(c);
+				break;
+			case Field::CELL_LIGHT:
+				stream << "*";
+				break;
+			case Field::CELL_NO_LIGHT_NOT_LIT:
+				stream << " ";
+				break;
+			case Field::CELL_LIT_BY_OTHER:
+				stream << "+";
+				break;
+			case Field::CELL_UNDECIDED:
+				stream << ".";
+				break;
+			}
+		}
+		stream << std::endl;
+	}
+	return stream;
 }
 }
 }

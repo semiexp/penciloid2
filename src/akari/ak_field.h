@@ -3,6 +3,8 @@
 #include "../common/type.h"
 #include "../common/grid.h"
 
+#include <iostream>
+
 #include "ak_problem.h"
 
 namespace penciloid
@@ -34,6 +36,7 @@ public:
 
 	CellState GetCell(CellPosition pos) const;
 	CellState GetCellSafe(CellPosition pos) const;
+	Clue GetClueValue(CellPosition pos) const;
 	void DecideCell(CellPosition pos, CellState status);
 private:
 	enum GroupDirection {
@@ -43,7 +46,7 @@ private:
 	struct Cell
 	{
 		CellState status;
-		int clue_number;
+		Clue clue_number;
 		int group_horizontal_id, group_vertical_id;
 	};
 	
@@ -65,5 +68,8 @@ private:
 	CellGroup *groups_;
 	bool inconsistent_;
 };
+
+std::ostream& operator<<(std::ostream &stream, Field &field);
+
 }
 }
