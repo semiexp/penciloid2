@@ -190,6 +190,16 @@ void Field::CheckCell(CellPosition pos)
 				DecideCell(pos + kDirs[d], CELL_LIGHT);
 			}
 		}
+		if (clue != 0 && clue == undecided_dir.size() - 1) {
+			int u = 0;
+			for (int d : undecided_dir) u |= 1 << d;
+
+			for (int d = 0; d < 4; ++d) {
+				if ((u & (1 << d)) && (u & (1 << ((d + 1) % 4)))) {
+					DecideCell(pos + kDirs[d] + kDirs[(d + 1) % 4], CELL_NO_LIGHT);
+				}
+			}
+		}
 	} else {
 		CellState current_status = GetCell(pos);
 		if (current_status == CELL_LIGHT || current_status == CELL_LIT_BY_OTHER) return;
