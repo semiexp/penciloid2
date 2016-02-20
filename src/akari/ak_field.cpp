@@ -29,10 +29,11 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width())
 	for (Y y(0); y < problem.height(); ++y) {
 		for (X x(0); x < problem.width(); ++x) {
 			if (problem.GetClue(CellPosition(y, x)) == kEmpty) {
-				cells_.at(CellPosition(y, x)).group_horizontal_id = n_groups;
-			}
-			if ((problem.GetClue(CellPosition(y, x)) != kEmpty || x == problem.width() - 1) && x != 0 && problem.GetClue(CellPosition(y, x - 1)) == kEmpty) {
-				++n_groups;
+				if (x != 0 && problem.GetClue(CellPosition(y, x - 1)) == kEmpty) {
+					cells_.at(CellPosition(y, x)).group_horizontal_id = cells_.at(CellPosition(y, x - 1)).group_horizontal_id;
+				} else {
+					cells_.at(CellPosition(y, x)).group_horizontal_id = n_groups++;
+				}
 			}
 		}
 	}
@@ -41,10 +42,11 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width())
 	for (X x(0); x < problem.width(); ++x) {
 		for (Y y(0); y < problem.height(); ++y) {
 			if (problem.GetClue(CellPosition(y, x)) == kEmpty) {
-				cells_.at(CellPosition(y, x)).group_vertical_id = n_groups;
-			}
-			if ((problem.GetClue(CellPosition(y, x)) != kEmpty || y == problem.height() - 1) && y != 0 && problem.GetClue(CellPosition(y - 1, x)) == kEmpty) {
-				++n_groups;
+				if (y != 0 && problem.GetClue(CellPosition(y - 1, x)) == kEmpty) {
+					cells_.at(CellPosition(y, x)).group_vertical_id = cells_.at(CellPosition(y - 1, x)).group_vertical_id;
+				} else {
+					cells_.at(CellPosition(y, x)).group_vertical_id = n_groups++;
+				}
 			}
 		}
 	}
