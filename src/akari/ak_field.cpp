@@ -158,6 +158,8 @@ void Field::CheckCell(CellPosition pos)
 		int clue = cells_.at(pos).clue_number;
 		if (clue < 0) return;
 
+		CheckDiagonalChain(pos);
+
 		static const Direction kDirs[] = {
 			Direction(Y(1), X(0)),
 			Direction(Y(0), X(1)),
@@ -238,6 +240,55 @@ void Field::CheckGroup(int group_id)
 	} else {
 		for (CellPosition pos = groups_[group_id].group_top; GetCellSafe(pos) != CELL_BLOCK; pos = pos + Direction(Y(1), X(0))) {
 			CheckCell(pos);
+		}
+	}
+}
+void Field::CheckDiagonalChain(CellPosition pos)
+{
+	static const Direction kDirs[] = {
+		Direction(Y(1), X(0)),
+		Direction(Y(0), X(1)),
+		Direction(Y(-1), X(0)),
+		Direction(Y(0), X(-1))
+	};
+
+	Clue clue = GetClueValue(pos);
+	if (clue == kEmpty || clue == kBlock) return;
+
+	for (int d = 0; d < 4; ++d) {
+		Direction dir1 = kDirs[d], dir2 = kDirs[(d + 1) % 4];
+		int n_lights = 0;
+
+		CellState state1 = GetCellSafe(pos - dir1);
+		if (state1 == CELL_UNDECIDED) continue;
+		if (state1 == CELL_LIGHT) ++n_lights;
+
+		CellState state2 = GetCellSafe(pos - dir2);
+		if (state2 == CELL_UNDECIDED) continue;
+		if (state2 == CELL_LIGHT) ++n_lights;
+
+		CellPosition pos2 = pos;
+		while (0 <= pos2.y && pos2.y < height() && 0 <= pos2.x && pos2.x < width()) {
+			Clue c = GetClueValue(pos2);
+			if (c == kEmpty || c == kBlock) return;
+
+			n_lights = c - n_lights;
+			if (n_lights < 0 || n_lights > 2) {
+				SetInconsistent();
+				return;
+			}
+			if (n_lights == 0) {
+				DecideCell(pos2 + dir1, CELL_NO_LIGHT);
+				DecideCell(pos2 + dir2, CELL_NO_LIGHT);
+				break;
+			}
+			if (n_lights == 2) {
+				DecideCell(pos2 + dir1, CELL_LIGHT);
+				DecideCell(pos2 + dir2, CELL_LIGHT);
+				break;
+			}
+
+			pos2 = pos2 + dir1 + dir2;
 		}
 	}
 }

@@ -63,6 +63,7 @@ private:
 	void CheckNeighbor(CellPosition pos);
 	void CheckGroup(int group_id);
 	void ExcludeCellFromGroups(CellPosition pos);
+	void CheckDiagonalChain(CellPosition pos);
 
 	Grid<Cell> cells_;
 	CellGroup *groups_;
