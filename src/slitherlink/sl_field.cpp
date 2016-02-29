@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <utility>
 
 #include "sl_problem.h"
 #include "sl_database.h"
@@ -10,34 +11,24 @@ namespace penciloid
 {
 namespace slitherlink
 {
-Field::Field() : GridLoop<Field>(), field_clue_(nullptr), database_(nullptr)
+Field::Field() : GridLoop<Field>(), field_clue_(), database_(nullptr)
 {
 }
-Field::Field(Y height, X width, Database *database) : GridLoop<Field>(height, width), field_clue_(nullptr), database_(database)
+Field::Field(Y height, X width, Database *database) : GridLoop<Field>(height, width), field_clue_(height, width, kNoClue), database_(database)
 {
-	int cell_count = static_cast<int>(height) * static_cast<int>(width);
-	field_clue_ = new Clue[cell_count];
-	std::fill(field_clue_, field_clue_ + cell_count, kNoClue);
 }
-Field::Field(const Field& other) : GridLoop<Field>(other), field_clue_(nullptr), database_(other.database_)
+Field::Field(const Field& other) : GridLoop<Field>(other), field_clue_(other.field_clue_), database_(other.database_)
 {
-	int cell_count = static_cast<int>(height()) * static_cast<int>(width());
-	field_clue_ = new Clue[cell_count];
-	memcpy(field_clue_, other.field_clue_, cell_count * sizeof(Clue));
 }
 Field::Field(Field&& other) : GridLoop<Field>(other), field_clue_(other.field_clue_), database_(other.database_)
 {
-	other.field_clue_ = nullptr;
+	field_clue_ = std::move(other.field_clue_);
 }
 Field &Field::operator=(const Field& other)
 {
 	GridLoop<Field>::operator=(other);
 
-	if (field_clue_) delete[] field_clue_;
-	int cell_count = static_cast<int>(height()) * static_cast<int>(width());
-	field_clue_ = new Clue[cell_count];
-	memcpy(field_clue_, other.field_clue_, cell_count * sizeof(Clue));
-
+	field_clue_ = other.field_clue_;
 	database_ = other.database_;
 
 	return *this;
@@ -46,18 +37,14 @@ Field &Field::operator=(Field&& other)
 {
 	GridLoop<Field>::operator=(other);
 
-	field_clue_ = other.field_clue_;
-	other.field_clue_ = nullptr;
+	field_clue_ = std::move(other.field_clue_);
 	database_ = other.database_;
 
 	return *this;
 }
-Field::Field(const Problem& problem, Database *database) : GridLoop<Field>(problem.height(), problem.width()), field_clue_(nullptr), database_(database)
+Field::Field(const Problem& problem, Database *database) : GridLoop<Field>(problem.height(), problem.width()), field_clue_(problem.height(), problem.width(), kNoClue), database_(database)
 {
 	int cell_count = static_cast<int>(height()) * static_cast<int>(width());
-	field_clue_ = new Clue[cell_count];
-	std::fill(field_clue_, field_clue_ + cell_count, kNoClue);
-
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
 			if (problem.GetClue(CellPosition(y, x)) != kNoClue) AddClue(CellPosition(y, x), problem.GetClue(CellPosition(y, x)));
@@ -66,7 +53,6 @@ Field::Field(const Problem& problem, Database *database) : GridLoop<Field>(probl
 }
 Field::~Field()
 {
-	if (field_clue_) delete[] field_clue_;
 }
 void Field::AddClue(CellPosition pos, Clue clue)
 {
@@ -77,7 +63,7 @@ void Field::AddClue(CellPosition pos, Clue clue)
 		return;
 	}
 
-	field_clue_[CellId(pos)] = clue;
+	field_clue_.at(pos) = clue;
 	ApplyTheorem(LoopPosition(pos.y * 2 + 1, pos.x * 2 + 1));
 	Check(LoopPosition(pos.y * 2 + 1, pos.x * 2 + 1));
 }
