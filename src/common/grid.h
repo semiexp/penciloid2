@@ -9,7 +9,7 @@ class Grid
 {
 public:
 	Grid() : data_(nullptr), height_(0), width_(0) {}
-	Grid(Y height, X width);
+	Grid(Y height, X width, const T &init_value = T());
 
 	Grid(const Grid &other);
 	Grid(Grid &&other);
@@ -37,9 +37,11 @@ private:
 	X width_;
 };
 template<class T>
-Grid<T>::Grid(Y height, X width) : data_(nullptr), height_(height), width_(width)
+Grid<T>::Grid(Y height, X width, const T &init_value) : data_(nullptr), height_(height), width_(width)
 {
-	data_ = new T[NumberOfCells()];
+	unsigned int n_cells = NumberOfCells();
+	data_ = new T[n_cells];
+	std::fill(data_, data_ + n_cells, init_value);
 }
 template<class T>
 Grid<T>::Grid(const Grid<T> &other) : data_(nullptr), height_(other.height_), width_(other.width_)
