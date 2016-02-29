@@ -20,9 +20,8 @@ Field::Field(Y height, X width, Database *database) : GridLoop<Field>(height, wi
 Field::Field(const Field& other) : GridLoop<Field>(other), field_clue_(other.field_clue_), database_(other.database_)
 {
 }
-Field::Field(Field&& other) : GridLoop<Field>(other), field_clue_(other.field_clue_), database_(other.database_)
+Field::Field(Field&& other) : GridLoop<Field>(other), field_clue_(std::move(other.field_clue_)), database_(other.database_)
 {
-	field_clue_ = std::move(other.field_clue_);
 }
 Field &Field::operator=(const Field& other)
 {
