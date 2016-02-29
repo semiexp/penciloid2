@@ -269,8 +269,9 @@ void Field::CheckDiagonalChain(CellPosition pos)
 
 		CellPosition pos2 = pos;
 		while (0 <= pos2.y && pos2.y < height() && 0 <= pos2.x && pos2.x < width()) {
+			if (GetCell(pos2) != CELL_BLOCK) break;
 			Clue c = GetClueValue(pos2);
-			if (c == kEmpty || c == kBlock) return;
+			if (c == kBlock) break;
 
 			n_lights = c - n_lights;
 			if (n_lights < 0 || n_lights > 2) {
