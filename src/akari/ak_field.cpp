@@ -105,7 +105,7 @@ Clue Field::GetClueValue(CellPosition pos) const
 void Field::DecideCell(CellPosition pos, CellState status)
 {
 	// is the transition possible?
-	CellState current_status = GetCell(pos);
+	CellState current_status = GetCellSafe(pos);
 	if (current_status == status) return;
 	if (current_status == CELL_BLOCK) return;
 	if (current_status == CELL_LIGHT) {
