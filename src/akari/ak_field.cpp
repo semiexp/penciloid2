@@ -217,6 +217,15 @@ void Field::CheckCell(CellPosition pos)
 		} else if (groups_[horizontal].cell_count == 1 && groups_[vertical].cell_count == 1) {
 			if (groups_[horizontal].xor_remaining_cell_id == groups_[vertical].xor_remaining_cell_id) {
 				DecideCell(cells_.AsPosition(groups_[horizontal].xor_remaining_cell_id), CELL_LIGHT);
+			} else {
+				CellPosition rem1 = cells_.AsPosition(groups_[horizontal].xor_remaining_cell_id);
+				CellPosition rem2 = cells_.AsPosition(groups_[vertical].xor_remaining_cell_id);
+				CellPosition common(rem1.y + rem2.y - pos.y, rem1.x + rem2.x - pos.x);
+				if (GetCell(common) != CELL_BLOCK) {
+					if (cells_.at(common).group_horizontal_id == cells_.at(rem2).group_horizontal_id && cells_.at(common).group_vertical_id == cells_.at(rem1).group_vertical_id) {
+						DecideCell(common, CELL_NO_LIGHT);
+					}
+				}
 			}
 		}
 	}
