@@ -143,36 +143,75 @@ private:
 	void Join(LoopPosition vertex, Direction dir1, Direction dir2);
 	void InspectVertex(LoopPosition vertex);
 
+	//Queue related methods
+	bool IsQueueStarted() { return queue_top_ != -1; }
+	bool IsQueueEmpty() { return queue_top_ == queue_end_; }
+	void QueueStart() { queue_top_ = queue_end_ = 0; }
+	void QueueEnd() { queue_top_ = queue_end_ = -1; }
+	void QueuePush(int id) {
+		if (!queue_stored_[id]) {
+			queue_stored_[id] = true;
+			queue_[queue_end_++] = id;
+			if (queue_end_ == queue_size_) queue_end_ = 0;
+		}
+	}
+	int QueuePop() {
+		int ret = queue_[queue_top_++];
+		queue_stored_[ret] = false;
+		if (queue_top_ == queue_size_) queue_top_ = 0;
+		return ret;
+	}
+	void QueueProcessAll();
+
 	FieldComponent *field_;
+	int *queue_;
+	bool *queue_stored_;
+
 	Y height_;
 	X width_;
 	EdgeCount decided_edges_, decided_lines_;
 	bool inconsistent_, fully_solved_, abnormal_;
+
+	int queue_top_, queue_end_, queue_size_;
 };
 template<class T>
 GridLoop<T>::GridLoop()
 	: field_(nullptr),
+	  queue_(nullptr),
+	  queue_stored_(nullptr),
 	  height_(0),
 	  width_(0),
 	  decided_edges_(0),
 	  decided_lines_(0),
 	  inconsistent_(false),
 	  fully_solved_(false),
-	  abnormal_(false)
+	  abnormal_(false),
+	  queue_top_(-1),
+	  queue_end_(-1),
+	  queue_size_(0)
 {
 }
 template<class T>
 GridLoop<T>::GridLoop(Y height, X width)
 	: field_(nullptr),
-	  height_(height), 
+	  queue_(nullptr),
+	  queue_stored_(nullptr),
+	  height_(height),
 	  width_(width),
 	  decided_edges_(0),
 	  decided_lines_(0),
 	  inconsistent_(false),
 	  fully_solved_(false),
-	  abnormal_(false)
+	  abnormal_(false),
+	  queue_top_(-1),
+	  queue_end_(-1),
+	  queue_size_(0)
 {
 	field_ = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
+	queue_ = new int[Id(2 * height_, 2 * width_) + 2];
+	queue_stored_ = new bool[Id(2 * height_, 2 * width_) + 1];
+	std::fill(queue_stored_, queue_stored_ + Id(2 * height_, 2 * width_) + 1, false);
+	queue_size_ = Id(2 * height_, 2 * width_) + 2;
 
 	for (Y y(0); y <= 2 * height_; ++y) {
 		for (X x(0); x <= 2 * width_; ++x) {
@@ -201,29 +240,44 @@ GridLoop<T>::GridLoop(Y height, X width)
 template<class T>
 GridLoop<T>::GridLoop(const GridLoop<T> &other)
 	: field_(nullptr),
+	  queue_(nullptr),
+	  queue_stored_(nullptr),
 	  height_(other.height_),
 	  width_(other.width_),
 	  decided_edges_(other.decided_edges_),
 	  decided_lines_(other.decided_lines_),
 	  inconsistent_(other.inconsistent_),
 	  fully_solved_(other.fully_solved_),
-	  abnormal_(other.abnormal_)
+	  abnormal_(other.abnormal_),
+	  queue_top_(-1),
+	  queue_end_(-1),
+	  queue_size_(other.queue_size_)
 {
 	field_ = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
 	memcpy(field_, other.field_, (Id(2 * height_, 2 * width_) + 1) * sizeof(FieldComponent));
+	queue_ = new int[Id(2 * height_, 2 * width_) + 2];
+	queue_stored_ = new bool[Id(2 * height_, 2 * width_) + 1];
+	std::fill(queue_stored_, queue_stored_ + Id(2 * height_, 2 * width_) + 1, false);
 }
 template<class T>
 GridLoop<T>::GridLoop(GridLoop<T> &&other)
 	: field_(other.field_),
+	  queue_(other.queue_),
+	  queue_stored_(other.queue_stored_),
 	  height_(other.height_),
 	  width_(other.width_),
 	  decided_edges_(other.decided_edges_),
 	  decided_lines_(other.decided_lines_),
 	  inconsistent_(other.inconsistent_),
 	  fully_solved_(other.fully_solved_),
-	  abnormal_(other.abnormal_)
+	  abnormal_(other.abnormal_),
+	  queue_top_(-1),
+	  queue_end_(-1),
+	  queue_size_(other.queue_size_)
 {
 	other.field_ = nullptr;
+	other.queue_ = nullptr;
+	other.queue_stored_ = nullptr;
 }
 template<class T>
 GridLoop<T> &GridLoop<T>::operator=(const GridLoop<T> &other)
@@ -237,9 +291,15 @@ GridLoop<T> &GridLoop<T>::operator=(const GridLoop<T> &other)
 	abnormal_ = other.abnormal_;
 
 	if (field_) delete[] field_;
+	if (queue_) delete[] queue_;
+	if (queue_stored_) delete[] queue_stored_;
 
 	field_ = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
 	memcpy(field_, other.field_, (Id(2 * height_, 2 * width_) + 1) * sizeof(FieldComponent));
+	queue_ = new int[Id(2 * height_, 2 * width_) + 2];
+	queue_stored_ = new bool[Id(2 * height_, 2 * width_) + 1];
+	std::fill(queue_stored_, queue_stored_ + Id(2 * height_, 2 * width_) + 1, false);
+	queue_size_ = other.queue_size_;
 
 	return *this;
 }
@@ -255,9 +315,16 @@ GridLoop<T> &GridLoop<T>::operator=(GridLoop<T> &&other)
 	abnormal_ = other.abnormal_;
 
 	if (field_) delete[] field_;
+	if (queue_) delete[] queue_;
+	if (queue_stored_) delete[] queue_stored_;
 
 	field_ = other.field_;
 	other.field_ = nullptr;
+	queue_ = other.queue_;
+	other.queue_ = nullptr;
+	queue_stored_ = other.queue_stored_;
+	other.queue_stored_ = nullptr;
+	queue_size_ = other.queue_size_;
 
 	return *this;
 }
@@ -265,6 +332,8 @@ template<class T>
 GridLoop<T>::~GridLoop()
 {
 	if (field_) delete[] field_;
+	if (queue_) delete[] queue_;
+	if (queue_stored_) delete[] queue_stored_;
 }
 template<class T> 
 typename GridLoop<T>::EdgeState GridLoop<T>::GetEdge(LoopPosition edge) const
@@ -294,13 +363,17 @@ void GridLoop<T>::DecideEdge(LoopPosition edge, EdgeState status)
 		return;
 	}
 
-	// TODO: Handle consequent updates
-	if (status == EDGE_LINE) {
-		DecideChain(id, EDGE_LINE);
+	if (IsQueueStarted()) {
+		DecideChain(id, status);
 		CheckNeighborhoodOfChain(id);
-	} else if (status == EDGE_BLANK) {
-		DecideChain(id, EDGE_BLANK);
+	} else {
+		QueueStart();
+
+		DecideChain(id, status);
 		CheckNeighborhoodOfChain(id);
+		QueueProcessAll();
+
+		QueueEnd();
 	}
 }
 template<class T>
@@ -327,19 +400,39 @@ unsigned int GridLoop<T>::GetAnotherEndAsId(LoopPosition point, Direction dir) c
 template <class T>
 void GridLoop<T>::Check(LoopPosition pos)
 {
-	// TODO: implement queue
 	if (!IsPositionOnField(pos)) return;
 
-	static_cast<T*>(this)->Inspect(pos);
-	if (IsVertex(pos)) InspectVertex(pos);
+	if (IsQueueStarted()) {
+		QueuePush(Id(pos));
+	} else {
+		QueueStart();
+
+		QueuePush(Id(pos));
+		QueueProcessAll();
+
+		QueueEnd();
+	}
 }
 template <class T>
 void GridLoop<T>::CheckAllCell()
 {
-	for (Y y(1); y < 2 * height_; ++y) {
-		for (X x(1); x < 2 * width_; ++x) {
-			Check(LoopPosition(y, x));
+	if (IsQueueStarted()) {
+		for (Y y(1); y < 2 * height_; ++y) {
+			for (X x(1); x < 2 * width_; ++x) {
+				Check(LoopPosition(y, x));
+			}
 		}
+	} else {
+		QueueStart();
+
+		for (Y y(1); y < 2 * height_; ++y) {
+			for (X x(1); x < 2 * width_; ++x) {
+				Check(LoopPosition(y, x));
+			}
+		}
+		QueueProcessAll();
+
+		QueueEnd();
 	}
 }
 template <class T>
@@ -548,6 +641,17 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 
 			DecideEdge(vertex + dirs[undecided_1], EDGE_BLANK);
 		}
+	}
+}
+
+template <class T>
+void GridLoop<T>::QueueProcessAll()
+{
+	while (!IsQueueEmpty()) {
+		int id = QueuePop();
+		LoopPosition pos = AsPosition(id);
+		static_cast<T*>(this)->Inspect(pos);
+		if (IsVertex(pos)) InspectVertex(pos);
 	}
 }
 
