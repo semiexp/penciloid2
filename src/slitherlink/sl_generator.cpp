@@ -50,6 +50,18 @@ bool HasZeroNearby(Field &field, CellPosition pos)
 
 	return false;
 }
+long long FieldHash(Field &field, long long hash_size)
+{
+	long long ret = 0;
+	for (Y y(0); y < field.height(); ++y) {
+		for (X x(0); x < field.width(); ++x) {
+			Clue c = field.GetClue(CellPosition(y, x));
+			if (c == kNoClue) ret = (ret * 7) % hash_size;
+			else ret = (ret * 7 + c + 1) % hash_size;
+		}
+	}
+	return ret;
+}
 }
 
 bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption &constraint, std::mt19937 *rnd, Problem *ret)
@@ -62,6 +74,11 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 	Problem current_problem(height, width);
 	int max_step = static_cast<int>(height) * static_cast<int>(width) * 10;
 
+	const int kTabuSize = 8;
+	const long long kTabuHashSize = 1e9 + 7;
+	long long tabu_list[kTabuSize];
+	for (int i = 0; i < kTabuSize; ++i) tabu_list[i] = -1;
+
 	int number_unplaced_clues = 0;
 	for (Y y(0); y < height; ++y) {
 		for (X x(0); x < width; ++x) {
@@ -73,7 +90,10 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 
 	Field latest_field(current_problem, constraint.field_database);
 
-	for (int step = 0; step < max_step; ++step) {
+	int no_progress = 0;
+	int step = 0;
+
+	for (; step < max_step; ++step) {
 		Field::EdgeCount previous_decided_edges = latest_field.GetNumberOfDecidedEdges();
 		bool is_progress = false;
 
@@ -117,6 +137,15 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 
 				if (next_field_candidate.IsInconsistent()) continue;
 
+				long long next_hash = FieldHash(next_field_candidate, kTabuHashSize);
+				bool tabu_collision = false;
+				for (int i = 0; i < kTabuSize; ++i) {
+					if (tabu_list[i] == next_hash) {
+						tabu_collision = true;
+					}
+				}
+				if (tabu_collision) continue;
+
 				bool transition = false;
 				Field::EdgeCount next_decided_edges = next_field_candidate.GetNumberOfDecidedEdges();
 
@@ -141,6 +170,10 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 				previous_decided_edges = next_decided_edges;
 				is_progress = true;
 				latest_field = next_field_candidate;
+
+				for (int i = 1; i < kTabuSize; ++i) tabu_list[i - 1] = tabu_list[i];
+				tabu_list[kTabuSize - 1] = next_hash;
+
 				break;
 			}
 
@@ -148,6 +181,10 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 			else current_problem.SetClue(pos, previous_clue);
 		}
 
+		if (!is_progress) {
+			++no_progress;
+			if (no_progress >= 10) break;
+		}
 		if (latest_field.IsFullySolved() && !latest_field.IsInconsistent() && number_unplaced_clues == 0) {
 			*ret = current_problem;
 			return true;
