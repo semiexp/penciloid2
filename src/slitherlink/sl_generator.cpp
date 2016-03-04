@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <random>
+#include <map>
 
 #include "sl_problem.h"
 #include "sl_field.h"
@@ -62,6 +63,71 @@ long long FieldHash(Field &field, long long hash_size)
 	}
 	return ret;
 }
+int CountProhibitedPattern(const CluePlacement &placement, Field &field)
+{
+	static const Direction kDirs[] = {
+		Direction(Y(1), X(0)),
+		Direction(Y(0), X(1)),
+		Direction(Y(-1), X(0)),
+		Direction(Y(0), X(-1))
+	};
+
+	int ret = 0;
+	for (Y y(0); y < field.height(); ++y) {
+		for (X x(0); x < field.width(); ++x) {
+			LoopPosition lp(y * 2 + 1, x * 2 + 1);
+			if (placement.GetClue(CellPosition(y, x)) == kSomeClue && field.GetClue(CellPosition(y, x)) != 0 && HasZeroNearby(field, CellPosition(y, x))) {
+				if (field.GetEdgeSafe(lp + kDirs[0]) == Field::EDGE_BLANK &&
+					field.GetEdgeSafe(lp + kDirs[1]) == Field::EDGE_BLANK &&
+					field.GetEdgeSafe(lp + kDirs[2]) == Field::EDGE_BLANK &&
+					field.GetEdgeSafe(lp + kDirs[3]) == Field::EDGE_BLANK) {
+					++ret;
+					goto nex;
+				}
+			}
+
+			for (int d = 0; d < 4; ++d) {
+				CellPosition pos2 = CellPosition(y, x) + kDirs[d];
+				if (0 <= pos2.y && pos2.y < field.height() && 0 <= pos2.x && pos2.x < field.width() && placement.GetClue(pos2) == kSomeClue) goto nex;
+			}
+
+			if (field.GetClue(CellPosition(y, x)) == 2) {
+				if (field.GetEdgeSafe(lp + Direction(Y(2), X(1))) == Field::EDGE_BLANK &&
+					field.GetEdgeSafe(lp + Direction(Y(1), X(2))) == Field::EDGE_BLANK &&
+					field.GetEdgeSafe(lp + Direction(Y(-2), X(-1))) == Field::EDGE_BLANK &&
+					field.GetEdgeSafe(lp + Direction(Y(-1), X(-2))) == Field::EDGE_BLANK) {
+					++ret;
+					goto nex;
+				}
+				if (field.GetEdgeSafe(lp + Direction(Y(-2), X(1))) == Field::EDGE_BLANK &&
+					field.GetEdgeSafe(lp + Direction(Y(-1), X(2))) == Field::EDGE_BLANK &&
+					field.GetEdgeSafe(lp + Direction(Y(2), X(-1))) == Field::EDGE_BLANK &&
+					field.GetEdgeSafe(lp + Direction(Y(1), X(-2))) == Field::EDGE_BLANK) {
+					++ret;
+					goto nex;
+				}
+			} else if (placement.GetClue(CellPosition(y, x)) == kNoClue) {
+				int n_in = 0, n_blank = 0;
+				for (int d = 0; d < 4; ++d) {
+					Direction dir1 = kDirs[d], dir2 = kDirs[(d + 1) % 4];
+					auto edge1 = field.GetEdgeSafe(lp + dir1 * 2 + dir2);
+					auto edge2 = field.GetEdgeSafe(lp + dir2 * 2 + dir1);
+
+					if (edge1 == Field::EDGE_BLANK && edge2 == Field::EDGE_BLANK) ++n_blank;
+					if (edge1 == Field::EDGE_BLANK && edge2 == Field::EDGE_LINE) ++n_in;
+					if (edge1 == Field::EDGE_LINE && edge2 == Field::EDGE_BLANK) ++n_in;
+				}
+
+				if (n_in >= 1 && n_blank >= 2) {
+					++ret;
+				}
+			}
+		nex:
+			continue;
+		}
+	}
+	return ret;
+}
 }
 
 bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption &constraint, std::mt19937 *rnd, Problem *ret)
@@ -78,6 +144,7 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 	const long long kTabuHashSize = 1e9 + 7;
 	long long tabu_list[kTabuSize];
 	for (int i = 0; i < kTabuSize; ++i) tabu_list[i] = -1;
+	std::map<long long, int> hash_count;
 
 	int number_unplaced_clues = 0;
 	for (Y y(0); y < height; ++y) {
@@ -89,12 +156,13 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 	}
 
 	Field latest_field(current_problem, constraint.field_database);
+	Field::EdgeCount previous_decided_edges = 0;
 
 	int no_progress = 0;
 	int step = 0;
 
 	for (; step < max_step; ++step) {
-		Field::EdgeCount previous_decided_edges = latest_field.GetNumberOfDecidedEdges();
+		// previous_decided_edges = latest_field.GetNumberOfDecidedEdges();
 		bool is_progress = false;
 
 		double temperature = 5.0;
@@ -102,7 +170,7 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 
 		for (Y y(0); y < height; ++y) {
 			for (X x(0); x < width; ++x) if (placement.GetClue(CellPosition(y, x)) == kSomeClue) {
-				if (HasUndecidedEdgeNearby(latest_field, y, x)) {
+				if (latest_field.GetClue(CellPosition(y, x)) == kNoClue || HasUndecidedEdgeNearby(latest_field, y, x)) {
 					position_candidates.push_back(CellPosition(y, x));
 				}
 			}
@@ -138,17 +206,12 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 				if (next_field_candidate.IsInconsistent()) continue;
 
 				long long next_hash = FieldHash(next_field_candidate, kTabuHashSize);
-				bool tabu_collision = false;
-				for (int i = 0; i < kTabuSize; ++i) {
-					if (tabu_list[i] == next_hash) {
-						tabu_collision = true;
-					}
-				}
+				bool tabu_collision = hash_count[next_hash] >= 5; // false;
 				if (tabu_collision) continue;
 
 				bool transition = false;
 				Field::EdgeCount next_decided_edges = next_field_candidate.GetNumberOfDecidedEdges();
-
+				next_decided_edges -= CountProhibitedPattern(placement, next_field_candidate) * 10;
 				if (previous_decided_edges < next_decided_edges) {
 					transition = true;
 				} else {
@@ -173,6 +236,7 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 
 				for (int i = 1; i < kTabuSize; ++i) tabu_list[i - 1] = tabu_list[i];
 				tabu_list[kTabuSize - 1] = next_hash;
+				hash_count[next_hash] += 1;
 
 				break;
 			}
@@ -183,14 +247,13 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 
 		if (!is_progress) {
 			++no_progress;
-			if (no_progress >= 10) break;
+			if (no_progress >= 20) break;
 		}
 		if (latest_field.IsFullySolved() && !latest_field.IsInconsistent() && number_unplaced_clues == 0) {
 			*ret = current_problem;
 			return true;
 		}
 	}
-
 	return false;
 }
 
