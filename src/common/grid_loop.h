@@ -101,6 +101,17 @@ public:
 	// Don't call this method directly (instead, use Check(pos) ).
 	void Inspect(LoopPosition pos) {}
 
+	// Invoke func() with the internal queue enabled.
+	template <class F>
+	void QueuedRun(F &func) {
+		if (IsQueueStarted()) func();
+		else {
+			QueueStart();
+			func();
+			QueueProcessAll();
+			QueueEnd();
+		}
+	}
 private:
 	struct FieldComponent
 	{
