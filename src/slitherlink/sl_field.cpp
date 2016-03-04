@@ -44,11 +44,14 @@ Field &Field::operator=(Field&& other)
 Field::Field(const Problem& problem, Database *database) : GridLoop<Field>(problem.height(), problem.width()), field_clue_(problem.height(), problem.width(), kNoClue), database_(database)
 {
 	int cell_count = static_cast<int>(height()) * static_cast<int>(width());
-	for (Y y(0); y < height(); ++y) {
-		for (X x(0); x < width(); ++x) {
-			if (problem.GetClue(CellPosition(y, x)) != kNoClue) AddClue(CellPosition(y, x), problem.GetClue(CellPosition(y, x)));
+	auto clue_adder = [this, &problem]() {
+		for (Y y(0); y < height(); ++y) {
+			for (X x(0); x < width(); ++x) {
+				if (problem.GetClue(CellPosition(y, x)) != kNoClue) AddClue(CellPosition(y, x), problem.GetClue(CellPosition(y, x)));
+			}
 		}
-	}
+	};
+	QueuedRun(clue_adder);
 }
 Field::~Field()
 {
