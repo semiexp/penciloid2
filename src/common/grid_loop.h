@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "type.h"
+#include "grid_loop_method.h"
 
 namespace penciloid
 {
@@ -49,6 +50,9 @@ public:
 	bool IsFullySolved() const { return fully_solved_; }
 	bool IsInAbnormalCondition() const { return abnormal_; }
 	void SetInconsistent() { inconsistent_ = true; }
+
+	GridLoopMethod GetMethod() const { return method_; }
+	void SetMethod(const GridLoopMethod &m) { method_ = m; }
 
 	// Returns the status of edge <edge>.
 	// <edge> should be a legitimate position.
@@ -183,6 +187,7 @@ private:
 	EdgeCount decided_edges_, decided_lines_;
 	bool inconsistent_, fully_solved_, abnormal_;
 
+	GridLoopMethod method_;
 	int queue_top_, queue_end_, queue_size_;
 };
 template<class T>
@@ -197,6 +202,7 @@ GridLoop<T>::GridLoop()
 	  inconsistent_(false),
 	  fully_solved_(false),
 	  abnormal_(false),
+	  method_(),
 	  queue_top_(-1),
 	  queue_end_(-1),
 	  queue_size_(0)
@@ -214,6 +220,7 @@ GridLoop<T>::GridLoop(Y height, X width)
 	  inconsistent_(false),
 	  fully_solved_(false),
 	  abnormal_(false),
+	  method_(),
 	  queue_top_(-1),
 	  queue_end_(-1),
 	  queue_size_(0)
@@ -260,6 +267,7 @@ GridLoop<T>::GridLoop(const GridLoop<T> &other)
 	  inconsistent_(other.inconsistent_),
 	  fully_solved_(other.fully_solved_),
 	  abnormal_(other.abnormal_),
+	  method_(other.method_),
 	  queue_top_(-1),
 	  queue_end_(-1),
 	  queue_size_(other.queue_size_)
@@ -282,6 +290,7 @@ GridLoop<T>::GridLoop(GridLoop<T> &&other)
 	  inconsistent_(other.inconsistent_),
 	  fully_solved_(other.fully_solved_),
 	  abnormal_(other.abnormal_),
+	  method_(other.method_),
 	  queue_top_(-1),
 	  queue_end_(-1),
 	  queue_size_(other.queue_size_)
@@ -300,6 +309,7 @@ GridLoop<T> &GridLoop<T>::operator=(const GridLoop<T> &other)
 	inconsistent_ = other.inconsistent_;
 	fully_solved_ = other.fully_solved_;
 	abnormal_ = other.abnormal_;
+	method_ = other.method_;
 
 	if (field_) delete[] field_;
 	if (queue_) delete[] queue_;
@@ -324,6 +334,7 @@ GridLoop<T> &GridLoop<T>::operator=(GridLoop<T> &&other)
 	inconsistent_ = other.inconsitent_;
 	fully_solved_ = other.fully_solved_;
 	abnormal_ = other.abnormal_;
+	method_ = other.method_;
 
 	if (field_) delete[] field_;
 	if (queue_) delete[] queue_;
@@ -508,9 +519,8 @@ void GridLoop<T>::Join(LoopPosition vertex, Direction dir1, Direction dir2)
 	}
 
 	if (end1_vertex == end2_vertex) {
-		// TODO
 		if (field_[edge1_id].edge_status == EDGE_UNDECIDED) {
-			if (decided_lines_ != 0) {
+			if (decided_lines_ != 0 && method_.avoid_cycle) {
 				DecideChain(edge1_id, EDGE_BLANK);
 				DecideChain(edge2_id, EDGE_BLANK);
 				CheckNeighborhoodOfChain(edge1_id);
@@ -573,7 +583,7 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 		int line_1 = -1, line_2 = -1;
 
 		for (int i = 0; i < 4; ++i) {
-			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED) {
+			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED && method_.avoid_three_lines) {
 				DecideEdge(vertex + dirs[i], EDGE_BLANK);
 			}
 
@@ -607,8 +617,10 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 					if (cand_dir == -1) cand_dir = i;
 					else cand_dir = -2;
 				} else {
-					DecideEdge(vertex + dirs[i], EDGE_BLANK);
-					return;
+					if (method_.avoid_cycle) {
+						DecideEdge(vertex + dirs[i], EDGE_BLANK);
+						return;
+					}
 				}
 			}
 		}
