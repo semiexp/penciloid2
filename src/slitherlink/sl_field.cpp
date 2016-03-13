@@ -11,16 +11,17 @@ namespace penciloid
 {
 namespace slitherlink
 {
-Field::Field() : GridLoop<Field>(), field_clue_(), database_(nullptr)
+Field::Field() : GridLoop<Field>(), field_clue_(), database_(nullptr), method_()
 {
 }
-Field::Field(Y height, X width, Database *database) : GridLoop<Field>(height, width), field_clue_(height, width, kNoClue), database_(database)
+Field::Field(Y height, X width, Database *database, const Method &met) :
+	GridLoop<Field>(height, width), field_clue_(height, width, kNoClue), database_(database), method_(met)
 {
 }
-Field::Field(const Field& other) : GridLoop<Field>(other), field_clue_(other.field_clue_), database_(other.database_)
+Field::Field(const Field& other) : GridLoop<Field>(other), field_clue_(other.field_clue_), database_(other.database_), method_(other.method_)
 {
 }
-Field::Field(Field&& other) : GridLoop<Field>(other), field_clue_(std::move(other.field_clue_)), database_(other.database_)
+Field::Field(Field&& other) : GridLoop<Field>(other), field_clue_(std::move(other.field_clue_)), database_(other.database_), method_(other.method_)
 {
 }
 Field &Field::operator=(const Field& other)
@@ -29,6 +30,7 @@ Field &Field::operator=(const Field& other)
 
 	field_clue_ = other.field_clue_;
 	database_ = other.database_;
+	method_ = other.method_;
 
 	return *this;
 }
@@ -38,10 +40,12 @@ Field &Field::operator=(Field&& other)
 
 	field_clue_ = std::move(other.field_clue_);
 	database_ = other.database_;
+	method_ = other.method_;
 
 	return *this;
 }
-Field::Field(const Problem& problem, Database *database) : GridLoop<Field>(problem.height(), problem.width()), field_clue_(problem.height(), problem.width(), kNoClue), database_(database)
+Field::Field(const Problem& problem, Database *database, const Method &met) :
+	GridLoop<Field>(problem.height(), problem.width()), field_clue_(problem.height(), problem.width(), kNoClue), database_(database), method_(met)
 {
 	int cell_count = static_cast<int>(height()) * static_cast<int>(width());
 	auto clue_adder = [this, &problem]() {
@@ -71,40 +75,41 @@ void Field::AddClue(CellPosition pos, Clue clue)
 }
 void Field::Inspect(LoopPosition pos)
 {
-	if (database_ == nullptr) return;
 	if (!(pos.y % 2 == 1 && pos.x % 2 == 1)) return;
 	if (GetClue(CellPosition(pos.y / 2, pos.x / 2)) == kNoClue) return;
 
-	unsigned int db_id = 0;
-	for (int i = 11; i >= 0; --i) {
-		EdgeState status = GetEdgeSafe(pos + Database::kNeighbor[i]);
-		
-		if (status == EDGE_UNDECIDED) db_id = db_id * 3 + Database::kUndecided;
-		else if (status == EDGE_LINE) db_id = db_id * 3 + Database::kLine;
-		else if (status == EDGE_BLANK) db_id = db_id * 3 + Database::kBlank;
-	}
+	if (database_ != nullptr && method_.around_cell) {
+		unsigned int db_id = 0;
+		for (int i = 11; i >= 0; --i) {
+			EdgeState status = GetEdgeSafe(pos + Database::kNeighbor[i]);
 
-	Clue c = GetClue(CellPosition(pos.y / 2, pos.x / 2));
-	unsigned int db_result = database_->Get(db_id, GetClue(CellPosition(pos.y / 2, pos.x / 2)));
-	if (db_result == 0xffffffffU) {
-		SetInconsistent();
-		return;
-	}
-
-	for (int i = 0; i < 12; ++i) {
-		int new_status = (db_result >> (2 * i)) & 3;
-		if (new_status == Database::kLine) {
-			DecideEdge(pos + Database::kNeighbor[i], EDGE_LINE);
+			if (status == EDGE_UNDECIDED) db_id = db_id * 3 + Database::kUndecided;
+			else if (status == EDGE_LINE) db_id = db_id * 3 + Database::kLine;
+			else if (status == EDGE_BLANK) db_id = db_id * 3 + Database::kBlank;
 		}
-		if (new_status == Database::kBlank) {
-			LoopPosition edge_pos = pos + Database::kNeighbor[i];
-			if (0 <= edge_pos.y && edge_pos.y <= 2 * height() && 0 <= edge_pos.x && edge_pos.x <= 2 * width()) {
-				DecideEdge(pos + Database::kNeighbor[i], EDGE_BLANK);
+
+		Clue c = GetClue(CellPosition(pos.y / 2, pos.x / 2));
+		unsigned int db_result = database_->Get(db_id, GetClue(CellPosition(pos.y / 2, pos.x / 2)));
+		if (db_result == 0xffffffffU) {
+			SetInconsistent();
+			return;
+		}
+
+		for (int i = 0; i < 12; ++i) {
+			int new_status = (db_result >> (2 * i)) & 3;
+			if (new_status == Database::kLine) {
+				DecideEdge(pos + Database::kNeighbor[i], EDGE_LINE);
+			}
+			if (new_status == Database::kBlank) {
+				LoopPosition edge_pos = pos + Database::kNeighbor[i];
+				if (0 <= edge_pos.y && edge_pos.y <= 2 * height() && 0 <= edge_pos.x && edge_pos.x <= 2 * width()) {
+					DecideEdge(pos + Database::kNeighbor[i], EDGE_BLANK);
+				}
 			}
 		}
 	}
 
-	CheckDiagonalChain(pos);
+	if (method_.diagonal_chain) CheckDiagonalChain(pos);
 }
 void Field::ApplyTheorem(LoopPosition pos)
 {
@@ -118,25 +123,29 @@ void Field::ApplyTheorem(LoopPosition pos)
 
 	if (GetClue(CellPosition(pos.y / 2, pos.x / 2)) == 3) {
 		// Adjacent 3s
-		for (int i = 0; i < 4; ++i) {
-			CellPosition pos2 = CellPosition(pos.y / 2, pos.x / 2) + dir[i];
-			if (0 <= pos2.y && pos2.y < height() && 0 <= pos2.x && pos2.x < width() && GetClue(pos2) == 3) {
-				DecideEdge(pos + dir[i], EDGE_LINE);
-				DecideEdge(pos + dir[i] + dir[i] + dir[i], EDGE_LINE);
-				DecideEdge(pos - dir[i], EDGE_LINE);
-				DecideEdge(pos + dir[i] + dir[i ^ 1] + dir[i ^ 1], EDGE_BLANK);
-				DecideEdge(pos + dir[i] - dir[i ^ 1] - dir[i ^ 1], EDGE_BLANK);
+		if (method_.adjacent_3) {
+			for (int i = 0; i < 4; ++i) {
+				CellPosition pos2 = CellPosition(pos.y / 2, pos.x / 2) + dir[i];
+				if (0 <= pos2.y && pos2.y < height() && 0 <= pos2.x && pos2.x < width() && GetClue(pos2) == 3) {
+					DecideEdge(pos + dir[i], EDGE_LINE);
+					DecideEdge(pos + dir[i] + dir[i] + dir[i], EDGE_LINE);
+					DecideEdge(pos - dir[i], EDGE_LINE);
+					DecideEdge(pos + dir[i] + dir[i ^ 1] + dir[i ^ 1], EDGE_BLANK);
+					DecideEdge(pos + dir[i] - dir[i ^ 1] - dir[i ^ 1], EDGE_BLANK);
+				}
 			}
 		}
-
+		
 		// Diagonal 3s
-		for (int i = 0; i < 4; ++i) {
-			CellPosition pos2 = CellPosition(pos.y / 2, pos.x / 2) + dir[i] + dir[(i + 1) & 3];
-			if (0 <= pos2.y && pos2.y < height() && 0 <= pos2.x && pos2.x < width() && GetClue(pos2) == 3) {
-				DecideEdge(pos - dir[i], EDGE_LINE);
-				DecideEdge(pos - dir[(i + 1) & 3], EDGE_LINE);
-				DecideEdge(pos + dir[i] + dir[i] + dir[i] + dir[(i + 1) & 3] + dir[(i + 1) & 3], EDGE_LINE);
-				DecideEdge(pos + dir[i] + dir[i] + dir[(i + 1) & 3] + dir[(i + 1) & 3] + dir[(i + 1) & 3], EDGE_LINE);
+		if (method_.diagonal_3) {
+			for (int i = 0; i < 4; ++i) {
+				CellPosition pos2 = CellPosition(pos.y / 2, pos.x / 2) + dir[i] + dir[(i + 1) & 3];
+				if (0 <= pos2.y && pos2.y < height() && 0 <= pos2.x && pos2.x < width() && GetClue(pos2) == 3) {
+					DecideEdge(pos - dir[i], EDGE_LINE);
+					DecideEdge(pos - dir[(i + 1) & 3], EDGE_LINE);
+					DecideEdge(pos + dir[i] + dir[i] + dir[i] + dir[(i + 1) & 3] + dir[(i + 1) & 3], EDGE_LINE);
+					DecideEdge(pos + dir[i] + dir[i] + dir[(i + 1) & 3] + dir[(i + 1) & 3] + dir[(i + 1) & 3], EDGE_LINE);
+				}
 			}
 		}
 	}
