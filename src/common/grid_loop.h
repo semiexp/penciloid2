@@ -21,9 +21,9 @@ public:
 	typedef unsigned int EdgeCount;
 
 	enum EdgeState {
-		EDGE_UNDECIDED,
-		EDGE_LINE,
-		EDGE_BLANK
+		kEdgeUndecided,
+		kEdgeLine,
+		kEdgeBlank
 	};
 
 	GridLoop();
@@ -39,10 +39,10 @@ public:
 	Y height() const { return height_; }
 	X width() const { return width_; }
 
-	// Returns the number of edges whose status is EDGE_LINE or EDGE_BLANK.
+	// Returns the number of edges whose status is kEdgeLine or kEdgeBlank.
 	EdgeCount GetNumberOfDecidedEdges() const { return decided_edges_; }
 
-	// Returns the number of edges whose status is EDGE_LINE.
+	// Returns the number of edges whose status is kEdgeLine.
 	EdgeCount GetNumberOfDecidedLines() const { return decided_lines_; }
 
 	// Note that both of IsInconsistent() and IsFullySolved() may hold.
@@ -59,7 +59,7 @@ public:
 	EdgeState GetEdge(LoopPosition edge) const;
 
 	// Returns the status of edge <edge>.
-	// If <edge> is out of range, EDGE_BLANK will be returned.
+	// If <edge> is out of range, kEdgeBlank will be returned.
 	EdgeState GetEdgeSafe(LoopPosition edge) const;
 
 	// Makes the status of edge <edge> <state>.
@@ -235,7 +235,7 @@ GridLoop<T>::GridLoop(Y height, X width)
 		for (X x(0); x <= 2 * width_; ++x) {
 			unsigned int id = Id(y, x);
 			if (int(y % 2) != int(x % 2)) { // Edge
-				field_[id].edge_status = EDGE_UNDECIDED;
+				field_[id].edge_status = kEdgeUndecided;
 				if (y % 2 == 0) {
 					field_[id].end_vertices[0] = Id(y, x - 1);
 					field_[id].end_vertices[1] = Id(y, x + 1);
@@ -366,13 +366,13 @@ template<class T>
 typename GridLoop<T>::EdgeState GridLoop<T>::GetEdgeSafe(LoopPosition edge) const
 {
 	if (IsPositionOnField(edge)) return GetEdge(edge);
-	return EDGE_BLANK;
+	return kEdgeBlank;
 }
 template<class T>
 void GridLoop<T>::DecideEdge(LoopPosition edge, EdgeState status)
 {
 	if (!IsPositionOnField(edge)) {
-		if (status != EDGE_BLANK) {
+		if (status != kEdgeBlank) {
 			SetInconsistent();
 		}
 		return;
@@ -380,7 +380,7 @@ void GridLoop<T>::DecideEdge(LoopPosition edge, EdgeState status)
 
 	unsigned int id = Id(edge);
 	if (field_[id].edge_status == status) return;
-	if (field_[id].edge_status != EDGE_UNDECIDED) {
+	if (field_[id].edge_status != kEdgeUndecided) {
 		SetInconsistent();
 		return;
 	}
@@ -464,7 +464,7 @@ void GridLoop<T>::DecideChain(unsigned int id, EdgeState status)
 	do {
 		field_[id].edge_status = status;
 		++decided_edges_;
-		if (status == EDGE_LINE) ++decided_lines_;
+		if (status == kEdgeLine) ++decided_lines_;
 		id = field_[id].list_next_edge;
 	} while (id != id_start);
 }
@@ -482,8 +482,8 @@ void GridLoop<T>::HasFullySolved()
 {
 	for (Y y(0); y <= 2 * height_; ++y) {
 		for (X x(0); x <= 2 * width_; ++x) {
-			if (int(y % 2) != int(x % 2) && GetEdge(LoopPosition(y, x)) == EDGE_UNDECIDED) {
-				DecideEdge(LoopPosition(y, x), EDGE_BLANK);
+			if (int(y % 2) != int(x % 2) && GetEdge(LoopPosition(y, x)) == kEdgeUndecided) {
+				DecideEdge(LoopPosition(y, x), kEdgeBlank);
 			}
 		}
 	}
@@ -505,13 +505,13 @@ void GridLoop<T>::Join(LoopPosition vertex, Direction dir1, Direction dir2)
 	unsigned int end2_edge = field_[edge2_id].another_end_edge;
 
 	// change the status of edges if necessary
-	if (field_[edge1_id].edge_status == EDGE_UNDECIDED && field_[edge2_id].edge_status != EDGE_UNDECIDED) {
+	if (field_[edge1_id].edge_status == kEdgeUndecided && field_[edge2_id].edge_status != kEdgeUndecided) {
 		DecideChain(edge1_id, field_[edge2_id].edge_status);
 		CheckNeighborhoodOfChain(edge1_id);
 		Join(vertex, dir1, dir2); // assure that two edges are still disjoint (or end this function call)
 		return;
 	}
-	if (field_[edge2_id].edge_status == EDGE_UNDECIDED && field_[edge1_id].edge_status != EDGE_UNDECIDED) {
+	if (field_[edge2_id].edge_status == kEdgeUndecided && field_[edge1_id].edge_status != kEdgeUndecided) {
 		DecideChain(edge2_id, field_[edge1_id].edge_status);
 		CheckNeighborhoodOfChain(edge2_id);
 		Join(vertex, dir1, dir2);
@@ -519,15 +519,15 @@ void GridLoop<T>::Join(LoopPosition vertex, Direction dir1, Direction dir2)
 	}
 
 	if (end1_vertex == end2_vertex) {
-		if (field_[edge1_id].edge_status == EDGE_UNDECIDED) {
+		if (field_[edge1_id].edge_status == kEdgeUndecided) {
 			if (decided_lines_ != 0 && method_.avoid_cycle) {
-				DecideChain(edge1_id, EDGE_BLANK);
-				DecideChain(edge2_id, EDGE_BLANK);
+				DecideChain(edge1_id, kEdgeBlank);
+				DecideChain(edge2_id, kEdgeBlank);
 				CheckNeighborhoodOfChain(edge1_id);
 				CheckNeighborhoodOfChain(edge2_id);
 				return;
 			}
-		} else if (field_[edge1_id].edge_status == EDGE_LINE) {
+		} else if (field_[edge1_id].edge_status == kEdgeLine) {
 			if (decided_lines_ != field_[edge1_id].chain_size + field_[edge2_id].chain_size) {
 				SetInconsistent();
 			} else {
@@ -570,8 +570,8 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 	unsigned int n_line = 0, n_undecided = 0;
 	for (int i = 0; i < 4; ++i) {
 		EdgeState status = GetEdgeSafe(vertex + dirs[i]);
-		if (status == EDGE_LINE) ++n_line;
-		if (status == EDGE_UNDECIDED) ++n_undecided;
+		if (status == kEdgeLine) ++n_line;
+		if (status == kEdgeUndecided) ++n_undecided;
 	}
 
 	if (n_line >= 3) {
@@ -583,11 +583,11 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 		int line_1 = -1, line_2 = -1;
 
 		for (int i = 0; i < 4; ++i) {
-			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED && method_.avoid_three_lines) {
-				DecideEdge(vertex + dirs[i], EDGE_BLANK);
+			if (GetEdgeSafe(vertex + dirs[i]) == kEdgeUndecided && method_.avoid_three_lines) {
+				DecideEdge(vertex + dirs[i], kEdgeBlank);
 			}
 
-			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_LINE) {
+			if (GetEdgeSafe(vertex + dirs[i]) == kEdgeLine) {
 				if (line_1 == -1) line_1 = i;
 				else line_2 = i;
 			}
@@ -602,7 +602,7 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 		LoopPosition line_another_end(Y(-1), X(-1));
 		int line_dir = 0;
 		for (int i = 0; i < 4; ++i) {
-			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_LINE) {
+			if (GetEdgeSafe(vertex + dirs[i]) == kEdgeLine) {
 				line_size = GetChainLength(vertex, dirs[i]);
 				line_another_end = GetAnotherEnd(vertex, dirs[i]);
 				line_dir = i;
@@ -611,14 +611,14 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 
 		int cand_dir = -1;
 		for (int i = 0; i < 4; ++i) {
-			if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED && IsEndOfAChain(vertex + dirs[i]) && IsEndOfAChainVertex(Id(vertex + dirs[i]), Id(vertex))) {
+			if (GetEdgeSafe(vertex + dirs[i]) == kEdgeUndecided && IsEndOfAChain(vertex + dirs[i]) && IsEndOfAChainVertex(Id(vertex + dirs[i]), Id(vertex))) {
 				if (line_size == decided_lines_ || line_another_end != GetAnotherEnd(vertex, dirs[i])) {
 					LoopPosition pos2 = GetAnotherEnd(vertex, dirs[i]);
 					if (cand_dir == -1) cand_dir = i;
 					else cand_dir = -2;
 				} else {
 					if (method_.avoid_cycle) {
-						DecideEdge(vertex + dirs[i], EDGE_BLANK);
+						DecideEdge(vertex + dirs[i], kEdgeBlank);
 						return;
 					}
 				}
@@ -639,7 +639,7 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 			int undecided_1 = -1, undecided_2 = -1;
 
 			for (int i = 0; i < 4; ++i) {
-				if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED) {
+				if (GetEdgeSafe(vertex + dirs[i]) == kEdgeUndecided) {
 					if (undecided_1 == -1) undecided_1 = i;
 					else undecided_2 = i;
 				}
@@ -650,12 +650,12 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 			int undecided_1 = -1;
 
 			for (int i = 0; i < 4; ++i) {
-				if (GetEdgeSafe(vertex + dirs[i]) == EDGE_UNDECIDED) {
+				if (GetEdgeSafe(vertex + dirs[i]) == kEdgeUndecided) {
 					undecided_1 = i;
 				}
 			}
 
-			DecideEdge(vertex + dirs[undecided_1], EDGE_BLANK);
+			DecideEdge(vertex + dirs[undecided_1], kEdgeBlank);
 		}
 	}
 }

@@ -83,9 +83,9 @@ void Field::Inspect(LoopPosition pos)
 		for (int i = 11; i >= 0; --i) {
 			EdgeState status = GetEdgeSafe(pos + Database::kNeighbor[i]);
 
-			if (status == EDGE_UNDECIDED) db_id = db_id * 3 + Database::kUndecided;
-			else if (status == EDGE_LINE) db_id = db_id * 3 + Database::kLine;
-			else if (status == EDGE_BLANK) db_id = db_id * 3 + Database::kBlank;
+			if (status == kEdgeUndecided) db_id = db_id * 3 + Database::kUndecided;
+			else if (status == kEdgeLine) db_id = db_id * 3 + Database::kLine;
+			else if (status == kEdgeBlank) db_id = db_id * 3 + Database::kBlank;
 		}
 
 		Clue c = GetClue(CellPosition(pos.y / 2, pos.x / 2));
@@ -98,12 +98,12 @@ void Field::Inspect(LoopPosition pos)
 		for (int i = 0; i < 12; ++i) {
 			int new_status = (db_result >> (2 * i)) & 3;
 			if (new_status == Database::kLine) {
-				DecideEdge(pos + Database::kNeighbor[i], EDGE_LINE);
+				DecideEdge(pos + Database::kNeighbor[i], kEdgeLine);
 			}
 			if (new_status == Database::kBlank) {
 				LoopPosition edge_pos = pos + Database::kNeighbor[i];
 				if (0 <= edge_pos.y && edge_pos.y <= 2 * height() && 0 <= edge_pos.x && edge_pos.x <= 2 * width()) {
-					DecideEdge(pos + Database::kNeighbor[i], EDGE_BLANK);
+					DecideEdge(pos + Database::kNeighbor[i], kEdgeBlank);
 				}
 			}
 		}
@@ -127,11 +127,11 @@ void Field::ApplyTheorem(LoopPosition pos)
 			for (int i = 0; i < 4; ++i) {
 				CellPosition pos2 = CellPosition(pos.y / 2, pos.x / 2) + dir[i];
 				if (0 <= pos2.y && pos2.y < height() && 0 <= pos2.x && pos2.x < width() && GetClue(pos2) == 3) {
-					DecideEdge(pos + dir[i], EDGE_LINE);
-					DecideEdge(pos + dir[i] + dir[i] + dir[i], EDGE_LINE);
-					DecideEdge(pos - dir[i], EDGE_LINE);
-					DecideEdge(pos + dir[i] + dir[i ^ 1] + dir[i ^ 1], EDGE_BLANK);
-					DecideEdge(pos + dir[i] - dir[i ^ 1] - dir[i ^ 1], EDGE_BLANK);
+					DecideEdge(pos + dir[i], kEdgeLine);
+					DecideEdge(pos + dir[i] + dir[i] + dir[i], kEdgeLine);
+					DecideEdge(pos - dir[i], kEdgeLine);
+					DecideEdge(pos + dir[i] + dir[i ^ 1] + dir[i ^ 1], kEdgeBlank);
+					DecideEdge(pos + dir[i] - dir[i ^ 1] - dir[i ^ 1], kEdgeBlank);
 				}
 			}
 		}
@@ -141,10 +141,10 @@ void Field::ApplyTheorem(LoopPosition pos)
 			for (int i = 0; i < 4; ++i) {
 				CellPosition pos2 = CellPosition(pos.y / 2, pos.x / 2) + dir[i] + dir[(i + 1) & 3];
 				if (0 <= pos2.y && pos2.y < height() && 0 <= pos2.x && pos2.x < width() && GetClue(pos2) == 3) {
-					DecideEdge(pos - dir[i], EDGE_LINE);
-					DecideEdge(pos - dir[(i + 1) & 3], EDGE_LINE);
-					DecideEdge(pos + dir[i] + dir[i] + dir[i] + dir[(i + 1) & 3] + dir[(i + 1) & 3], EDGE_LINE);
-					DecideEdge(pos + dir[i] + dir[i] + dir[(i + 1) & 3] + dir[(i + 1) & 3] + dir[(i + 1) & 3], EDGE_LINE);
+					DecideEdge(pos - dir[i], kEdgeLine);
+					DecideEdge(pos - dir[(i + 1) & 3], kEdgeLine);
+					DecideEdge(pos + dir[i] + dir[i] + dir[i] + dir[(i + 1) & 3] + dir[(i + 1) & 3], kEdgeLine);
+					DecideEdge(pos + dir[i] + dir[i] + dir[(i + 1) & 3] + dir[(i + 1) & 3] + dir[(i + 1) & 3], kEdgeLine);
 				}
 			}
 		}
@@ -162,14 +162,14 @@ void Field::CheckDiagonalChain(LoopPosition pos)
 	if (GetClue(CellPosition(pos.y / 2, pos.x / 2)) == kNoClue) return;
 
 	static const auto check_and_update_parity = [](EdgeState s1, EdgeState s2, int prev_parity) {
-		if (s1 == EDGE_UNDECIDED || s2 == EDGE_UNDECIDED) return prev_parity;
+		if (s1 == kEdgeUndecided || s2 == kEdgeUndecided) return prev_parity;
 		if (s1 == s2) return 0;
 		return 1;
 	};
 	static const auto edge_state_by_parity = [](EdgeState s1, int parity) {
 		if (parity == 1) {
-			if (s1 == EDGE_LINE) return EDGE_BLANK;
-			else return EDGE_LINE;
+			if (s1 == kEdgeLine) return kEdgeBlank;
+			else return kEdgeLine;
 		}
 		return s1;
 	};
@@ -198,35 +198,35 @@ void Field::CheckDiagonalChain(LoopPosition pos)
 
 			if (GetClue(cell_pos) == 1) {
 				if (vertex_parity == 0) {
-					DecideEdge(cell_loop_pos - dir1, EDGE_BLANK);
-					DecideEdge(cell_loop_pos - dir2, EDGE_BLANK);
+					DecideEdge(cell_loop_pos - dir1, kEdgeBlank);
+					DecideEdge(cell_loop_pos - dir2, kEdgeBlank);
 				} else if (vertex_parity == 1) {
-					DecideEdge(cell_loop_pos + dir1, EDGE_BLANK);
-					DecideEdge(cell_loop_pos + dir2, EDGE_BLANK);
+					DecideEdge(cell_loop_pos + dir1, kEdgeBlank);
+					DecideEdge(cell_loop_pos + dir2, kEdgeBlank);
 				}
 				break;
 			}
 			if (GetClue(cell_pos) == 3) {
 				if (vertex_parity == 0) {
-					DecideEdge(cell_loop_pos - dir1, EDGE_LINE);
-					DecideEdge(cell_loop_pos - dir2, EDGE_LINE);
+					DecideEdge(cell_loop_pos - dir1, kEdgeLine);
+					DecideEdge(cell_loop_pos - dir2, kEdgeLine);
 				} else if (vertex_parity == 1) {
-					DecideEdge(cell_loop_pos + dir1, EDGE_LINE);
-					DecideEdge(cell_loop_pos + dir2, EDGE_LINE);
+					DecideEdge(cell_loop_pos + dir1, kEdgeLine);
+					DecideEdge(cell_loop_pos + dir2, kEdgeLine);
 				}
 				break;
 			}
 			if (GetClue(cell_pos) == 2) {
-				if (GetEdgeSafe(cell_loop_pos + dir1) != EDGE_UNDECIDED) {
+				if (GetEdgeSafe(cell_loop_pos + dir1) != kEdgeUndecided) {
 					DecideEdge(cell_loop_pos + dir2, edge_state_by_parity(GetEdgeSafe(cell_loop_pos + dir1), vertex_parity));
 				}
-				if (GetEdgeSafe(cell_loop_pos + dir2) != EDGE_UNDECIDED) {
+				if (GetEdgeSafe(cell_loop_pos + dir2) != kEdgeUndecided) {
 					DecideEdge(cell_loop_pos + dir1, edge_state_by_parity(GetEdgeSafe(cell_loop_pos + dir2), vertex_parity));
 				}
-				if (GetEdgeSafe(cell_loop_pos + dir1 + dir2 * 2) != EDGE_UNDECIDED) {
+				if (GetEdgeSafe(cell_loop_pos + dir1 + dir2 * 2) != kEdgeUndecided) {
 					DecideEdge(cell_loop_pos + dir2 + dir1 * 2, edge_state_by_parity(GetEdgeSafe(cell_loop_pos + dir1 + dir2 * 2), vertex_parity));
 				}
-				if (GetEdgeSafe(cell_loop_pos + dir2 + dir1 * 2) != EDGE_UNDECIDED) {
+				if (GetEdgeSafe(cell_loop_pos + dir2 + dir1 * 2) != kEdgeUndecided) {
 					DecideEdge(cell_loop_pos + dir1 + dir2 * 2, edge_state_by_parity(GetEdgeSafe(cell_loop_pos + dir2 + dir1 * 2), vertex_parity));
 				}
 			}
@@ -244,14 +244,14 @@ std::ostream& operator<<(std::ostream &stream, Field &field)
 				stream << "+";
 			} else if (y % 2 == 0 && x % 2 == 1) {
 				Field::EdgeState status = field.GetEdge(LoopPosition(y, x));
-				if (status == Field::EDGE_UNDECIDED) stream << "   ";
-				else if (status == Field::EDGE_LINE) stream << "---";
-				else if (status == Field::EDGE_BLANK) stream << " X ";
+				if (status == Field::kEdgeUndecided) stream << "   ";
+				else if (status == Field::kEdgeLine) stream << "---";
+				else if (status == Field::kEdgeBlank) stream << " X ";
 			} else if (y % 2 == 1 && x % 2 == 0) {
 				Field::EdgeState status = field.GetEdge(LoopPosition(y, x));
-				if (status == Field::EDGE_UNDECIDED) stream << " ";
-				else if (status == Field::EDGE_LINE) stream << "|";
-				else if (status == Field::EDGE_BLANK) stream << "X";
+				if (status == Field::kEdgeUndecided) stream << " ";
+				else if (status == Field::kEdgeLine) stream << "|";
+				else if (status == Field::kEdgeBlank) stream << "X";
 			} else if (y % 2 == 1 && x % 2 == 1) {
 				Clue clue = field.GetClue(CellPosition(y / 2, x / 2));
 				if (clue == kNoClue) stream << "   ";

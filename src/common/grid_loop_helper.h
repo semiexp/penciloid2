@@ -35,10 +35,10 @@ void ApplyInOutRule(GridLoop<T> *grid)
 		for (X x(0); x < width; ++x) {
 			LoopPosition cell_position(2 * y + 1, 2 * x + 1);
 			for (int d = 0; d < 4; ++d) {
-				if (grid->GetEdge(cell_position + dirs[d]) == GridLoop<T>::EDGE_LINE) {
+				if (grid->GetEdge(cell_position + dirs[d]) == GridLoop<T>::kEdgeLine) {
 					uf.Join(cell_id(CellPosition(y, x)), cell_id(CellPosition(y, x) + dirs[d]) + 1);
 					uf.Join(cell_id(CellPosition(y, x)) + 1, cell_id(CellPosition(y, x) + dirs[d]));
-				} else if (grid->GetEdge(cell_position + dirs[d]) == GridLoop<T>::EDGE_BLANK) {
+				} else if (grid->GetEdge(cell_position + dirs[d]) == GridLoop<T>::kEdgeBlank) {
 					uf.Join(cell_id(CellPosition(y, x)), cell_id(CellPosition(y, x) + dirs[d]));
 					uf.Join(cell_id(CellPosition(y, x)) + 1, cell_id(CellPosition(y, x) + dirs[d]) + 1);
 				}
@@ -51,10 +51,10 @@ void ApplyInOutRule(GridLoop<T> *grid)
 			LoopPosition cell_position(2 * y + 1, 2 * x + 1);
 			for (int d = 0; d < 4; ++d) {
 				if (uf.Root(cell_id(CellPosition(y, x))) == uf.Root(cell_id(CellPosition(y, x) + dirs[d]))) {
-					grid->DecideEdge(cell_position + dirs[d], GridLoop<T>::EDGE_BLANK);
+					grid->DecideEdge(cell_position + dirs[d], GridLoop<T>::kEdgeBlank);
 				}
 				if (uf.Root(cell_id(CellPosition(y, x))) == uf.Root(cell_id(CellPosition(y, x) + dirs[d]) + 1)) {
-					grid->DecideEdge(cell_position + dirs[d], GridLoop<T>::EDGE_LINE);
+					grid->DecideEdge(cell_position + dirs[d], GridLoop<T>::kEdgeLine);
 				}
 			}
 		}
@@ -82,7 +82,7 @@ void CheckConnectability(GridLoop<T> *grid)
 	for (Y y(0); y <= 2 * height; y += 2) {
 		for (X x(0); x <= 2 * width; x += 2) {
 			for (int d = 0; d < 4; ++d) {
-				if (grid->GetEdgeSafe(LoopPosition(y, x) + dirs[d]) != GridLoop<T>::EDGE_BLANK) {
+				if (grid->GetEdgeSafe(LoopPosition(y, x) + dirs[d]) != GridLoop<T>::kEdgeBlank) {
 					// We can assume that Position(y, x) + dirs[d] is a valid position on the grid
 					uf.Join(pos_id(LoopPosition(y, x)), pos_id(LoopPosition(y, x) + dirs[d]));
 				}
@@ -94,7 +94,7 @@ void CheckConnectability(GridLoop<T> *grid)
 	for (Y y(0); y <= 2 * height; ++y) {
 		for (X x(0); x <= 2 * width; ++x) {
 			if (static_cast<int>(y) % 2 != static_cast<int>(x) % 2) {
-				if (grid->GetEdge(LoopPosition(y, x)) == GridLoop<T>::EDGE_LINE) {
+				if (grid->GetEdge(LoopPosition(y, x)) == GridLoop<T>::kEdgeLine) {
 					int root = uf.Root(pos_id(LoopPosition(y, x)));
 					if (line_root == -1) line_root = root;
 					else if (line_root != root) {

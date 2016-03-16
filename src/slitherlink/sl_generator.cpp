@@ -28,7 +28,7 @@ bool HasUndecidedEdgeNearby(Field &field, Y y_base, X x_base)
 			X x = x_base + dx;
 
 			if (0 <= y && y <= 2 * field.height() && 0 <= x && x <= 2 * field.width()) {
-				if (static_cast<int>(y) % 2 != static_cast<int>(x) % 2 && field.GetEdge(LoopPosition(y, x)) == Field::EDGE_UNDECIDED) {
+				if (static_cast<int>(y) % 2 != static_cast<int>(x) % 2 && field.GetEdge(LoopPosition(y, x)) == Field::kEdgeUndecided) {
 					return true;
 				}
 			}
@@ -77,10 +77,10 @@ int CountProhibitedPattern(const CluePlacement &placement, Field &field)
 		for (X x(0); x < field.width(); ++x) {
 			LoopPosition lp(y * 2 + 1, x * 2 + 1);
 			if (placement.GetClue(CellPosition(y, x)) == kSomeClue && field.GetClue(CellPosition(y, x)) != 0 && HasZeroNearby(field, CellPosition(y, x))) {
-				if (field.GetEdgeSafe(lp + kDirs[0]) == Field::EDGE_BLANK &&
-					field.GetEdgeSafe(lp + kDirs[1]) == Field::EDGE_BLANK &&
-					field.GetEdgeSafe(lp + kDirs[2]) == Field::EDGE_BLANK &&
-					field.GetEdgeSafe(lp + kDirs[3]) == Field::EDGE_BLANK) {
+				if (field.GetEdgeSafe(lp + kDirs[0]) == Field::kEdgeBlank &&
+					field.GetEdgeSafe(lp + kDirs[1]) == Field::kEdgeBlank &&
+					field.GetEdgeSafe(lp + kDirs[2]) == Field::kEdgeBlank &&
+					field.GetEdgeSafe(lp + kDirs[3]) == Field::kEdgeBlank) {
 					++ret;
 					goto nex;
 				}
@@ -92,17 +92,17 @@ int CountProhibitedPattern(const CluePlacement &placement, Field &field)
 			}
 
 			if (field.GetClue(CellPosition(y, x)) == 2) {
-				if (field.GetEdgeSafe(lp + Direction(Y(2), X(1))) == Field::EDGE_BLANK &&
-					field.GetEdgeSafe(lp + Direction(Y(1), X(2))) == Field::EDGE_BLANK &&
-					field.GetEdgeSafe(lp + Direction(Y(-2), X(-1))) == Field::EDGE_BLANK &&
-					field.GetEdgeSafe(lp + Direction(Y(-1), X(-2))) == Field::EDGE_BLANK) {
+				if (field.GetEdgeSafe(lp + Direction(Y(2), X(1))) == Field::kEdgeBlank &&
+					field.GetEdgeSafe(lp + Direction(Y(1), X(2))) == Field::kEdgeBlank &&
+					field.GetEdgeSafe(lp + Direction(Y(-2), X(-1))) == Field::kEdgeBlank &&
+					field.GetEdgeSafe(lp + Direction(Y(-1), X(-2))) == Field::kEdgeBlank) {
 					++ret;
 					goto nex;
 				}
-				if (field.GetEdgeSafe(lp + Direction(Y(-2), X(1))) == Field::EDGE_BLANK &&
-					field.GetEdgeSafe(lp + Direction(Y(-1), X(2))) == Field::EDGE_BLANK &&
-					field.GetEdgeSafe(lp + Direction(Y(2), X(-1))) == Field::EDGE_BLANK &&
-					field.GetEdgeSafe(lp + Direction(Y(1), X(-2))) == Field::EDGE_BLANK) {
+				if (field.GetEdgeSafe(lp + Direction(Y(-2), X(1))) == Field::kEdgeBlank &&
+					field.GetEdgeSafe(lp + Direction(Y(-1), X(2))) == Field::kEdgeBlank &&
+					field.GetEdgeSafe(lp + Direction(Y(2), X(-1))) == Field::kEdgeBlank &&
+					field.GetEdgeSafe(lp + Direction(Y(1), X(-2))) == Field::kEdgeBlank) {
 					++ret;
 					goto nex;
 				}
@@ -113,9 +113,9 @@ int CountProhibitedPattern(const CluePlacement &placement, Field &field)
 					auto edge1 = field.GetEdgeSafe(lp + dir1 * 2 + dir2);
 					auto edge2 = field.GetEdgeSafe(lp + dir2 * 2 + dir1);
 
-					if (edge1 == Field::EDGE_BLANK && edge2 == Field::EDGE_BLANK) ++n_blank;
-					if (edge1 == Field::EDGE_BLANK && edge2 == Field::EDGE_LINE) ++n_in;
-					if (edge1 == Field::EDGE_LINE && edge2 == Field::EDGE_BLANK) ++n_in;
+					if (edge1 == Field::kEdgeBlank && edge2 == Field::kEdgeBlank) ++n_blank;
+					if (edge1 == Field::kEdgeBlank && edge2 == Field::kEdgeLine) ++n_in;
+					if (edge1 == Field::kEdgeLine && edge2 == Field::kEdgeBlank) ++n_in;
 				}
 
 				if (n_in >= 1 && n_blank >= 2) {

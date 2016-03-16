@@ -32,9 +32,9 @@ void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const ch
 		for (X x(0); x <= 2 * width; ++x) {
 			if (int(y % 2) != int(x % 2)) {
 				Field::EdgeState expected;
-				if (test_target[y][x] == 'x') expected = Field::EDGE_BLANK;
-				else if (test_target[y][x] == ' ') expected = Field::EDGE_UNDECIDED;
-				else expected = Field::EDGE_LINE;
+				if (test_target[y][x] == 'x') expected = Field::kEdgeBlank;
+				else if (test_target[y][x] == ' ') expected = Field::kEdgeUndecided;
+				else expected = Field::kEdgeLine;
 				assert(field.GetEdge(LoopPosition(y, x)) == expected);
 			}
 		}
