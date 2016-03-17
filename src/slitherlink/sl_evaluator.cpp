@@ -14,9 +14,9 @@ Evaluator::Evaluator() : field_(), param_(), move_candidates_()
 }
 Evaluator::Evaluator(Problem &problem)// : field_(), param_(), move_candidates_()
 {
-	//Method method;
-	//method.DisableAll();
-	field_ = Field(problem, nullptr);
+	Method method;
+	method.DisableAll();
+	field_ = Field(problem, nullptr, method);
 }
 Evaluator::~Evaluator()
 {
@@ -30,13 +30,11 @@ double Evaluator::EvaluateRun()
 	int width_as_int = static_cast<int>(field_.width());
 	int number_of_total_edges = (height_as_int + 1) * width_as_int + height_as_int * (width_as_int + 1);
 
-	while (!field_.IsInconsistent() && field_.IsFullySolved()) {
+	while (!field_.IsInconsistent() && !field_.IsFullySolved()) {
 		move_candidates_.clear();
-		// EnumerateMoves();
-		int x = 5;
-		x += 5;
-		std::cout << x << std::endl;
+		EnumerateMoves();
 		if (move_candidates_.size() == 0) {
+			std::cout << field_ << std::endl;
 			return kScoreImpossible;
 		}
 
@@ -92,35 +90,35 @@ double Evaluator::EvaluateRun()
 		last_y /= next_move.target_pos.size();
 		last_x /= next_move.target_pos.size();
 	}
-
+	
 	if (!field_.IsFullySolved()) return kScoreInconsistent;
 	return score;
 }
 void Evaluator::EnumerateMoves()
 {
-	//CheckTwoLinesRule();
-	//CheckAvoidCycleRule();
-	//CheckTheoremsAbout3();
+	CheckTwoLinesRule();
+	CheckAvoidCycleRule();
+	CheckTheoremsAbout3();
 
 	for (Y y(0); y <= height(); ++y) {
 		for (X x(0); x <= width(); ++x) {
-			//CheckHourglassRule(LoopPosition(y * 2, x * 2));
+			CheckHourglassRule(LoopPosition(y * 2, x * 2));
 		}
 	}
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
 			CellPosition pos(y, x);
-			if (false && !CheckAdjacentLinesRule(pos)) {
-				//CheckCornerCell(pos);
-				//CheckLineToClue(pos);
-				//CheckLineFromClue(pos);
-				//CheckDiagonalChain(pos);
+			if (!CheckAdjacentLinesRule(pos)) {
+				CheckCornerCell(pos);
+				CheckLineToClue(pos);
+				CheckLineFromClue(pos);
+				CheckDiagonalChain(pos);
 			}
 		}
 	}
 
-	//CheckInOutRule();
-	//EliminateDoneMoves();
+	CheckInOutRule();
+	EliminateDoneMoves();
 }
 void Evaluator::EliminateDoneMoves()
 {
@@ -228,7 +226,7 @@ void Evaluator::CheckTheoremsAbout3()
 {
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
-			if (!field_.GetClue(CellPosition(y, x)) == 3) continue;
+			if (field_.GetClue(CellPosition(y, x)) != 3) continue;
 			LoopPosition loop_pos(2 * y + 1, 2 * x + 1);
 
 			if (y != height() - 1 && field_.GetClue(CellPosition(y + 1, x)) == 3) {
@@ -322,6 +320,7 @@ void Evaluator::CheckCornerCell(CellPosition pos)
 				Move m(param_.corner_clue[1]);
 				m.AddTarget(loop_pos + d1, kEdgeBlank);
 				m.AddTarget(loop_pos + d2, kEdgeBlank);
+				move_candidates_.push_back(m);
 			}
 			if (clue == 2) {
 				Move m1(param_.corner_clue[2]);
@@ -339,9 +338,7 @@ void Evaluator::CheckCornerCell(CellPosition pos)
 				if (GetEdgeSafe(loop_pos + d1) == kEdgeBlank ||
 					GetEdgeSafe(loop_pos + d2) == kEdgeBlank ||
 					GetEdgeSafe(loop_pos - d1) == kEdgeLine ||
-					GetEdgeSafe(loop_pos - d2) == kEdgeLine ||
-					GetEdgeSafe(loop_pos - d1 * 2 - d2) == kEdgeBlank ||
-					GetEdgeSafe(loop_pos - d2 * 2 - d1) == kEdgeBlank) {
+					GetEdgeSafe(loop_pos - d2) == kEdgeLine) {
 					m1.AddTarget(loop_pos + d1, kEdgeBlank);
 					m1.AddTarget(loop_pos + d2, kEdgeBlank);
 					m1.AddTarget(loop_pos - d1, kEdgeLine);
@@ -370,6 +367,7 @@ void Evaluator::CheckCornerCell(CellPosition pos)
 				Move m(param_.corner_clue[3]);
 				m.AddTarget(loop_pos + d1, kEdgeLine);
 				m.AddTarget(loop_pos + d2, kEdgeLine);
+				move_candidates_.push_back(m);
 			}
 		}
 	}
