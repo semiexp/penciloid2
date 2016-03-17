@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <vector>
+#include <cstring>
 
 #include "type.h"
 #include "grid_loop_method.h"
@@ -38,6 +39,9 @@ public:
 
 	Y height() const { return height_; }
 	X width() const { return width_; }
+
+	// Returns whether <pos> is within the range of this field.
+	bool IsPositionOnField(LoopPosition pos) const { return 0 <= pos.y && pos.y <= 2 * height_ && 0 <= pos.x && pos.x <= 2 * width_; }
 
 	// Returns the number of edges whose status is kEdgeLine or kEdgeBlank.
 	EdgeCount GetNumberOfDecidedEdges() const { return decided_edges_; }
@@ -139,7 +143,6 @@ private:
 
 	bool IsVertex(LoopPosition pos) const { return pos.y % 2 == 0 && pos.x % 2 == 0; }
 	bool IsEdge(LoopPosition pos) const { return pos.y % 2 != pos.x % 2; }
-	bool IsPositionOnField(LoopPosition pos) const { return 0 <= pos.y && pos.y <= 2 * height_ && 0 <= pos.x && pos.x <= 2 * width_; }
 
 	unsigned int Id(Y y, X x) const { return int(y) * (2 * int(width_) + 1) + int(x); }
 	unsigned int Id(LoopPosition pos) const { return int(pos.y) * (2 * int(width_) + 1) + int(pos.x); }
