@@ -77,4 +77,10 @@ typedef position_base<position_Position_t> LoopPosition;
 struct position_CellPosition_t {};
 typedef position_base<position_CellPosition_t> CellPosition;
 
+const Direction k4Neighborhood[] = {
+	Direction(Y(-1), X(0)),
+	Direction(Y(0), X(-1)),
+	Direction(Y(1), X(0)),
+	Direction(Y(0), X(1))
+};
 }
