@@ -13,8 +13,8 @@ namespace slitherlink
 class Evaluator
 {
 public:
-	const double kScoreImpossible = -1.0;
-	const double kScoreInconsistent = -2.0;
+	static const double kScoreImpossible;
+	static const double kScoreInconsistent;
 
 	Evaluator();
 	Evaluator(Problem &problem);
@@ -32,9 +32,9 @@ public:
 
 private:
 	typedef Field::EdgeState EdgeState;
-	const EdgeState kEdgeUndecided = Field::kEdgeUndecided;
-	const EdgeState kEdgeLine = Field::kEdgeLine;
-	const EdgeState kEdgeBlank = Field::kEdgeBlank;
+	static const EdgeState kEdgeUndecided = Field::kEdgeUndecided;
+	static const EdgeState kEdgeLine = Field::kEdgeLine;
+	static const EdgeState kEdgeBlank = Field::kEdgeBlank;
 
 	struct Move
 	{
