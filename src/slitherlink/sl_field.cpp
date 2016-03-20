@@ -17,12 +17,15 @@ Field::Field() : GridLoop<Field>(), field_clue_(), database_(nullptr), method_()
 Field::Field(Y height, X width, Database *database, const Method &met) :
 	GridLoop<Field>(height, width), field_clue_(height, width, kNoClue), database_(database), method_(met)
 {
+	GridLoop<Field>::SetMethod(met.grid_loop_method);
 }
 Field::Field(const Field& other) : GridLoop<Field>(other), field_clue_(other.field_clue_), database_(other.database_), method_(other.method_)
 {
+	GridLoop<Field>::SetMethod(other.method_.grid_loop_method);
 }
 Field::Field(Field&& other) : GridLoop<Field>(other), field_clue_(std::move(other.field_clue_)), database_(other.database_), method_(other.method_)
 {
+	GridLoop<Field>::SetMethod(other.method_.grid_loop_method);
 }
 Field &Field::operator=(const Field& other)
 {
@@ -47,6 +50,7 @@ Field &Field::operator=(Field&& other)
 Field::Field(const Problem& problem, Database *database, const Method &met) :
 	GridLoop<Field>(problem.height(), problem.width()), field_clue_(problem.height(), problem.width(), kNoClue), database_(database), method_(met)
 {
+	GridLoop<Field>::SetMethod(met.grid_loop_method);
 	int cell_count = static_cast<int>(height()) * static_cast<int>(width());
 	auto clue_adder = [this, &problem]() {
 		for (Y y(0); y < height(); ++y) {
