@@ -37,10 +37,8 @@ double Evaluator::EvaluateRun()
 		move_candidates_.clear();
 		EnumerateMoves();
 		if (move_candidates_.size() == 0) {
-			std::cout << field_ << std::endl;
 			return kScoreImpossible;
 		}
-
 		for (Move &m : move_candidates_) {
 			double locality_weight = 0.0;
 			for (LoopPosition pos : m.target_pos) {
@@ -89,7 +87,6 @@ double Evaluator::EvaluateRun()
 
 			field_.DecideEdge(next_move.target_pos[i], next_move.target_state[i]);
 		}
-
 		last_y /= next_move.target_pos.size();
 		last_x /= next_move.target_pos.size();
 	}
@@ -176,7 +173,7 @@ void Evaluator::CheckAvoidCycleRule()
 				}
 			}
 
-			if (n_lines != 1 || line_weight == field_.GetNumberOfDecidedEdges()) continue;
+			if (n_lines != 1 || line_weight == field_.GetNumberOfDecidedLines()) continue;
 
 			for (Direction d : k4Neighborhood) {
 				if (GetEdgeSafe(pos + d) == kEdgeUndecided && field_.GetAnotherEnd(pos, d) == line_destination) {
@@ -215,7 +212,7 @@ void Evaluator::CheckHourglassRule(LoopPosition pos)
 		}
 	}
 
-	if (!is_line_chain || line_weight >= field_.GetNumberOfDecidedEdges()) return;
+	if (!is_line_chain || line_weight >= field_.GetNumberOfDecidedLines()) return;
 
 	for (LoopPosition base : {undecided_target0, undecided_target1}){
 		for (Direction d : k4Neighborhood) {
@@ -261,7 +258,7 @@ void Evaluator::CheckTheoremsAbout3()
 
 					if (GetEdgeSafe(loop_pos + Direction(Y(1), X(0))) == kEdgeUndecided && GetEdgeSafe(loop_pos + Direction(Y(0), X(sgn))) == kEdgeUndecided &&
 						GetEdgeSafe(loop_pos + Direction(Y(1), X(2 * sgn))) == kEdgeUndecided && GetEdgeSafe(loop_pos + Direction(Y(2), X(sgn))) == kEdgeUndecided &&
-						field_.GetNumberOfDecidedEdges() > 4) {
+						field_.GetNumberOfDecidedLines() > 4) {
 						if (field_.GetAnotherEnd(loop_pos + Direction(Y(-1), X(sgn)), Direction(Y(0), X(sgn))) == loop_pos + Direction(Y(1), X(3 * sgn))) {
 							move_candidates_.push_back(Move(loop_pos + Direction(Y(-1), X(2 * sgn)), kEdgeBlank, param_.diagonal_3_avoid_cycle));
 						}
@@ -420,7 +417,7 @@ void Evaluator::CheckLineToClue(CellPosition pos)
 		}
 		if (clue == 3) {
 			if (GetEdgeSafe(in1) == kEdgeLine || GetEdgeSafe(in2) == kEdgeLine) {
-				Move m(param_.line_to_clue[1]);
+				Move m(param_.line_to_clue[3]);
 				if (GetEdgeSafe(in1) == kEdgeLine) m.AddTarget(in2, kEdgeBlank);
 				if (GetEdgeSafe(in2) == kEdgeLine) m.AddTarget(in1, kEdgeBlank);
 				m.AddTarget(loop_pos - d1, kEdgeLine);
