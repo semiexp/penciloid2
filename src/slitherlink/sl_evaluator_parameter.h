@@ -32,6 +32,7 @@ struct EvaluatorParameter
 		line_from_clue[1] = 4.5;
 		line_from_clue[2] = 0.0;
 		line_from_clue[3] = 4.4;
+		almost_line_to_2 = 4.0;
 		diagonal_chain = 3.1;
 		inout_rule = 4.4;
 
@@ -47,6 +48,7 @@ struct EvaluatorParameter
 	double corner_clue[4];
 	double line_to_clue[4];
 	double line_from_clue[4];
+	double almost_line_to_2;
 	double diagonal_chain;
 	double inout_rule;
 

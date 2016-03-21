@@ -66,6 +66,7 @@ private:
 	bool CheckAdjacentLinesRule(CellPosition pos);
 	void CheckCornerCell(CellPosition pos);
 	void CheckLineToClue(CellPosition pos);
+	void CheckAlmostLineTo2(CellPosition pos);
 	void CheckLineFromClue(CellPosition pos);
 	void CheckDiagonalChain(CellPosition pos);
 	void CheckInOutRule();
