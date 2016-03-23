@@ -572,13 +572,10 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 	};
 
 	MiniVector<int, 4> line_dir, undecided_dir;
-	// unsigned int n_line = 0, n_undecided = 0;
 	for (int i = 0; i < 4; ++i) {
 		EdgeState status = GetEdgeSafe(vertex + dirs[i]);
 		if (status == kEdgeLine) line_dir.push_back(i);
 		if (status == kEdgeUndecided) undecided_dir.push_back(i);
-		// if (status == kEdgeLine) ++n_line;
-		// if (status == kEdgeUndecided) ++n_undecided;
 	}
 
 	if (line_dir.size() >= 3) {
