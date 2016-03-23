@@ -621,6 +621,33 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 			Join(vertex, dirs[ld], dirs[cand_dir]);
 		}
 
+		if (undecided_dir.size() == 2 && method_.hourglass_rule1) {
+			// Hourglass rule
+			LoopPosition line_end = GetAnotherEnd(vertex, dirs[line_dir[0]]);
+			LoopPosition undecided_end[] = {
+				GetAnotherEnd(vertex, dirs[undecided_dir[0]]),
+				GetAnotherEnd(vertex, dirs[undecided_dir[1]])
+			};
+
+			int n_line_undecided_end0 = 0;
+			bool is_triangle = false;
+			for (Direction d : dirs) {
+				if (GetEdgeSafe(undecided_end[0] + d) == kEdgeLine) {
+					++n_line_undecided_end0;
+					if (GetAnotherEnd(undecided_end[0], d) == undecided_end[1]) is_triangle = true;
+				}
+			}
+
+			if (!(n_line_undecided_end0 == 1 && is_triangle)) return;
+
+			for (LoopPosition vertex2 : undecided_end) {
+				for (Direction d : dirs) {
+					if (GetEdgeSafe(vertex2 + d) == kEdgeUndecided && GetAnotherEnd(vertex2, d) == line_end && GetChainLength(vertex2, d) < GetNumberOfDecidedEdges()) {
+						DecideEdge(vertex2 + d, kEdgeBlank);
+					}
+				}
+			}
+		}
 		return;
 	}
 

@@ -16,6 +16,7 @@ void RunAllGridLoopTest()
 	GridLoopInspectVertex();
 	GridLoopCopy();
 	GridLoopClosedLoop();
+	GridLoopHourglassRule();
 }
 void GridLoopBasicAccessors()
 {
@@ -115,5 +116,19 @@ void GridLoopClosedLoop()
 	assert(field.IsFullySolved() == true);
 	assert(field.GetEdge(LoopPosition(Y(0), X(5))) == PlainGridLoop::kEdgeBlank);
 }
+void GridLoopHourglassRule()
+{
+	PlainGridLoop field(Y(3), X(3));
+
+	field.DecideEdge(LoopPosition(Y(0), X(1)), PlainGridLoop::kEdgeLine);
+	field.DecideEdge(LoopPosition(Y(0), X(5)), PlainGridLoop::kEdgeBlank);
+	field.DecideEdge(LoopPosition(Y(6), X(5)), PlainGridLoop::kEdgeLine);
+	field.DecideEdge(LoopPosition(Y(2), X(3)), PlainGridLoop::kEdgeLine);
+	field.DecideEdge(LoopPosition(Y(3), X(2)), PlainGridLoop::kEdgeBlank);
+
+	assert(field.IsFullySolved() == false);
+	assert(field.GetEdge(LoopPosition(Y(0), X(3))) == PlainGridLoop::kEdgeBlank);
+}
+
 }
 }

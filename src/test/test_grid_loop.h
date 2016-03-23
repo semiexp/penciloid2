@@ -9,5 +9,6 @@ void GridLoopDecideEdgeBasic();
 void GridLoopInspectVertex();
 void GridLoopCopy();
 void GridLoopClosedLoop();
+void GridLoopHourglassRule();
 }
 }
