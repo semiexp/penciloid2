@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include "type.h"
+#include "mini_vector.h"
 #include "grid_loop_method.h"
 
 namespace penciloid
@@ -570,51 +571,42 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 		Direction(Y(0), X(-1))
 	};
 
-	unsigned int n_line = 0, n_undecided = 0;
+	MiniVector<int, 4> line_dir, undecided_dir;
+	// unsigned int n_line = 0, n_undecided = 0;
 	for (int i = 0; i < 4; ++i) {
 		EdgeState status = GetEdgeSafe(vertex + dirs[i]);
-		if (status == kEdgeLine) ++n_line;
-		if (status == kEdgeUndecided) ++n_undecided;
+		if (status == kEdgeLine) line_dir.push_back(i);
+		if (status == kEdgeUndecided) undecided_dir.push_back(i);
+		// if (status == kEdgeLine) ++n_line;
+		// if (status == kEdgeUndecided) ++n_undecided;
 	}
 
-	if (n_line >= 3) {
+	if (line_dir.size() >= 3) {
 		SetInconsistent();
 		return;
 	}
 
-	if (n_line == 2) {
+	if (line_dir.size() == 2) {
 		int line_1 = -1, line_2 = -1;
 
-		for (int i = 0; i < 4; ++i) {
-			if (GetEdgeSafe(vertex + dirs[i]) == kEdgeUndecided && method_.avoid_three_lines) {
-				DecideEdge(vertex + dirs[i], kEdgeBlank);
-			}
-
-			if (GetEdgeSafe(vertex + dirs[i]) == kEdgeLine) {
-				if (line_1 == -1) line_1 = i;
-				else line_2 = i;
+		if (method_.avoid_three_lines) {
+			for (int d : undecided_dir) {
+				DecideEdge(vertex + dirs[d], kEdgeBlank);
 			}
 		}
 
-		Join(vertex, dirs[line_1], dirs[line_2]);
+		Join(vertex, dirs[line_dir[0]], dirs[line_dir[1]]);
 		return;
 	}
 
-	if (n_line == 1) {
-		EdgeCount line_size = 0;
-		LoopPosition line_another_end(Y(-1), X(-1));
-		int line_dir = 0;
-		for (int i = 0; i < 4; ++i) {
-			if (GetEdgeSafe(vertex + dirs[i]) == kEdgeLine) {
-				line_size = GetChainLength(vertex, dirs[i]);
-				line_another_end = GetAnotherEnd(vertex, dirs[i]);
-				line_dir = i;
-			}
-		}
+	if (line_dir.size() == 1) {
+		int ld = line_dir[0];
+		EdgeCount line_size = GetChainLength(vertex, dirs[ld]);
+		LoopPosition line_another_end = GetAnotherEnd(vertex, dirs[ld]);
 
 		int cand_dir = -1;
-		for (int i = 0; i < 4; ++i) {
-			if (GetEdgeSafe(vertex + dirs[i]) == kEdgeUndecided && IsEndOfAChain(vertex + dirs[i]) && IsEndOfAChainVertex(Id(vertex + dirs[i]), Id(vertex))) {
+		for (int i : undecided_dir) {
+			if (IsEndOfAChain(vertex + dirs[i]) && IsEndOfAChainVertex(Id(vertex + dirs[i]), Id(vertex))) {
 				if (line_size == decided_lines_ || line_another_end != GetAnotherEnd(vertex, dirs[i]) || !method_.avoid_cycle) {
 					LoopPosition pos2 = GetAnotherEnd(vertex, dirs[i]);
 					if (cand_dir == -1) cand_dir = i;
@@ -629,34 +621,17 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 		if (cand_dir == -1) {
 			SetInconsistent();
 		} else if (cand_dir != -2) {
-			Join(vertex, dirs[line_dir], dirs[cand_dir]);
+			Join(vertex, dirs[ld], dirs[cand_dir]);
 		}
 
 		return;
 	}
 
-	if (n_line == 0) {
-		if (n_undecided == 2) {
-			int undecided_1 = -1, undecided_2 = -1;
-
-			for (int i = 0; i < 4; ++i) {
-				if (GetEdgeSafe(vertex + dirs[i]) == kEdgeUndecided) {
-					if (undecided_1 == -1) undecided_1 = i;
-					else undecided_2 = i;
-				}
-			}
-
-			Join(vertex, dirs[undecided_1], dirs[undecided_2]);
-		} else if (n_undecided == 1) {
-			int undecided_1 = -1;
-
-			for (int i = 0; i < 4; ++i) {
-				if (GetEdgeSafe(vertex + dirs[i]) == kEdgeUndecided) {
-					undecided_1 = i;
-				}
-			}
-
-			DecideEdge(vertex + dirs[undecided_1], kEdgeBlank);
+	if (line_dir.size() == 0) {
+		if (undecided_dir.size() == 2) {
+			Join(vertex, dirs[undecided_dir[0]], dirs[undecided_dir[1]]);
+		} else if (undecided_dir.size() == 1) {
+			DecideEdge(vertex + dirs[undecided_dir[0]], kEdgeBlank);
 		}
 	}
 }
