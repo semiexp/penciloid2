@@ -118,6 +118,17 @@ void GridLoopClosedLoop()
 }
 void GridLoopHourglassRule()
 {
+	{
+		PlainGridLoop field(Y(3), X(3));
+
+		field.DecideEdge(LoopPosition(Y(0), X(1)), PlainGridLoop::kEdgeLine);
+		field.DecideEdge(LoopPosition(Y(0), X(5)), PlainGridLoop::kEdgeBlank);
+		field.DecideEdge(LoopPosition(Y(2), X(3)), PlainGridLoop::kEdgeLine);
+		field.DecideEdge(LoopPosition(Y(3), X(2)), PlainGridLoop::kEdgeBlank);
+
+		assert(field.GetEdge(LoopPosition(Y(0), X(3))) == PlainGridLoop::kEdgeUndecided);
+	}
+
 	for (bool use_hourglass_rule : {false, true}) {
 		GridLoopMethod method;
 		method.hourglass_rule1 = use_hourglass_rule;
