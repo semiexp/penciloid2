@@ -118,16 +118,22 @@ void GridLoopClosedLoop()
 }
 void GridLoopHourglassRule()
 {
-	PlainGridLoop field(Y(3), X(3));
+	for (bool use_hourglass_rule : {false, true}) {
+		GridLoopMethod method;
+		method.hourglass_rule1 = use_hourglass_rule;
+		PlainGridLoop field(Y(3), X(3));
+		field.SetMethod(method);
 
-	field.DecideEdge(LoopPosition(Y(0), X(1)), PlainGridLoop::kEdgeLine);
-	field.DecideEdge(LoopPosition(Y(0), X(5)), PlainGridLoop::kEdgeBlank);
-	field.DecideEdge(LoopPosition(Y(6), X(5)), PlainGridLoop::kEdgeLine);
-	field.DecideEdge(LoopPosition(Y(2), X(3)), PlainGridLoop::kEdgeLine);
-	field.DecideEdge(LoopPosition(Y(3), X(2)), PlainGridLoop::kEdgeBlank);
+		field.DecideEdge(LoopPosition(Y(0), X(1)), PlainGridLoop::kEdgeLine);
+		field.DecideEdge(LoopPosition(Y(0), X(5)), PlainGridLoop::kEdgeBlank);
+		field.DecideEdge(LoopPosition(Y(6), X(5)), PlainGridLoop::kEdgeLine);
+		field.DecideEdge(LoopPosition(Y(2), X(3)), PlainGridLoop::kEdgeLine);
+		field.DecideEdge(LoopPosition(Y(3), X(2)), PlainGridLoop::kEdgeBlank);
 
-	assert(field.IsFullySolved() == false);
-	assert(field.GetEdge(LoopPosition(Y(0), X(3))) == PlainGridLoop::kEdgeBlank);
+		assert(field.IsFullySolved() == false);
+		auto expected = use_hourglass_rule ? PlainGridLoop::kEdgeBlank : PlainGridLoop::kEdgeUndecided;
+		assert(field.GetEdge(LoopPosition(Y(0), X(3))) == expected);
+	}
 }
 
 }
