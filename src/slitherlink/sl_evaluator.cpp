@@ -464,6 +464,7 @@ void Evaluator::CheckAlmostLineTo2(CellPosition pos)
 			if (GetEdgeSafe(in2) == kEdgeLine) m.AddTarget(in1, kEdgeBlank);
 			if (GetEdgeSafe(out1) == kEdgeLine) m.AddTarget(out2, kEdgeBlank);
 			if (GetEdgeSafe(out2) == kEdgeLine) m.AddTarget(out1, kEdgeBlank);
+			move_candidates_.push_back(m);
 		}
 	}
 }
