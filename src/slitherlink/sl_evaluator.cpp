@@ -37,6 +37,7 @@ double Evaluator::EvaluateRun()
 		move_candidates_.clear();
 		EnumerateMoves();
 		if (move_candidates_.size() == 0) {
+			std::cout << field_ << std::endl;
 			return kScoreImpossible;
 		}
 		for (Move &m : move_candidates_) {
@@ -345,6 +346,12 @@ void Evaluator::CheckCornerCell(CellPosition pos)
 					m1.AddTarget(loop_pos - d1, kEdgeLine);
 					m1.AddTarget(loop_pos - d2, kEdgeLine);
 				}
+				if (GetEdgeSafe(loop_pos - d1 * 2 - d2) == kEdgeBlank ||
+					GetEdgeSafe(loop_pos - d2 * 2 - d1) == kEdgeBlank) {
+					m1.AddTarget(loop_pos - d1 * 2 - d2, kEdgeBlank);
+					m1.AddTarget(loop_pos - d2 * 2 - d1, kEdgeBlank);
+				}
+
 				move_candidates_.push_back(m1);
 
 				Move m2(param_.corner_clue[2]);
