@@ -524,7 +524,7 @@ void GridLoop<T>::Join(LoopPosition vertex, Direction dir1, Direction dir2)
 
 	if (end1_vertex == end2_vertex) {
 		if (field_[edge1_id].edge_status == kEdgeUndecided) {
-			if (decided_lines_ != 0) {
+			if (decided_lines_ != 0 && method_.eliminate_closed_chain) {
 				DecideChain(edge1_id, kEdgeBlank);
 				DecideChain(edge2_id, kEdgeBlank);
 				CheckNeighborhoodOfChain(edge1_id);
@@ -604,7 +604,7 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 		int cand_dir = -1;
 		for (int i : undecided_dir) {
 			if (IsEndOfAChain(vertex + dirs[i]) && IsEndOfAChainVertex(Id(vertex + dirs[i]), Id(vertex))) {
-				if (line_size == decided_lines_ || line_another_end != GetAnotherEnd(vertex, dirs[i]) || !method_.avoid_cycle) {
+				if (line_size == decided_lines_ || line_another_end != GetAnotherEnd(vertex, dirs[i]) || !method_.avoid_line_cycle) {
 					LoopPosition pos2 = GetAnotherEnd(vertex, dirs[i]);
 					if (cand_dir == -1) cand_dir = i;
 					else cand_dir = -2;
