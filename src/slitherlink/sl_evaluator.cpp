@@ -37,26 +37,32 @@ double Evaluator::EvaluateRun()
 		move_candidates_.clear();
 		EnumerateMoves();
 		if (move_candidates_.size() == 0) {
-			std::cout << field_ << std::endl;
+		//	std::cout << field_ << std::endl;
 			return kScoreImpossible;
 		}
+
+		std::vector<ScoredMove> scored_candidates;
 		for (Move &m : move_candidates_) {
+			scored_candidates.push_back(ScoredMove(GetScoreOfMethod(m.method), m));
+		}
+
+		for (ScoredMove &m : scored_candidates) {
 			double locality_weight = 0.0;
-			for (LoopPosition pos : m.target_pos) {
+			for (LoopPosition pos : m.move.target_pos) {
 				locality_weight += std::min(1.0, ((abs(last_x - pos.x) + abs(last_y - pos.y)) - 1) / 4.0);
 			}
-			locality_weight = pow(param_.locality_base, locality_weight / m.target_pos.size() - 1);
-			m.difficulty *= locality_weight;
+			locality_weight = pow(param_.locality_base, locality_weight / m.move.target_pos.size() - 1);
+			m.score *= locality_weight;
 		}
 
 		double current_score = 0.0;
 		bool is_score_zero = false;
-		for (Move &m : move_candidates_) {
-			if (m.difficulty < 1e-6) {
+		for (ScoredMove &m : scored_candidates) {
+			if (m.score < 1e-6) {
 				is_score_zero = true;
 				break;
 			} else {
-				current_score += pow(m.difficulty / m.target_pos.size(), -param_.alternative_dimension);
+				current_score += pow(m.score / m.move.target_pos.size(), -param_.alternative_dimension);
 			}
 		}
 
@@ -69,8 +75,8 @@ double Evaluator::EvaluateRun()
 		int easiest_move_index = 0;
 		double easiest_move_score = 1e10;
 
-		for (int i = 0; i < move_candidates_.size(); ++i) {
-			double score_tmp = move_candidates_[i].difficulty / move_candidates_[i].target_pos.size();
+		for (int i = 0; i < scored_candidates.size(); ++i) {
+			double score_tmp = scored_candidates[i].score / scored_candidates[i].move.target_pos.size();
 
 			if (easiest_move_score > score_tmp) {
 				easiest_move_score = score_tmp;
@@ -78,7 +84,7 @@ double Evaluator::EvaluateRun()
 			}
 		}
 
-		Move &next_move = move_candidates_[easiest_move_index];
+		Move &next_move = scored_candidates[easiest_move_index].move;
 		score += current_score * next_move.target_pos.size();
 
 		last_y = last_x = 0;
@@ -127,7 +133,7 @@ void Evaluator::EliminateDoneMoves()
 	std::vector<Move> new_move_candidates;
 	
 	for (Move &move : move_candidates_) {
-		Move new_move(move.difficulty);
+		Move new_move(move.method);
 		for (int i = 0; i < move.target_pos.size(); ++i) {
 			if (GetEdgeSafe(move.target_pos[i]) == kEdgeUndecided) {
 				new_move.target_pos.push_back(move.target_pos[i]);
@@ -138,6 +144,34 @@ void Evaluator::EliminateDoneMoves()
 	}
 
 	move_candidates_.swap(new_move_candidates);
+}
+double Evaluator::GetScoreOfMethod(AppliedMethod method)
+{
+	switch (method)
+	{
+	case kTwoLines: return param_.two_lines;
+	case kAvoidCycle: return param_.avoid_cycle;
+	case kHourglassRule: return param_.hourglass_rule;
+	case kAdjacentLines0: return param_.adjacent_lines[0];
+	case kAdjacentLines1: return param_.adjacent_lines[1];
+	case kAdjacentLines2: return param_.adjacent_lines[2];
+	case kAdjacentLines3: return param_.adjacent_lines[3];
+	case kAdjacent3s: return param_.adjacent_3;
+	case kDiagonal3s: return param_.diagonal_3;
+	case kDiagonal3sAvoidCycle: return param_.diagonal_3_avoid_cycle;
+	case kCornerClue1: return param_.corner_clue[1];
+	case kCornerClue2: return param_.corner_clue[2];
+	case kCornerClue3: return param_.corner_clue[3];
+	case kLineToClue1: return param_.line_to_clue[1];
+	case kLineToClue2: return param_.line_to_clue[2];
+	case kLineToClue3: return param_.line_to_clue[3];
+	case kLineFromClue1: return param_.line_from_clue[1];
+	case kLineFromClue3: return param_.line_from_clue[3];
+	case kAlmostLineTo2: return param_.almost_line_to_2;
+	case kDiagonalChain: return param_.diagonal_chain;
+	case kInoutRule: return param_.inout_rule;
+	}
+	return -1.0;
 }
 void Evaluator::CheckTwoLinesRule()
 {
@@ -151,7 +185,7 @@ void Evaluator::CheckTwoLinesRule()
 			if (n_lines == 2) {
 				for (Direction d : k4Neighborhood) {
 					if (GetEdgeSafe(LoopPosition(y, x) + d) == kEdgeUndecided) {
-						move_candidates_.push_back(Move(LoopPosition(y, x) + d, kEdgeBlank, param_.two_lines));
+						move_candidates_.push_back(Move(LoopPosition(y, x) + d, kEdgeBlank, kTwoLines));
 					}
 				}
 			}
@@ -179,7 +213,7 @@ void Evaluator::CheckAvoidCycleRule()
 
 			for (Direction d : k4Neighborhood) {
 				if (GetEdgeSafe(pos + d) == kEdgeUndecided && field_.GetAnotherEnd(pos, d) == line_destination) {
-					move_candidates_.push_back(Move(pos + d, kEdgeBlank, param_.avoid_cycle));
+					move_candidates_.push_back(Move(pos + d, kEdgeBlank, kAvoidCycle));
 				}
 			}
 		}
@@ -219,7 +253,7 @@ void Evaluator::CheckHourglassRule(LoopPosition pos)
 	for (LoopPosition base : {undecided_target0, undecided_target1}){
 		for (Direction d : k4Neighborhood) {
 			if (GetEdgeSafe(base + d) == kEdgeUndecided && field_.GetAnotherEnd(base, d) == line_companion) {
-				move_candidates_.push_back(Move(base + d, kEdgeBlank, param_.hourglass_rule));
+				move_candidates_.push_back(Move(base + d, kEdgeBlank, kHourglassRule));
 			}
 		}
 	}
@@ -232,7 +266,7 @@ void Evaluator::CheckTheoremsAbout3()
 			LoopPosition loop_pos(2 * y + 1, 2 * x + 1);
 
 			if (y != height() - 1 && field_.GetClue(CellPosition(y + 1, x)) == 3) {
-				Move m(param_.adjacent_3);
+				Move m(kAdjacent3s);
 				m.AddTarget(loop_pos + Direction(Y(-1), X(0)), kEdgeLine);
 				m.AddTarget(loop_pos + Direction(Y(1), X(0)), kEdgeLine);
 				m.AddTarget(loop_pos + Direction(Y(3), X(0)), kEdgeLine);
@@ -241,7 +275,7 @@ void Evaluator::CheckTheoremsAbout3()
 				move_candidates_.push_back(m);
 			}
 			if (x != width() - 1 && field_.GetClue(CellPosition(y, x + 1)) == 3) {
-				Move m(param_.adjacent_3);
+				Move m(kAdjacent3s);
 				m.AddTarget(loop_pos + Direction(Y(0), X(-1)), kEdgeLine);
 				m.AddTarget(loop_pos + Direction(Y(0), X(1)), kEdgeLine);
 				m.AddTarget(loop_pos + Direction(Y(0), X(3)), kEdgeLine);
@@ -251,7 +285,7 @@ void Evaluator::CheckTheoremsAbout3()
 			}
 			for (int sgn : {-1, 1}) {
 				if (y != height() - 1 && 0 <= x + sgn && x + sgn < width() && field_.GetClue(CellPosition(y + 1, x + sgn)) == 3) {
-					Move m(param_.diagonal_3);
+					Move m(kDiagonal3s);
 					m.AddTarget(loop_pos + Direction(Y(0), X(-sgn)), kEdgeLine);
 					m.AddTarget(loop_pos + Direction(Y(-1), X(0)), kEdgeLine);
 					m.AddTarget(loop_pos + Direction(Y(2), X(3 * sgn)), kEdgeLine);
@@ -262,10 +296,10 @@ void Evaluator::CheckTheoremsAbout3()
 						GetEdgeSafe(loop_pos + Direction(Y(1), X(2 * sgn))) == kEdgeUndecided && GetEdgeSafe(loop_pos + Direction(Y(2), X(sgn))) == kEdgeUndecided &&
 						field_.GetNumberOfDecidedLines() > 4) {
 						if (field_.GetAnotherEnd(loop_pos + Direction(Y(-1), X(sgn)), Direction(Y(0), X(sgn))) == loop_pos + Direction(Y(1), X(3 * sgn))) {
-							move_candidates_.push_back(Move(loop_pos + Direction(Y(-1), X(2 * sgn)), kEdgeBlank, param_.diagonal_3_avoid_cycle));
+							move_candidates_.push_back(Move(loop_pos + Direction(Y(-1), X(2 * sgn)), kEdgeBlank, kDiagonal3sAvoidCycle));
 						}
 						if (field_.GetAnotherEnd(loop_pos + Direction(Y(1), X(-sgn)), Direction(Y(1), X(0))) == loop_pos + Direction(Y(3), X(sgn))) {
-							move_candidates_.push_back(Move(loop_pos + Direction(Y(2), X(-sgn)), kEdgeBlank, param_.diagonal_3_avoid_cycle));
+							move_candidates_.push_back(Move(loop_pos + Direction(Y(2), X(-sgn)), kEdgeBlank, kDiagonal3sAvoidCycle));
 						}
 					}
 				}
@@ -287,8 +321,13 @@ bool Evaluator::CheckAdjacentLinesRule(CellPosition pos)
 		else if (state == kEdgeBlank) ++n_blanks;
 	}
 
+	AppliedMethod method =
+		clue == 0 ? kAdjacentLines0 :
+		clue == 1 ? kAdjacentLines1 :
+		clue == 2 ? kAdjacentLines2 : kAdjacentLines3;
+
 	if (n_lines == clue) {
-		Move m(param_.adjacent_lines[clue]);
+		Move m(method);
 		for (Direction d : k4Neighborhood) {
 			if (GetEdgeSafe(loop_pos + d) == kEdgeUndecided) {
 				m.AddTarget(loop_pos + d, kEdgeBlank);
@@ -297,7 +336,7 @@ bool Evaluator::CheckAdjacentLinesRule(CellPosition pos)
 		move_candidates_.push_back(m);
 	}
 	if (4 - n_blanks == clue) {
-		Move m(param_.adjacent_lines[clue]);
+		Move m(method);
 		for (Direction d : k4Neighborhood) {
 			if (GetEdgeSafe(loop_pos + d) == kEdgeUndecided) {
 				m.AddTarget(loop_pos + d, kEdgeLine);
@@ -319,13 +358,13 @@ void Evaluator::CheckCornerCell(CellPosition pos)
 
 		if (GetEdgeSafe(loop_pos + d1 * 2 + d2) == kEdgeBlank && GetEdgeSafe(loop_pos + d2 * 2 + d1) == kEdgeBlank) {
 			if (clue == 1) {
-				Move m(param_.corner_clue[1]);
+				Move m(kCornerClue1);
 				m.AddTarget(loop_pos + d1, kEdgeBlank);
 				m.AddTarget(loop_pos + d2, kEdgeBlank);
 				move_candidates_.push_back(m);
 			}
 			if (clue == 2) {
-				Move m1(param_.corner_clue[2]);
+				Move m1(kCornerClue2);
 				if (GetEdgeSafe(loop_pos + d1) == kEdgeLine ||
 					GetEdgeSafe(loop_pos + d2) == kEdgeLine ||
 					GetEdgeSafe(loop_pos - d1) == kEdgeBlank ||
@@ -354,7 +393,7 @@ void Evaluator::CheckCornerCell(CellPosition pos)
 
 				move_candidates_.push_back(m1);
 
-				Move m2(param_.corner_clue[2]);
+				Move m2(kCornerClue2);
 				for (int sgn : {-1, 1}) {
 					if (GetEdgeSafe(loop_pos + sgn * (d1 * 2 - d2)) == kEdgeBlank) {
 						m2.AddTarget(loop_pos + sgn * (d1 - d2 * 2), kEdgeLine);
@@ -372,7 +411,7 @@ void Evaluator::CheckCornerCell(CellPosition pos)
 				move_candidates_.push_back(m2);
 			}
 			if (clue == 3) {
-				Move m(param_.corner_clue[3]);
+				Move m(kCornerClue3);
 				m.AddTarget(loop_pos + d1, kEdgeLine);
 				m.AddTarget(loop_pos + d2, kEdgeLine);
 				move_candidates_.push_back(m);
@@ -394,7 +433,7 @@ void Evaluator::CheckLineToClue(CellPosition pos)
 		if (clue == 1) {
 			if ((GetEdgeSafe(in1) == kEdgeLine && GetEdgeSafe(in2) == kEdgeBlank) ||
 				(GetEdgeSafe(in1) == kEdgeBlank && GetEdgeSafe(in2) == kEdgeLine)) {
-				Move m(param_.line_to_clue[1]);
+				Move m(kLineToClue1);
 				m.AddTarget(loop_pos - d1, kEdgeBlank);
 				m.AddTarget(loop_pos - d2, kEdgeBlank);
 				move_candidates_.push_back(m);
@@ -410,7 +449,7 @@ void Evaluator::CheckLineToClue(CellPosition pos)
 
 			if (!is_applicable) continue;
 
-			Move m(param_.line_to_clue[2]);
+			Move m(kLineToClue2);
 
 			if (GetEdgeSafe(loop_pos - d1) == kEdgeLine) m.AddTarget(loop_pos - d2, kEdgeBlank);
 			if (GetEdgeSafe(loop_pos - d1) == kEdgeBlank) m.AddTarget(loop_pos - d2, kEdgeLine);
@@ -425,7 +464,7 @@ void Evaluator::CheckLineToClue(CellPosition pos)
 		}
 		if (clue == 3) {
 			if (GetEdgeSafe(in1) == kEdgeLine || GetEdgeSafe(in2) == kEdgeLine) {
-				Move m(param_.line_to_clue[3]);
+				Move m(kLineToClue3);
 				if (GetEdgeSafe(in1) == kEdgeLine) m.AddTarget(in2, kEdgeBlank);
 				if (GetEdgeSafe(in2) == kEdgeLine) m.AddTarget(in1, kEdgeBlank);
 				m.AddTarget(loop_pos - d1, kEdgeLine);
@@ -449,7 +488,7 @@ void Evaluator::CheckAlmostLineTo2(CellPosition pos)
 
 		if ((GetEdgeSafe(in1) == kEdgeLine || GetEdgeSafe(in2) == kEdgeLine) &&
 			(GetEdgeSafe(loop_pos - d1) == kEdgeBlank || GetEdgeSafe(loop_pos - d2) == kEdgeBlank)) {
-			Move m(param_.almost_line_to_2);
+			Move m(kAlmostLineTo2);
 			if (GetEdgeSafe(in1) == kEdgeLine) m.AddTarget(in2, kEdgeBlank);
 			if (GetEdgeSafe(in2) == kEdgeLine) m.AddTarget(in1, kEdgeBlank);
 			if (GetEdgeSafe(loop_pos - d1) == kEdgeBlank) m.AddTarget(loop_pos - d2, kEdgeLine);
@@ -459,7 +498,7 @@ void Evaluator::CheckAlmostLineTo2(CellPosition pos)
 		if (i < 2 &&
 			(GetEdgeSafe(in1) == kEdgeLine || GetEdgeSafe(in2) == kEdgeLine) &&
 			(GetEdgeSafe(out1) == kEdgeLine || GetEdgeSafe(out2) == kEdgeLine)) {
-			Move m(param_.almost_line_to_2);
+			Move m(kAlmostLineTo2);
 			if (GetEdgeSafe(in1) == kEdgeLine) m.AddTarget(in2, kEdgeBlank);
 			if (GetEdgeSafe(in2) == kEdgeLine) m.AddTarget(in1, kEdgeBlank);
 			if (GetEdgeSafe(out1) == kEdgeLine) m.AddTarget(out2, kEdgeBlank);
@@ -482,7 +521,7 @@ void Evaluator::CheckLineFromClue(CellPosition pos)
 		if (clue == 1 || clue == 3) {
 			EdgeState state_target = (clue == 1 ? kEdgeBlank : kEdgeLine);
 			if (GetEdgeSafe(loop_pos - d1) == state_target && GetEdgeSafe(loop_pos - d2) == state_target) {
-				Move m(param_.line_from_clue[clue]);
+				Move m(clue == 1 ? kLineFromClue1 : kLineFromClue3);
 
 				if (GetEdgeSafe(in1) == kEdgeLine) m.AddTarget(in2, kEdgeBlank);
 				if (GetEdgeSafe(in1) == kEdgeBlank) m.AddTarget(in2, kEdgeLine);
@@ -521,7 +560,7 @@ void Evaluator::CheckDiagonalChain(CellPosition pos)
 			Clue clue = field_.GetClue(cell_pos);
 
 			if (clue == 2) {
-				Move m(param_.diagonal_chain);
+				Move m(kDiagonalChain);
 				if (GetEdgeSafe(loop_pos + dy) != kEdgeUndecided) {
 					m.AddTarget(loop_pos + dx, ((GetEdgeSafe(loop_pos + dy) == kEdgeLine) ^ (cnt == 1)) ? kEdgeLine : kEdgeBlank);
 				}
@@ -541,7 +580,7 @@ void Evaluator::CheckDiagonalChain(CellPosition pos)
 				continue;
 			}
 			if (clue == 1 || clue == 3) {
-				Move m(param_.diagonal_chain);
+				Move m(kDiagonalChain);
 				EdgeState state = (clue == 1 ? kEdgeBlank : kEdgeLine);
 				if (cnt == 0) {
 					m.AddTarget(loop_pos - dy, state);
@@ -602,10 +641,10 @@ void Evaluator::CheckInOutRule()
 
 			if (uf.Root(cell1 * 2) == uf.Root(cell2 * 2)) {
 				// TODO: avoid duplicated addition
-				move_candidates_.push_back(Move(LoopPosition(y, x), kEdgeBlank, param_.inout_rule));
+				move_candidates_.push_back(Move(LoopPosition(y, x), kEdgeBlank, kInoutRule));
 			}
 			if (uf.Root(cell1 * 2) == uf.Root(cell2 * 2 + 1)) {
-				move_candidates_.push_back(Move(LoopPosition(y, x), kEdgeLine, param_.inout_rule));
+				move_candidates_.push_back(Move(LoopPosition(y, x), kEdgeLine, kInoutRule));
 			}
 		}
 	}

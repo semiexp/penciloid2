@@ -36,10 +36,35 @@ private:
 	static const EdgeState kEdgeLine = Field::kEdgeLine;
 	static const EdgeState kEdgeBlank = Field::kEdgeBlank;
 
+	enum AppliedMethod
+	{
+		kTwoLines,
+		kAvoidCycle,
+		kHourglassRule,
+		kAdjacentLines0,
+		kAdjacentLines1,
+		kAdjacentLines2,
+		kAdjacentLines3,
+		kAdjacent3s,
+		kDiagonal3s,
+		kDiagonal3sAvoidCycle,
+		kCornerClue1,
+		kCornerClue2,
+		kCornerClue3,
+		kLineToClue1,
+		kLineToClue2,
+		kLineToClue3,
+		kLineFromClue1,
+		kLineFromClue3,
+		kAlmostLineTo2,
+		kDiagonalChain,
+		kInoutRule
+	};
+
 	struct Move
 	{
-		Move(double difficulty = 0.0) : difficulty(difficulty), target_pos(), target_state() {}
-		Move(LoopPosition pos, EdgeState state, double difficulty) : difficulty(difficulty) {
+		Move(AppliedMethod method) : method(method), target_pos(), target_state() {}
+		Move(LoopPosition pos, EdgeState state, AppliedMethod method) : method(method) {
 			target_pos.push_back(pos);
 			target_state.push_back(state);
 		}
@@ -47,9 +72,16 @@ private:
 			target_pos.push_back(pos);
 			target_state.push_back(st);
 		}
-		double difficulty;
+		AppliedMethod method;
 		std::vector<LoopPosition> target_pos;
 		std::vector<EdgeState> target_state;
+	};
+
+	struct ScoredMove
+	{
+		ScoredMove(double score, Move move) : score(score), move(move) {}
+		double score;
+		Move move;
 	};
 
 	Y height() { return field_.height(); }
@@ -58,6 +90,7 @@ private:
 
 	void EnumerateMoves();
 	void EliminateDoneMoves();
+	double GetScoreOfMethod(AppliedMethod method);
 
 	void CheckAvoidCycleRule();
 	void CheckHourglassRule(LoopPosition pos);
