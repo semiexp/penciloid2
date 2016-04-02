@@ -707,7 +707,7 @@ class PlainGridLoop : public GridLoop < PlainGridLoop >
 public:
 	PlainGridLoop() : GridLoop<PlainGridLoop>() {}
 	PlainGridLoop(Y height, X width) : GridLoop<PlainGridLoop>(height, width) {}
-	PlainGridLoop(const GridLoop &other) : GridLoop<PlainGridLoop>(other) {}
+	PlainGridLoop(const PlainGridLoop &other) : GridLoop<PlainGridLoop>(other) {}
 	PlainGridLoop(PlainGridLoop &&other) : GridLoop<PlainGridLoop>(other) {}
 };
 }
