@@ -24,7 +24,7 @@ Evaluator::Evaluator(Problem &problem)// : field_(), param_(), move_candidates_(
 Evaluator::~Evaluator()
 {
 }
-double Evaluator::EvaluateRun()
+double Evaluator::Evaluate()
 {
 	double score = 0.0;
 	double last_y = 1e8, last_x = 1e8;

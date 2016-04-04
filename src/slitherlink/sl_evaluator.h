@@ -28,7 +28,7 @@ public:
 	void SetParameter(const EvaluatorParameter &param) { param_ = param; }
 	EvaluatorParameter GetParameter() const { return param_; }
 
-	double EvaluateRun();
+	double Evaluate();
 
 private:
 	typedef Field::EdgeState EdgeState;
