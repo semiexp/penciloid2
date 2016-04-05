@@ -47,6 +47,8 @@ double Evaluator::Evaluate()
 		}
 
 		for (ScoredMove &m : scored_candidates) {
+			// These methods don't involve locality
+			if (m.move.method == kAdjacent3s || m.move.method == kDiagonal3s || m.move.method == kAdjacentLines0) continue;
 			double locality_weight = 0.0;
 			for (LoopPosition pos : m.move.target_pos) {
 				locality_weight += std::min(1.0, ((abs(last_x - pos.x) + abs(last_y - pos.y)) - 1) / 4.0);
