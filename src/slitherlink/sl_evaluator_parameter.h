@@ -10,7 +10,7 @@ public:
 	static const int kNumberOfEffectiveParameters = 22;
 	
 	EvaluatorParameter();
-	double &operator[](int i) { *(at(i)); }
+	double &operator[](int i) { return *(at(i)); }
 
 	double two_lines;
 	double avoid_cycle, hourglass_rule;
