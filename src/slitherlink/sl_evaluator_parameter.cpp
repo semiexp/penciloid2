@@ -8,34 +8,34 @@ EvaluatorParameter::EvaluatorParameter()
 {
 	two_lines = 0.0;
 	avoid_cycle = 1.2;
-	hourglass_rule = 3.2;
+	hourglass_rule = 3.1;
 
-	adjacent_lines[0] = 1.0;
+	adjacent_lines[0] = 1.3;
 	adjacent_lines[1] = 1.4;
 	adjacent_lines[2] = 1.2;
-	adjacent_lines[3] = 1.2;
-	adjacent_3 = 2.7;
-	diagonal_3 = 2.0;
-	diagonal_3_avoid_cycle = 3.0;
+	adjacent_lines[3] = 1.0;
+	adjacent_3 = 2.5;
+	diagonal_3 = 3.3;
+	diagonal_3_avoid_cycle = 1.6;
 
 	corner_clue[0] = 0.0;
-	corner_clue[1] = 3.2;
-	corner_clue[2] = 3.3;
-	corner_clue[3] = 1.4;
+	corner_clue[1] = 3.1;
+	corner_clue[2] = 4.0;
+	corner_clue[3] = 1.3;
 	line_to_clue[0] = 0.0;
-	line_to_clue[1] = 2.5;
-	line_to_clue[2] = 1.2;
-	line_to_clue[3] = 1.3;
+	line_to_clue[1] = 2.4;
+	line_to_clue[2] = 1.9;
+	line_to_clue[3] = 1.4;
 	line_from_clue[0] = 0.0;
-	line_from_clue[1] = 4.5;
+	line_from_clue[1] = 4.9;
 	line_from_clue[2] = 0.0;
-	line_from_clue[3] = 4.4;
-	almost_line_to_2 = 4.0;
-	diagonal_chain = 3.1;
-	inout_rule = 4.4;
+	line_from_clue[3] = 3.9;
+	almost_line_to_2 = 3.3;
+	diagonal_chain = 3.0;
+	inout_rule = 4.8;
 
-	locality_base = 2.4;
-	alternative_dimension = 3.0;
+	locality_base = 2.3;
+	alternative_dimension = 2.9;
 }
 double* EvaluatorParameter::at(int i)
 {
