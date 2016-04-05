@@ -8,6 +8,7 @@
 #include <random>
 #include <iostream>
 #include <string>
+#include <ctime>
 
 namespace
 {
@@ -84,7 +85,7 @@ void EvaluatorTrainer::LoadProblemSetFromFile(std::istream &is)
 }
 void EvaluatorTrainer::Train()
 {
-	double temperature = 0.05;
+	double temperature = 0.001;
 	double technique_step = 0.1;
 	double technique_min = 1.0;
 	double technique_max = 5.0;
@@ -94,9 +95,12 @@ void EvaluatorTrainer::Train()
 	std::mt19937 rnd(rnddev());
 	std::uniform_real_distribution<double> probability_gen(0.0, 1.0);
 
-	fprintf(stderr, "initial examination\n");
+	fprintf(stderr, "initial scoring\n");
 	fflush(stderr);
+	time_t initial_start = clock();
 	double current_score = ComputeScore();
+	time_t initial_end = clock();
+	fprintf(stderr, "initial scoring ended (%.3f[s])\n", (double)(initial_end - initial_start) / CLOCKS_PER_SEC);
 	for (int i = 0; i < 300; ++i) {
 		std::vector<int> cand;
 		for (int j = 0; j < EvaluatorParameter::kNumberOfEffectiveParameters; ++j) {
@@ -121,7 +125,7 @@ void EvaluatorTrainer::Train()
 				current_score = next_score;
 				goto nex;
 			}
-			if (probability_gen(rnd) < exp((next_score - current_score) / temperature) * 65536) {
+			if (probability_gen(rnd) < exp((next_score - current_score) / temperature)) {
 				current_score = next_score;
 				goto nex;
 			}
