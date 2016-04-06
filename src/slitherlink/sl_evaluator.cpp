@@ -27,7 +27,7 @@ Evaluator::~Evaluator()
 double Evaluator::Evaluate()
 {
 	double score = 0.0;
-	double last_y = 1e8, last_x = 1e8;
+	std::vector<LoopPosition> last_pos;
 
 	int height_as_int = static_cast<int>(field_.height());
 	int width_as_int = static_cast<int>(field_.width());
@@ -49,11 +49,15 @@ double Evaluator::Evaluate()
 		for (ScoredMove &m : scored_candidates) {
 			// These methods don't involve locality
 			if (m.move.method == kAdjacent3s || m.move.method == kDiagonal3s || m.move.method == kAdjacentLines0) continue;
-			double locality_weight = 0.0;
+
+			int locality_distance = 2 * (static_cast<int>(field_.height()) + static_cast<int>(field_.width()));
 			for (LoopPosition pos : m.move.target_pos) {
-				locality_weight += std::min(1.0, ((abs(last_x - pos.x) + abs(last_y - pos.y)) - 1) / 4.0);
+				for (LoopPosition pos2 : last_pos) {
+					int d = abs(static_cast<int>(pos.y - pos2.y)) + abs(static_cast<int>(pos.x - pos2.x));
+					locality_distance = std::min(locality_distance, d);
+				}
 			}
-			locality_weight = pow(param_.locality_base, locality_weight / m.move.target_pos.size() - 1);
+			double locality_weight = pow(param_.locality_base, std::min(1.0, (locality_distance - 1) / 4.0) - 1);
 			m.score *= locality_weight;
 		}
 
@@ -89,15 +93,10 @@ double Evaluator::Evaluate()
 		Move &next_move = scored_candidates[easiest_move_index].move;
 		score += current_score * next_move.target_pos.size();
 
-		last_y = last_x = 0;
 		for (int i = 0; i < next_move.target_pos.size(); ++i) {
-			last_y += static_cast<double>(next_move.target_pos[i].y);
-			last_x += static_cast<double>(next_move.target_pos[i].x);
-
 			field_.DecideEdge(next_move.target_pos[i], next_move.target_state[i]);
 		}
-		last_y /= next_move.target_pos.size();
-		last_x /= next_move.target_pos.size();
+		last_pos = next_move.target_pos;
 	}
 	
 	if (!field_.IsFullySolved()) return kScoreInconsistent;
