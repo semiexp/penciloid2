@@ -51,6 +51,7 @@ private:
 		kCornerClue1,
 		kCornerClue2,
 		kCornerClue3,
+		kCornerClue2Hard,
 		kLineToClue1,
 		kLineToClue2,
 		kLineToClue3,

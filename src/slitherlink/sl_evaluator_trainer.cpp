@@ -87,7 +87,7 @@ void EvaluatorTrainer::Train()
 {
 	double temperature = 0.001;
 	double technique_step = 0.1;
-	double technique_min = 1.0;
+	double technique_min = 0.1;
 	double technique_max = 5.0;
 	const double EPS = 1e-8;
 
