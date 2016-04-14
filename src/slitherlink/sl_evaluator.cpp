@@ -12,10 +12,10 @@ namespace slitherlink
 const double Evaluator::kScoreImpossible = -1.0;
 const double Evaluator::kScoreInconsistent = -2.0;
 
-Evaluator::Evaluator() : field_(), param_(), move_candidates_()
+Evaluator::Evaluator() : field_(), param_(), param_given_(), move_candidates_()
 {
 }
-Evaluator::Evaluator(Problem &problem)// : field_(), param_(), move_candidates_()
+Evaluator::Evaluator(Problem &problem) : field_(), param_(), param_given_(), move_candidates_()
 {
 	Method method;
 	method.DisableAll();

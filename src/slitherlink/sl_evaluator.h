@@ -25,8 +25,12 @@ public:
 	Evaluator &operator=(const Evaluator&) = delete;
 	Evaluator &operator=(Evaluator&&) = delete;
 
-	void SetParameter(const EvaluatorParameter &param) { param_ = param; }
-	EvaluatorParameter GetParameter() const { return param_; }
+	void SetParameter(const EvaluatorParameter &param) {
+		param_given_ = param;
+		param_ = param;
+		for (int i = 0; i < EvaluatorParameter::kNumberOfEffectiveParameters; ++i) param_[i] -= i * 1e-7;
+	}
+	EvaluatorParameter GetParameter() const { return param_given_; }
 
 	double Evaluate();
 
@@ -106,7 +110,7 @@ private:
 	void CheckInOutRule();
 
 	Field field_;
-	EvaluatorParameter param_;
+	EvaluatorParameter param_, param_given_;
 	std::vector<Move> move_candidates_;
 };
 }
