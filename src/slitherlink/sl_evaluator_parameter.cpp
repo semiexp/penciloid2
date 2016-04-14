@@ -7,37 +7,37 @@ namespace slitherlink
 EvaluatorParameter::EvaluatorParameter()
 {
 	two_lines = 0.0;
-	avoid_cycle = 1.2;
-	hourglass_rule = 2.7;
+	avoid_cycle = 1.05;
+	hourglass_rule = 1.7;
 
 	adjacent_lines[0] = 1.0;
-	adjacent_lines[1] = 1.5;
-	adjacent_lines[2] = 1.1;
-	adjacent_lines[3] = 1.2;
-	adjacent_3 = 2.4;
-	diagonal_3 = 2.5;
-	diagonal_3_avoid_cycle = 1.8;
+	adjacent_lines[1] = 0.85;
+	adjacent_lines[2] = 1.25;
+	adjacent_lines[3] = 1.9;
+	adjacent_3 = 4.85;
+	diagonal_3 = 2.3;
+	diagonal_3_avoid_cycle = 2.0;
 
 	corner_clue[0] = 0.0;
-	corner_clue[1] = 2.8;
-	corner_clue[2] = 4.9;
-	corner_clue[3] = 1.3;
+	corner_clue[1] = 2.45;
+	corner_clue[2] = 3.35;
+	corner_clue[3] = 1.1;
 	corner_clue_2_hard = 4.9;
 	line_to_clue[0] = 0.0;
-	line_to_clue[1] = 2.5;
-	line_to_clue[2] = 1.2;
-	line_to_clue[3] = 1.6;
+	line_to_clue[1] = 2.0;
+	line_to_clue[2] = 0.85;
+	line_to_clue[3] = 2.05;
 	line_from_clue[0] = 0.0;
-	line_from_clue[1] = 4.9;
+	line_from_clue[1] = 4.05;
 	line_from_clue[2] = 0.0;
-	line_from_clue[3] = 2.9;
-	almost_line_to_2 = 4.0;
-	diagonal_chain = 2.7;
-	inout_rule = 4.9;
+	line_from_clue[3] = 2.05;
+	almost_line_to_2 = 2.55;
+	diagonal_chain = 2.35;
+	inout_rule = 3.75;
 
-	locality_base = 2.0;
-	alternative_dimension = 2.3;
-	undecided_power = 0.5;
+	locality_base = 2.2;
+	alternative_dimension = 3.9;
+	undecided_power = 0.35;
 }
 double* EvaluatorParameter::at(int i)
 {
