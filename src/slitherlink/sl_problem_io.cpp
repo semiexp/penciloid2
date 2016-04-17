@@ -24,5 +24,53 @@ bool InputProblem(std::istream &str, Problem &problem)
 	}
 	return true;
 }
+std::string StringOfProblem(Problem &problem)
+{
+	auto int_to_char = [](int i) {
+		if (0 <= i && i < 10) return (char)(i + '0');
+		else if (10 <= i && i < 36) return (char)((i - 10) + 'a');
+		else if (36 <= i && i < 62) return (char)((i - 36) + 'a');
+		return ' ';
+	};
+	std::string ret;
+	ret.push_back(int_to_char(problem.height()));
+	ret.push_back(int_to_char(problem.width()));
+
+	int val = 0, cnt = 0;
+	for (Y y(0); y < problem.height(); ++y) {
+		for (X x(0); x < problem.width(); ++x) {
+			if (cnt == 0) {
+				val = 1 + static_cast<int>(problem.GetClue(CellPosition(y, x)));
+				cnt = 1;
+			} else if (cnt == 1) {
+				ret.push_back(int_to_char(val + 5 * (1 + static_cast<int>(problem.GetClue(CellPosition(y, x))))));
+				val = 0;
+				cnt = 0;
+			}
+		}
+	}
+	if (cnt == 1) ret.push_back(int_to_char(val));
+	return ret;
+}
+Problem ProblemOfString(std::string &str)
+{
+	auto char_to_int = [](char c) {
+		if ('0' <= c && c <= '9') return (int)(c - '0');
+		if ('a' <= c && c <= 'z') return (int)(c - 'a') + 10;
+		if ('A' <= c && c <= 'Z') return (int)(c - 'A') + 36;;
+		return -1;
+	};
+	Y height(char_to_int(str[0]));
+	X width(char_to_int(str[1]));
+	Problem ret(height, width);
+	for (Y y(0); y < height; ++y) {
+		for (X x(0); x < width; ++x) {
+			int pos = static_cast<int>(y) * static_cast<int>(width) + static_cast<int>(x);
+			if (pos % 2 == 0) ret.SetClue(CellPosition(y, x), Clue(char_to_int(str[pos / 2 + 2]) % 5 - 1));
+			else ret.SetClue(CellPosition(y, x), Clue(char_to_int(str[pos / 2 + 2]) / 5 - 1));
+		}
+	}
+	return ret;
+}
 }
 }
