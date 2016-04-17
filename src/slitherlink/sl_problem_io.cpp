@@ -29,7 +29,7 @@ std::string StringOfProblem(Problem &problem)
 	auto int_to_char = [](int i) {
 		if (0 <= i && i < 10) return (char)(i + '0');
 		else if (10 <= i && i < 36) return (char)((i - 10) + 'a');
-		else if (36 <= i && i < 62) return (char)((i - 36) + 'a');
+		else if (36 <= i && i < 62) return (char)((i - 36) + 'A');
 		return ' ';
 	};
 	std::string ret;
