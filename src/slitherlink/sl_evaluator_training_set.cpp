@@ -19,11 +19,9 @@ std::vector<double> EvaluatorTrainingSet::ComputeDifficultyAll(EvaluatorParamete
 	for (int i = 0; i < problem_set_.size(); ++i) {
 		score_result.push_back(-1.0);
 		if (evaluability_[i] != kUnevaluable) {
-			printf("%d ", i);
 			entries.push_back({ &(problem_set_[i]), i });
 		}
 	}
-	puts("");
 
 	std::sort(entries.begin(), entries.end(), [](const std::pair<Problem*, int> &e1, const std::pair<Problem*, int> &e2) {
 		int size_e1 = static_cast<int>(e1.first->height()) * static_cast<int>(e1.first->width());
