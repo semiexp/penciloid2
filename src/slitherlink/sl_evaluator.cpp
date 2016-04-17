@@ -12,13 +12,14 @@ namespace slitherlink
 const double Evaluator::kScoreImpossible = -1.0;
 const double Evaluator::kScoreInconsistent = -2.0;
 
-Evaluator::Evaluator() : field_(), param_(), move_candidates_()
+Evaluator::Evaluator() : field_(), param_(), param_given_(), move_candidates_()
 {
 }
-Evaluator::Evaluator(Problem &problem)// : field_(), param_(), move_candidates_()
+Evaluator::Evaluator(Problem &problem) : field_(), param_(), param_given_(), move_candidates_()
 {
 	Method method;
 	method.DisableAll();
+	method.grid_loop_method.avoid_three_lines = true;
 	field_ = Field(problem, nullptr, method);
 }
 Evaluator::~Evaluator()
@@ -27,7 +28,7 @@ Evaluator::~Evaluator()
 double Evaluator::Evaluate()
 {
 	double score = 0.0;
-	double last_y = 1e8, last_x = 1e8;
+	std::vector<LoopPosition> last_pos;
 
 	int height_as_int = static_cast<int>(field_.height());
 	int width_as_int = static_cast<int>(field_.width());
@@ -48,12 +49,16 @@ double Evaluator::Evaluate()
 
 		for (ScoredMove &m : scored_candidates) {
 			// These methods don't involve locality
-			if (m.move.method == kAdjacent3s || m.move.method == kDiagonal3s || m.move.method == kAdjacentLines0) continue;
-			double locality_weight = 0.0;
+			// if (m.move.method == kAdjacent3s || m.move.method == kDiagonal3s || m.move.method == kAdjacentLines0) continue;
+
+			int locality_distance = 2 * (static_cast<int>(field_.height()) + static_cast<int>(field_.width()));
 			for (LoopPosition pos : m.move.target_pos) {
-				locality_weight += std::min(1.0, ((abs(last_x - pos.x) + abs(last_y - pos.y)) - 1) / 4.0);
+				for (LoopPosition pos2 : last_pos) {
+					int d = abs(static_cast<int>(pos.y - pos2.y)) + abs(static_cast<int>(pos.x - pos2.x));
+					locality_distance = std::min(locality_distance, d);
+				}
 			}
-			locality_weight = pow(param_.locality_base, locality_weight / m.move.target_pos.size() - 1);
+			double locality_weight = pow(param_.locality_base, std::min(1.0, (locality_distance - 1) / 4.0) - 1);
 			m.score *= locality_weight;
 		}
 
@@ -72,13 +77,13 @@ double Evaluator::Evaluate()
 		else {
 			current_score = pow(current_score, -1.0 / param_.alternative_dimension);
 		}
-		current_score *= sqrt(number_of_total_edges - field_.GetNumberOfDecidedEdges());
+		current_score *= pow(number_of_total_edges - field_.GetNumberOfDecidedEdges(), param_.undecided_power);
 
 		int easiest_move_index = 0;
 		double easiest_move_score = 1e10;
 
 		for (int i = 0; i < scored_candidates.size(); ++i) {
-			double score_tmp = scored_candidates[i].score / scored_candidates[i].move.target_pos.size();
+			double score_tmp = scored_candidates[i].score;
 
 			if (easiest_move_score > score_tmp) {
 				easiest_move_score = score_tmp;
@@ -87,17 +92,12 @@ double Evaluator::Evaluate()
 		}
 
 		Move &next_move = scored_candidates[easiest_move_index].move;
-		score += current_score * next_move.target_pos.size();
+		score += current_score;
 
-		last_y = last_x = 0;
 		for (int i = 0; i < next_move.target_pos.size(); ++i) {
-			last_y += static_cast<double>(next_move.target_pos[i].y);
-			last_x += static_cast<double>(next_move.target_pos[i].x);
-
 			field_.DecideEdge(next_move.target_pos[i], next_move.target_state[i]);
 		}
-		last_y /= next_move.target_pos.size();
-		last_x /= next_move.target_pos.size();
+		last_pos = next_move.target_pos;
 	}
 	
 	if (!field_.IsFullySolved()) return kScoreInconsistent;
@@ -105,7 +105,7 @@ double Evaluator::Evaluate()
 }
 void Evaluator::EnumerateMoves()
 {
-	CheckTwoLinesRule();
+	// CheckTwoLinesRule();
 	CheckAvoidCycleRule();
 	CheckTheoremsAbout3();
 
@@ -164,6 +164,7 @@ double Evaluator::GetScoreOfMethod(AppliedMethod method)
 	case kCornerClue1: return param_.corner_clue[1];
 	case kCornerClue2: return param_.corner_clue[2];
 	case kCornerClue3: return param_.corner_clue[3];
+	case kCornerClue2Hard: return param_.corner_clue_2_hard;
 	case kLineToClue1: return param_.line_to_clue[1];
 	case kLineToClue2: return param_.line_to_clue[2];
 	case kLineToClue3: return param_.line_to_clue[3];
@@ -367,9 +368,7 @@ void Evaluator::CheckCornerCell(CellPosition pos)
 			}
 			if (clue == 2) {
 				Move m1(kCornerClue2);
-				if (GetEdgeSafe(loop_pos + d1) == kEdgeLine ||
-					GetEdgeSafe(loop_pos + d2) == kEdgeLine ||
-					GetEdgeSafe(loop_pos - d1) == kEdgeBlank ||
+				if (GetEdgeSafe(loop_pos - d1) == kEdgeBlank ||
 					GetEdgeSafe(loop_pos - d2) == kEdgeBlank ||
 					GetEdgeSafe(loop_pos - d1 * 2 - d2) == kEdgeLine ||
 					GetEdgeSafe(loop_pos - d2 * 2 - d1) == kEdgeLine) {
@@ -378,9 +377,7 @@ void Evaluator::CheckCornerCell(CellPosition pos)
 					m1.AddTarget(loop_pos - d1, kEdgeBlank);
 					m1.AddTarget(loop_pos - d2, kEdgeBlank);
 				}
-				if (GetEdgeSafe(loop_pos + d1) == kEdgeBlank ||
-					GetEdgeSafe(loop_pos + d2) == kEdgeBlank ||
-					GetEdgeSafe(loop_pos - d1) == kEdgeLine ||
+				if (GetEdgeSafe(loop_pos - d1) == kEdgeLine ||
 					GetEdgeSafe(loop_pos - d2) == kEdgeLine) {
 					m1.AddTarget(loop_pos + d1, kEdgeBlank);
 					m1.AddTarget(loop_pos + d2, kEdgeBlank);
@@ -395,7 +392,7 @@ void Evaluator::CheckCornerCell(CellPosition pos)
 
 				move_candidates_.push_back(m1);
 
-				Move m2(kCornerClue2);
+				Move m2(kCornerClue2Hard);
 				for (int sgn : {-1, 1}) {
 					if (GetEdgeSafe(loop_pos + sgn * (d1 * 2 - d2)) == kEdgeBlank) {
 						m2.AddTarget(loop_pos + sgn * (d1 - d2 * 2), kEdgeLine);
