@@ -56,7 +56,6 @@ EvaluatorParameter TrainEvaluator(EvaluatorTrainingSet &training_set, const std:
 			}
 
 			std::vector<double> computed_difficulty = training_set.ComputeDifficultyAll(param, n_threads);
-			for (int i = 0; i < reference_difficulty.size(); ++i) printf("%f %f\n", reference_difficulty[i], computed_difficulty[i]);
 			double next_score = sc(reference_difficulty, computed_difficulty);
 
 			fprintf(stderr, "next_score: %f\n", next_score);
