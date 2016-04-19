@@ -44,6 +44,7 @@ private:
 	{
 		kTwoLines,
 		kAvoidCycle,
+		kEliminateClosedChain,
 		kHourglassRule,
 		kAdjacentLines0,
 		kAdjacentLines1,
@@ -98,6 +99,7 @@ private:
 	double GetScoreOfMethod(AppliedMethod method);
 
 	void CheckAvoidCycleRule();
+	void CheckClosedChain();
 	void CheckHourglassRule(LoopPosition pos);
 	void CheckTwoLinesRule();
 	void CheckTheoremsAbout3();

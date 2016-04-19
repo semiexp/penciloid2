@@ -107,6 +107,7 @@ void Evaluator::EnumerateMoves()
 {
 	// CheckTwoLinesRule();
 	CheckAvoidCycleRule();
+	CheckClosedChain();
 	CheckTheoremsAbout3();
 
 	for (Y y(0); y <= height(); ++y) {
@@ -153,6 +154,7 @@ double Evaluator::GetScoreOfMethod(AppliedMethod method)
 	{
 	case kTwoLines: return param_.two_lines;
 	case kAvoidCycle: return param_.avoid_cycle;
+	case kEliminateClosedChain: return param_.eliminate_closed_chain;
 	case kHourglassRule: return param_.hourglass_rule;
 	case kAdjacentLines0: return param_.adjacent_lines[0];
 	case kAdjacentLines1: return param_.adjacent_lines[1];
@@ -218,6 +220,21 @@ void Evaluator::CheckAvoidCycleRule()
 				if (GetEdgeSafe(pos + d) == kEdgeUndecided && field_.GetAnotherEnd(pos, d) == line_destination) {
 					move_candidates_.push_back(Move(pos + d, kEdgeBlank, kAvoidCycle));
 				}
+			}
+		}
+	}
+}
+void Evaluator::CheckClosedChain()
+{
+	if (field_.GetNumberOfDecidedLines() == 0) return;
+	for (Y y(0); y <= 2 * height(); ++y) {
+		for (X x(0); x <= 2 * width(); ++x) {
+			if (static_cast<int>(y) % 2 == static_cast<int>(x) % 2) continue;
+			if (GetEdgeSafe(LoopPosition(y, x)) != kEdgeUndecided) continue;
+			
+			auto ends = field_.GetEndsOfChain(LoopPosition(y, x));
+			if (ends.first == ends.second) {
+				move_candidates_.push_back(Move(LoopPosition(y, x), kEdgeBlank, kEliminateClosedChain));
 			}
 		}
 	}

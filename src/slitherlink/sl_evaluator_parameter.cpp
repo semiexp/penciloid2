@@ -8,6 +8,7 @@ EvaluatorParameter::EvaluatorParameter()
 {
 	two_lines = 0.0;
 	avoid_cycle = 1.05;
+	eliminate_closed_chain = 1.0;
 	hourglass_rule = 1.7;
 
 	adjacent_lines[0] = 1.0;
@@ -44,29 +45,30 @@ double* EvaluatorParameter::at(int i)
 	switch (i)
 	{
 	case 0: return &avoid_cycle;
-	case 1: return &hourglass_rule;
-	case 2: return &(adjacent_lines[0]);
-	case 3: return &(adjacent_lines[1]);
-	case 4: return &(adjacent_lines[2]);
-	case 5: return &(adjacent_lines[3]);
-	case 6: return &adjacent_3;
-	case 7: return &diagonal_3;
-	case 8: return &diagonal_3_avoid_cycle;
-	case 9: return &(corner_clue[1]);
-	case 10: return &(corner_clue[2]);
-	case 11: return &(corner_clue[3]);
-	case 12: return &corner_clue_2_hard;
-	case 13: return &(line_to_clue[1]);
-	case 14: return &(line_to_clue[2]);
-	case 15: return &(line_to_clue[3]);
-	case 16: return &(line_from_clue[1]);
-	case 17: return &(line_from_clue[3]);
-	case 18: return &almost_line_to_2;
-	case 19: return &diagonal_chain;
-	case 20: return &inout_rule;
-	case 21: return &locality_base;
-	case 22: return &alternative_dimension;
-	case 23: return &undecided_power;
+	case 1: return &eliminate_closed_chain;
+	case 2: return &hourglass_rule;
+	case 3: return &(adjacent_lines[0]);
+	case 4: return &(adjacent_lines[1]);
+	case 5: return &(adjacent_lines[2]);
+	case 6: return &(adjacent_lines[3]);
+	case 7: return &adjacent_3;
+	case 8: return &diagonal_3;
+	case 9: return &diagonal_3_avoid_cycle;
+	case 10: return &(corner_clue[1]);
+	case 11: return &(corner_clue[2]);
+	case 12: return &(corner_clue[3]);
+	case 13: return &corner_clue_2_hard;
+	case 14: return &(line_to_clue[1]);
+	case 15: return &(line_to_clue[2]);
+	case 16: return &(line_to_clue[3]);
+	case 17: return &(line_from_clue[1]);
+	case 18: return &(line_from_clue[3]);
+	case 19: return &almost_line_to_2;
+	case 20: return &diagonal_chain;
+	case 21: return &inout_rule;
+	case 22: return &locality_base;
+	case 23: return &alternative_dimension;
+	case 24: return &undecided_power;
 	}
 	return nullptr;
 }

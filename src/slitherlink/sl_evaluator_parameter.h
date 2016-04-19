@@ -7,13 +7,13 @@ namespace slitherlink
 struct EvaluatorParameter
 {
 public:
-	static const int kNumberOfEffectiveParameters = 24;
+	static const int kNumberOfEffectiveParameters = 25;
 	
 	EvaluatorParameter();
 	double &operator[](int i) { return *(at(i)); }
 
 	double two_lines;
-	double avoid_cycle, hourglass_rule;
+	double avoid_cycle, eliminate_closed_chain, hourglass_rule;
 
 	double adjacent_lines[4];
 	double adjacent_3, diagonal_3, diagonal_3_avoid_cycle;
