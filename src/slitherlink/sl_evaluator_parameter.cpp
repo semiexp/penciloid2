@@ -15,29 +15,29 @@ EvaluatorParameter::EvaluatorParameter()
 	adjacent_lines[1] = 0.85;
 	adjacent_lines[2] = 1.25;
 	adjacent_lines[3] = 1.9;
-	adjacent_3 = 4.85;
+	adjacent_3 = 4.95;
 	diagonal_3 = 2.3;
-	diagonal_3_avoid_cycle = 2.0;
+	diagonal_3_avoid_cycle = 1.95;
 
 	corner_clue[0] = 0.0;
 	corner_clue[1] = 2.45;
-	corner_clue[2] = 3.35;
+	corner_clue[2] = 3.3;
 	corner_clue[3] = 1.1;
-	corner_clue_2_hard = 4.9;
+	corner_clue_2_hard = 4.7;
 	line_to_clue[0] = 0.0;
-	line_to_clue[1] = 2.0;
+	line_to_clue[1] = 1.95;
 	line_to_clue[2] = 0.85;
-	line_to_clue[3] = 2.05;
+	line_to_clue[3] = 2.1;
 	line_from_clue[0] = 0.0;
 	line_from_clue[1] = 4.05;
 	line_from_clue[2] = 0.0;
 	line_from_clue[3] = 2.05;
-	almost_line_to_2 = 2.55;
+	almost_line_to_2 = 2.8;
 	diagonal_chain = 2.35;
-	inout_rule = 3.75;
+	inout_rule = 4.25;
 
-	locality_base = 2.2;
-	alternative_dimension = 3.9;
+	locality_base = 2.3;
+	alternative_dimension = 3.95;
 	undecided_power = 0.35;
 }
 double* EvaluatorParameter::at(int i)
