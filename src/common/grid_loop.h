@@ -82,7 +82,6 @@ public:
 
 	// Returns two end vertices of the chain which edge <edge> belongs to.
 	// Non-const version changes internal status to perform "path compression".
-	std::pair<LoopPosition, LoopPosition> GetEndsOfChain(LoopPosition edge);
 	std::pair<LoopPosition, LoopPosition> GetEndsOfChain(LoopPosition edge) const;
 
 	// Check around position <pos>.
@@ -413,7 +412,15 @@ typename GridLoop<T>::EdgeCount GridLoop<T>::GetChainLength(LoopPosition point, 
 {
 	return field_[Id(point + dir)].chain_size;
 }
-
+template<class T>
+std::pair<LoopPosition, LoopPosition> GridLoop<T>::GetEndsOfChain(LoopPosition edge) const
+{
+	unsigned int edge_id = Id(edge);
+	while (!IsEndOfAChain(edge_id)) {
+		edge_id = field_[edge_id].another_end_edge;
+	}
+	return{ AsPosition(field_[edge_id].end_vertices[0]), AsPosition(field_[edge_id].end_vertices[1]) };
+}
 template<class T>
 bool GridLoop<T>::IsEndOfAChainVertex(unsigned int edge_id, unsigned int vertex_id) const {
 	return field_[edge_id].end_vertices[0] == vertex_id || field_[edge_id].end_vertices[1] == vertex_id;
