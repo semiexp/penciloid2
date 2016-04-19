@@ -10,5 +10,6 @@ void GridLoopInspectVertex();
 void GridLoopCopy();
 void GridLoopClosedLoop();
 void GridLoopHourglassRule();
+void GridLoopComplexAccessors();
 }
 }

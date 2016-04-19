@@ -17,6 +17,7 @@ void RunAllGridLoopTest()
 	GridLoopCopy();
 	GridLoopClosedLoop();
 	GridLoopHourglassRule();
+	GridLoopComplexAccessors();
 }
 void GridLoopBasicAccessors()
 {
@@ -128,7 +129,7 @@ void GridLoopHourglassRule()
 
 		assert(field.GetEdge(LoopPosition(Y(0), X(3))) == PlainGridLoop::kEdgeUndecided);
 	}
-
+	
 	for (bool use_hourglass_rule : {false, true}) {
 		GridLoopMethod method;
 		method.hourglass_rule1 = use_hourglass_rule;
@@ -146,6 +147,40 @@ void GridLoopHourglassRule()
 		assert(field.GetEdge(LoopPosition(Y(0), X(3))) == expected);
 	}
 }
+void GridLoopComplexAccessors()
+{
+	PlainGridLoop field(Y(3), X(3));
 
+	assert(field.GetAnotherEnd(LoopPosition(Y(2), X(0)), Direction(Y(-1), X(0))) == LoopPosition(Y(0), X(2)));
+	assert(field.GetAnotherEnd(LoopPosition(Y(0), X(4)), Direction(Y(0), X(-1))) == LoopPosition(Y(0), X(2)));
+	field.DecideEdge(LoopPosition(Y(0), X(1)), PlainGridLoop::kEdgeLine);
+	field.DecideEdge(LoopPosition(Y(0), X(3)), PlainGridLoop::kEdgeLine);
+	assert(field.GetAnotherEnd(LoopPosition(Y(2), X(0)), Direction(Y(-1), X(0))) == LoopPosition(Y(0), X(4)));
+	assert(field.GetAnotherEnd(LoopPosition(Y(0), X(4)), Direction(Y(0), X(-1))) == LoopPosition(Y(2), X(0)));
+	assert(field.GetChainLength(LoopPosition(Y(2), X(0)), Direction(Y(-1), X(0))) == 3);
+	assert(field.GetChainLength(LoopPosition(Y(0), X(4)), Direction(Y(0), X(-1))) == 3);
+	{
+		auto ends = field.GetEndsOfChain(LoopPosition(Y(0), X(1)));
+		assert(
+			(ends.first == LoopPosition(Y(0), X(4)) && ends.second == LoopPosition(Y(2), X(0))) ||
+			(ends.second == LoopPosition(Y(0), X(4)) && ends.first == LoopPosition(Y(2), X(0)))
+			);
+	}
+
+	assert(field.GetAnotherEnd(LoopPosition(Y(4), X(4)), Direction(Y(1), X(0))) == LoopPosition(Y(6), X(4)));
+	assert(field.GetAnotherEnd(LoopPosition(Y(6), X(2)), Direction(Y(0), X(1))) == LoopPosition(Y(6), X(4)));
+	field.DecideEdge(LoopPosition(Y(5), X(6)), PlainGridLoop::kEdgeBlank);
+	assert(field.GetAnotherEnd(LoopPosition(Y(4), X(4)), Direction(Y(1), X(0))) == LoopPosition(Y(6), X(2)));
+	assert(field.GetAnotherEnd(LoopPosition(Y(6), X(2)), Direction(Y(0), X(1))) == LoopPosition(Y(4), X(4)));
+	assert(field.GetChainLength(LoopPosition(Y(4), X(4)), Direction(Y(1), X(0))) == 2);
+	assert(field.GetChainLength(LoopPosition(Y(6), X(2)), Direction(Y(0), X(1))) == 2);
+	{
+		auto ends = field.GetEndsOfChain(LoopPosition(Y(6), X(3)));
+		assert(
+			(ends.first == LoopPosition(Y(6), X(2)) && ends.second == LoopPosition(Y(4), X(4))) ||
+			(ends.second == LoopPosition(Y(6), X(2)) && ends.first == LoopPosition(Y(4), X(4)))
+			);
+	}
+}
 }
 }
