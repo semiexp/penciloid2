@@ -29,6 +29,8 @@ void AkariFieldClueTest()
 		assert(field.GetCell(CellPosition(Y(0), X(2))) == Field::CELL_LIT_BY_OTHER);
 		assert(field.GetCell(CellPosition(Y(1), X(1))) == Field::CELL_LIT_BY_OTHER);
 		assert(field.GetCell(CellPosition(Y(2), X(0))) == Field::CELL_LIT_BY_OTHER);
+
+		assert(field.GetNumberOfDecidedCells() == 12);
 	}
 
 	{
@@ -41,6 +43,8 @@ void AkariFieldClueTest()
 		assert(field.GetCell(CellPosition(Y(0), X(2))) == Field::CELL_LIGHT);
 		assert(field.GetCell(CellPosition(Y(1), X(0))) == Field::CELL_LIT_BY_OTHER);
 		assert(field.GetCell(CellPosition(Y(1), X(2))) == Field::CELL_LIT_BY_OTHER);
+
+		assert(field.GetNumberOfDecidedCells() == 14);
 	}
 }
 }

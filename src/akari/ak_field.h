@@ -14,6 +14,8 @@ namespace akari
 class Field
 {
 public:
+	typedef unsigned int CellCount;
+
 	enum CellState {
 		CELL_UNDECIDED,
 		CELL_LIGHT,
@@ -31,7 +33,11 @@ public:
 	Y height() const { return cells_.height(); }
 	X width() const { return cells_.width(); }
 
+	// Cells with blocks are also considered already decided.
+	CellCount GetNumberOfDecidedCells() const { return decided_cells_; }
+
 	bool IsInconsistent() const { return inconsistent_; }
+	bool IsFullySolved() const { return fully_solved_; }
 	void SetInconsistent() { inconsistent_ = true; }
 
 	CellState GetCell(CellPosition pos) const;
@@ -67,7 +73,8 @@ private:
 
 	Grid<Cell> cells_;
 	CellGroup *groups_;
-	bool inconsistent_;
+	CellCount decided_cells_;
+	bool inconsistent_, fully_solved_;
 };
 
 std::ostream& operator<<(std::ostream &stream, Field &field);

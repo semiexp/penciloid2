@@ -8,16 +8,17 @@ namespace penciloid
 {
 namespace akari
 {
-Field::Field() : cells_(), groups_(nullptr), inconsistent_(false)
+Field::Field() : cells_(), groups_(nullptr), decided_cells_(0), inconsistent_(false), fully_solved_(false)
 {
 }
-Field::Field(const Problem &problem) : cells_(problem.height(), problem.width()), groups_(nullptr), inconsistent_(false)
+Field::Field(const Problem &problem) : cells_(problem.height(), problem.width()), groups_(nullptr), decided_cells_(0), inconsistent_(false), fully_solved_(false)
 {
 	for (Y y(0); y < problem.height(); ++y) {
 		for (X x(0); x < problem.width(); ++x) {
 			if (problem.GetClue(CellPosition(y, x)) != kEmpty) {
 				cells_.at(CellPosition(y, x)).status = CELL_BLOCK;
 				cells_.at(CellPosition(y, x)).clue_number = problem.GetClue(CellPosition(y, x));
+				++decided_cells_;
 			} else {
 				cells_.at(CellPosition(y, x)).status = CELL_UNDECIDED;
 			}
@@ -122,6 +123,7 @@ void Field::DecideCell(CellPosition pos, CellState status)
 	}
 
 	if (status == CELL_LIGHT) {
+		++decided_cells_;
 		cells_.at(pos).status = CELL_LIGHT;
 
 		static const Direction kDirs[] = {
@@ -137,6 +139,7 @@ void Field::DecideCell(CellPosition pos, CellState status)
 		}
 		CheckNeighbor(pos);
 	} else if (status == CELL_LIT_BY_OTHER) {
+		++decided_cells_;
 		if (current_status == CELL_NO_LIGHT_NOT_LIT) {
 			cells_.at(pos).status = CELL_LIT_BY_OTHER;
 			return;
