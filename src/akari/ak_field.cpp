@@ -124,6 +124,9 @@ void Field::DecideCell(CellPosition pos, CellState status)
 
 	if (status == CELL_LIGHT) {
 		++decided_cells_;
+		if (decided_cells_ == static_cast<int>(height()) * static_cast<int>(width())) {
+			fully_solved_ = true;
+		}
 		cells_.at(pos).status = CELL_LIGHT;
 
 		static const Direction kDirs[] = {
@@ -140,6 +143,9 @@ void Field::DecideCell(CellPosition pos, CellState status)
 		CheckNeighbor(pos);
 	} else if (status == CELL_LIT_BY_OTHER) {
 		++decided_cells_;
+		if (decided_cells_ == static_cast<int>(height()) * static_cast<int>(width())) {
+			fully_solved_ = true;
+		}
 		if (current_status == CELL_NO_LIGHT_NOT_LIT) {
 			cells_.at(pos).status = CELL_LIT_BY_OTHER;
 			return;

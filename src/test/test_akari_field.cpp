@@ -46,6 +46,21 @@ void AkariFieldClueTest()
 
 		assert(field.GetNumberOfDecidedCells() == 14);
 	}
+
+	{
+		Problem prob(Y(5), X(5));
+		prob.SetClue(CellPosition(Y(0), X(1)), Clue(3));
+		prob.SetClue(CellPosition(Y(1), X(4)), Clue(-1));
+		prob.SetClue(CellPosition(Y(2), X(2)), Clue(2));
+		prob.SetClue(CellPosition(Y(3), X(0)), Clue(-1));
+		prob.SetClue(CellPosition(Y(4), X(3)), Clue(-1));
+
+		Field field(prob);
+		assert(field.GetCell(CellPosition(Y(4), X(0))) == Field::CELL_LIGHT);
+		assert(field.GetNumberOfDecidedCells() == 25);
+		assert(field.IsInconsistent() == false);
+		assert(field.IsFullySolved() == true);
+	}
 }
 }
 }
