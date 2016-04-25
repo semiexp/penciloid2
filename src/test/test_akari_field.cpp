@@ -61,6 +61,26 @@ void AkariFieldClueTest()
 		assert(field.IsInconsistent() == false);
 		assert(field.IsFullySolved() == true);
 	}
+
+	{
+		const char *pb[10] = {
+			".....11...",
+			"..#.......",
+			"..#....11.",
+			"2.........",
+			"#...##....",
+			"....#1...1",
+			".........1",
+			".0#....#..",
+			".......1..",
+			"...2#....."
+		};
+		Problem prob(Y(10), X(10), pb);
+		Field field(prob);
+
+		assert(field.IsFullySolved() == true);
+		assert(field.IsInconsistent() == false);
+	}
 }
 }
 }
