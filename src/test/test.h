@@ -9,5 +9,6 @@ void RunAllGridLoopTest();
 void RunAllSlitherlinkFieldTest();
 void RunAllAkariProblemTest();
 void RunAllAkariFieldTest();
+void RunAllYajilinFieldTest();
 }
 }

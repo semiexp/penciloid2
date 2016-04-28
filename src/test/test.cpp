@@ -10,6 +10,7 @@ void RunAllTest()
 	RunAllSlitherlinkFieldTest();
 	RunAllAkariProblemTest();
 	RunAllAkariFieldTest();
+	RunAllYajilinFieldTest();
 }
 }
 }
