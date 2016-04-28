@@ -58,7 +58,12 @@ void Field::DecideCell(CellPosition cell, CellState status)
 
 	cells_.at(cell).status = status;
 	
-	// TODO: check affected (clue) cells
+	for (Direction d : k4Neighborhood) {
+		for (CellPosition c = cell + d;; c = c + d) {
+			if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
+			Check(LoopPosition(c.y * 2, c.x * 2));
+		}
+	}
 
 	Check(LoopPosition(cell.y * 2, cell.x * 2));
 	if (status == kCellBlock) {
