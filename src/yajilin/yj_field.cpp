@@ -111,32 +111,31 @@ void Field::Inspect(LoopPosition pos)
 		Direction dir = GetDirectionValue(cells_.at(cell).direction);
 		int clue_num = cells_.at(cell).clue_number;
 
-		if (clue_num == 0) {
+		int chain_size = 0, n_block = 0, max_extra_block = 0;
+		for (CellPosition c = cell + dir;; c = c + dir) {
+			if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
+			if (GetCellState(c) == kCellUndecided) {
+				++chain_size;
+			} else {
+				max_extra_block += (chain_size + 1) / 2;
+				chain_size = 0;
+			}
+			if (GetCellState(c) == kCellBlock) {
+				--clue_num;
+			}
+		}
+		max_extra_block += (chain_size + 1) / 2;
+		chain_size = 0;
+
+		if (clue_num < n_block || n_block + max_extra_block < clue_num) {
+			SetInconsistent(); return;
+		}
+		if (clue_num == n_block) {
 			for (CellPosition c = cell + dir;; c = c + dir) {
 				if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
-				if (GetCellState(c) != kCellClue) DecideCell(c, kCellLine);
+				if (GetCellState(c) != kCellClue && GetCellState(c) != kCellBlock) DecideCell(c, kCellLine);
 			}
 		} else {
-			int chain_size = 0, n_block = 0, max_extra_block = 0;
-			for (CellPosition c = cell + dir;; c = c + dir) {
-				if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
-				if (GetCellState(c) == kCellUndecided) {
-					++chain_size;
-				} else {
-					max_extra_block += (chain_size + 1) / 2;
-					chain_size = 0;
-				}
-				if (GetCellState(c) == kCellBlock) {
-					--clue_num;
-				}
-			}
-			max_extra_block += (chain_size + 1) / 2;
-			chain_size = 0;
-
-			if (n_block > clue_num || n_block + max_extra_block < clue_num) {
-				SetInconsistent();
-				return;
-			}
 			if (n_block + max_extra_block == clue_num) {
 				std::vector<CellPosition> chain_cells;
 				for (CellPosition c = cell + dir;; c = c + dir) {
