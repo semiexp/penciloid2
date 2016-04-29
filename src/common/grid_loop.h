@@ -253,10 +253,13 @@ GridLoop<T>::GridLoop(Y height, X width)
 		}
 	}
 
+	QueueStart();
 	Join(LoopPosition(Y(0), X(0)), Direction(Y(1), X(0)), Direction(Y(0), X(1)));
 	Join(LoopPosition(2 * height, X(0)), Direction(Y(-1), X(0)), Direction(Y(0), X(1)));
 	Join(LoopPosition(Y(0), 2 * width), Direction(Y(1), X(0)), Direction(Y(0), X(-1)));
 	Join(LoopPosition(2 * height, 2 * width), Direction(Y(-1), X(0)), Direction(Y(0), X(-1)));
+	while (!IsQueueEmpty()) QueuePop();
+	QueueEnd();
 }
 template<class T>
 GridLoop<T>::GridLoop(const GridLoop<T> &other)
