@@ -38,6 +38,23 @@ Field::Field(Problem &problem) : GridLoop<Field>(problem.height() - 1, problem.w
 			if (GetCellState(CellPosition(y, x)) == kCellClue) Check(LoopPosition(y * 2, x * 2));
 		}
 	}
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			int adjacent_empty_cells = 0;
+			for (Direction d : k4Neighborhood) {
+				CellPosition cell2 = CellPosition(y, x) + d;
+				if (cell2.y >= 0 && cell2.x >= 0 && cell2.y < height() && cell2.x < width() && GetCellState(cell2) != kCellClue) ++adjacent_empty_cells;
+			}
+			if (adjacent_empty_cells == 2) {
+				for (Direction d : k4Neighborhood) {
+					CellPosition cell2 = CellPosition(y, x) + d;
+					if (cell2.y >= 0 && cell2.x >= 0 && cell2.y < height() && cell2.x < width() && GetCellState(cell2) != kCellClue) {
+						DecideCell(cell2, kCellLine);
+					}
+				}
+			}
+		}
+	}
 }
 Field::Field(const Field &other) : GridLoop<Field>(other), cells_(other.cells_)
 {
