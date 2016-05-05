@@ -13,6 +13,7 @@ namespace test
 void RunAllYajilinFieldTest()
 {
 	YajilinFieldClueTest();
+	YajilinCornerCellTest();
 }
 void YajilinFieldClueTest()
 {
@@ -24,6 +25,19 @@ void YajilinFieldClueTest()
 	Field field(problem);
 	assert(field.IsFullySolved() == true);
 	assert(field.IsInconsistent() == false);
+}
+void YajilinCornerCellTest()
+{
+	using namespace yajilin;
+	Problem problem(Y(10), X(10));
+	problem.SetClue(CellPosition(Y(0), X(5)), Problem::kClueNorth, 0);
+	Field field(problem);
+	assert(field.GetCellState(CellPosition(Y(1), X(0))) == Field::kCellLine);
+	assert(field.GetCellState(CellPosition(Y(0), X(1))) == Field::kCellLine);
+	assert(field.GetCellState(CellPosition(Y(0), X(3))) == Field::kCellLine);
+	assert(field.GetCellState(CellPosition(Y(1), X(4))) == Field::kCellLine);
+	assert(field.GetCellState(CellPosition(Y(1), X(6))) == Field::kCellLine);
+	assert(field.GetCellState(CellPosition(Y(0), X(7))) == Field::kCellLine);
 }
 }
 }
