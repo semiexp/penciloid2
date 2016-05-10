@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include "../common/grid_loop.h"
 #include "../common/grid.h"
 #include "yj_problem.h"
@@ -48,6 +50,7 @@ public:
 
 	void DecideCell(CellPosition cell, CellState status);
 	CellState GetCellState(CellPosition cell) { return cells_.at(cell).status; }
+	Cell GetCell(CellPosition cell) { return cells_.at(cell); }
 
 	void Inspect(LoopPosition pos);
 	void HasDecided(LoopPosition pos);
@@ -57,5 +60,8 @@ private:
 
 	Direction GetDirectionValue(ClueDirection dir);
 };
+
+std::ostream& operator<<(std::ostream &stream, Field &field);
+
 }
 }

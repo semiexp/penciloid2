@@ -188,5 +188,53 @@ Direction Field::GetDirectionValue(ClueDirection dir)
 	}
 	return Direction(Y(0), X(0));
 }
+std::ostream& operator<<(std::ostream &stream, Field &field)
+{
+	for (Y y(0); y <= 2 * (field.height() - 1); ++y) {
+		for (X x(0); x <= 2 * (field.width() - 1); ++x) {
+			if (y % 2 == 0 && x % 2 == 0) {
+				Field::CellState cell_status = field.GetCellState(CellPosition(y / 2, x / 2));
+				if (cell_status == Field::kCellBlock) {
+					stream << "#";
+				} else if (cell_status == Field::kCellClue) {
+					Field::Cell cell = field.GetCell(CellPosition(y / 2, x / 2));
+					switch (cell.direction) {
+					case Field::kClueNorth: stream << "^"; break;
+					case Field::kClueWest: stream << "<"; break;
+					case Field::kClueEast: stream << ">"; break;
+					case Field::kClueSouth: stream << "v"; break;
+					}
+					stream << cell.clue_number;
+				} else if (cell_status == Field::kCellLine) {
+					stream << "+";
+				} else {
+					stream << ".";
+				}
+			} else if (y % 2 == 0 && x % 2 == 1) {
+				Field::EdgeState status = field.GetEdge(LoopPosition(y, x));
+				bool connect_block_or_clue = false;
+				if (field.GetCellState(CellPosition(y / 2, x / 2)) == Field::kCellBlock || field.GetCellState(CellPosition(y / 2, x / 2)) == Field::kCellClue) connect_block_or_clue = true;
+				if (field.GetCellState(CellPosition(y / 2, x / 2 + 1)) == Field::kCellBlock || field.GetCellState(CellPosition(y / 2, x / 2 + 1)) == Field::kCellClue) connect_block_or_clue = true;
+				if (status == Field::kEdgeUndecided || connect_block_or_clue) {
+					if (field.GetCellState(CellPosition(y / 2, x / 2)) == Field::kCellClue) stream << "  ";
+					else stream << "   ";
+				} else if (status == Field::kEdgeLine) stream << "---";
+				else if (status == Field::kEdgeBlank) stream << " X ";
+			} else if (y % 2 == 1 && x % 2 == 0) {
+				Field::EdgeState status = field.GetEdge(LoopPosition(y, x));
+				bool connect_block_or_clue = false;
+				if (field.GetCellState(CellPosition(y / 2, x / 2)) == Field::kCellBlock || field.GetCellState(CellPosition(y / 2, x / 2)) == Field::kCellClue) connect_block_or_clue = true;
+				if (field.GetCellState(CellPosition(y / 2 + 1, x / 2)) == Field::kCellBlock || field.GetCellState(CellPosition(y / 2 + 1, x / 2)) == Field::kCellClue) connect_block_or_clue = true;
+				if (status == Field::kEdgeUndecided || connect_block_or_clue) stream << " ";
+				else if (status == Field::kEdgeLine) stream << "|";
+				else if (status == Field::kEdgeBlank) stream << "X";
+			} else if (y % 2 == 1 && x % 2 == 1) {
+				stream << "   ";
+			}
+		}
+		stream << "\n";
+	}
+	return stream;
+}
 }
 }
