@@ -5,6 +5,7 @@
 #include "sl_problem.h"
 #include "sl_field.h"
 #include "sl_evaluator_parameter.h"
+#include "sl_evaluator_detailed_result.h"
 
 namespace penciloid
 {
@@ -13,33 +14,6 @@ namespace slitherlink
 class Evaluator
 {
 public:
-	static const double kScoreImpossible;
-	static const double kScoreInconsistent;
-
-	Evaluator();
-	Evaluator(Problem &problem);
-	Evaluator(const Evaluator&) = delete;
-	Evaluator(Evaluator&&) = delete;
-	~Evaluator();
-
-	Evaluator &operator=(const Evaluator&) = delete;
-	Evaluator &operator=(Evaluator&&) = delete;
-
-	void SetParameter(const EvaluatorParameter &param) {
-		param_given_ = param;
-		param_ = param;
-		for (int i = 0; i < EvaluatorParameter::kNumberOfEffectiveParameters; ++i) param_[i] -= i * 1e-7;
-	}
-	EvaluatorParameter GetParameter() const { return param_given_; }
-
-	double Evaluate();
-
-private:
-	typedef Field::EdgeState EdgeState;
-	static const EdgeState kEdgeUndecided = Field::kEdgeUndecided;
-	static const EdgeState kEdgeLine = Field::kEdgeLine;
-	static const EdgeState kEdgeBlank = Field::kEdgeBlank;
-
 	enum AppliedMethod
 	{
 		kTwoLines,
@@ -66,6 +40,34 @@ private:
 		kDiagonalChain,
 		kInoutRule
 	};
+
+	static const double kScoreImpossible;
+	static const double kScoreInconsistent;
+
+	Evaluator();
+	Evaluator(Problem &problem);
+	Evaluator(const Evaluator&) = delete;
+	Evaluator(Evaluator&&) = delete;
+	~Evaluator();
+
+	Evaluator &operator=(const Evaluator&) = delete;
+	Evaluator &operator=(Evaluator&&) = delete;
+
+	void SetParameter(const EvaluatorParameter &param) {
+		param_given_ = param;
+		param_ = param;
+		for (int i = 0; i < EvaluatorParameter::kNumberOfEffectiveParameters; ++i) param_[i] -= i * 1e-7;
+	}
+	EvaluatorParameter GetParameter() const { return param_given_; }
+
+	double Evaluate();
+	EvaluatorDetailedResult GetDetailedResult() const { return result_; }
+
+private:
+	typedef Field::EdgeState EdgeState;
+	static const EdgeState kEdgeUndecided = Field::kEdgeUndecided;
+	static const EdgeState kEdgeLine = Field::kEdgeLine;
+	static const EdgeState kEdgeBlank = Field::kEdgeBlank;
 
 	struct Move
 	{
@@ -114,6 +116,8 @@ private:
 	Field field_;
 	EvaluatorParameter param_, param_given_;
 	std::vector<Move> move_candidates_;
+
+	EvaluatorDetailedResult result_;
 };
 }
 }

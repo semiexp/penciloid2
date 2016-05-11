@@ -34,11 +34,15 @@ double Evaluator::Evaluate()
 	int width_as_int = static_cast<int>(field_.width());
 	int number_of_total_edges = (height_as_int + 1) * width_as_int + height_as_int * (width_as_int + 1);
 
+	int method_count[kInoutRule + 1];
+	for (int i = 0; i <= kInoutRule; ++i) method_count[i] = 0;
+
 	while (!field_.IsInconsistent() && !field_.IsFullySolved()) {
 		move_candidates_.clear();
 		EnumerateMoves();
 		if (move_candidates_.size() == 0) {
 		//	std::cout << field_ << std::endl;
+			result_.score = kScoreImpossible;
 			return kScoreImpossible;
 		}
 
@@ -93,14 +97,20 @@ double Evaluator::Evaluate()
 
 		Move &next_move = scored_candidates[easiest_move_index].move;
 		score += current_score;
-
+		result_.step_score.push_back(current_score);
+		++method_count[next_move.method];
 		for (int i = 0; i < next_move.target_pos.size(); ++i) {
 			field_.DecideEdge(next_move.target_pos[i], next_move.target_state[i]);
 		}
 		last_pos = next_move.target_pos;
 	}
-	
-	if (!field_.IsFullySolved()) return kScoreInconsistent;
+	for (int i = 0; i <= kInoutRule; ++i) result_.method_application_count.push_back(method_count[i]);
+
+	if (!field_.IsFullySolved()) {
+		result_.score = kScoreInconsistent;
+		return kScoreInconsistent;
+	}
+	result_.score = score;
 	return score;
 }
 void Evaluator::EnumerateMoves()
