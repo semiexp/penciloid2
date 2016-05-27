@@ -5,6 +5,8 @@
 
 namespace penciloid
 {
+// Using GridLoop<T> is allowed as long as the destructor isn't called
+
 template <class T>
 void ApplyInOutRule(GridLoop<T> *grid)
 {
@@ -104,6 +106,38 @@ void CheckConnectability(GridLoop<T> *grid)
 				}
 			}
 		}
+	}
+}
+template <class T>
+void Assume(T *grid)
+{
+	Y height = grid->height();
+	X width = grid->width();
+	while (true) {
+		bool updated = false;
+		for (Y y(0); y <= height * 2; ++y) {
+			for (X x(0); x <= width * 2; ++x) {
+				if (static_cast<int>(y % 2) == static_cast<int>(x % 2)) continue;
+				if (grid->GetEdge(LoopPosition(y, x)) != T::kEdgeUndecided) continue;
+
+				T field_line = *grid, field_blank = *grid;
+				field_line.DecideEdge(LoopPosition(y, x), T::kEdgeLine);
+				field_blank.DecideEdge(LoopPosition(y, x), T::kEdgeBlank);
+
+				if (field_line.IsInconsistent() && field_blank.IsInconsistent()) {
+					grid->SetInconsistent();
+					return;
+				}
+				if (field_line.IsInconsistent()) {
+					*grid = field_blank;
+					updated = true;
+				} else if (field_blank.IsInconsistent()) {
+					*grid = field_line;
+					updated = true;
+				}
+			}
+		}
+		if (!updated) break;
 	}
 }
 }
