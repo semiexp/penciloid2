@@ -48,7 +48,6 @@ void YajilinFieldClueSameDirectionTest()
 	problem.SetClue(CellPosition(Y(2), X(2)), Problem::kClueSouth, 1);
 	Field field(problem);
 	assert(field.GetCellState(CellPosition(Y(1), X(2))) == Field::kCellBlock);
-	std::cout << field;
 }
 
 }
