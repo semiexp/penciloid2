@@ -14,6 +14,7 @@ void RunAllYajilinFieldTest()
 {
 	YajilinFieldClueTest();
 	YajilinCornerCellTest();
+	YajilinFieldClueSameDirectionTest();
 }
 void YajilinFieldClueTest()
 {
@@ -39,5 +40,16 @@ void YajilinCornerCellTest()
 	assert(field.GetCellState(CellPosition(Y(1), X(6))) == Field::kCellLine);
 	assert(field.GetCellState(CellPosition(Y(0), X(7))) == Field::kCellLine);
 }
+void YajilinFieldClueSameDirectionTest()
+{
+	using namespace yajilin;
+	Problem problem(Y(6), X(6));
+	problem.SetClue(CellPosition(Y(0), X(2)), Problem::kClueSouth, 2);
+	problem.SetClue(CellPosition(Y(2), X(2)), Problem::kClueSouth, 1);
+	Field field(problem);
+	assert(field.GetCellState(CellPosition(Y(1), X(2))) == Field::kCellBlock);
+	std::cout << field;
+}
+
 }
 }

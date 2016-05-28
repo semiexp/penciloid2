@@ -6,5 +6,6 @@ namespace test
 {
 void YajilinFieldClueTest();
 void YajilinCornerCellTest();
+void YajilinFieldClueSameDirectionTest();
 }
 }

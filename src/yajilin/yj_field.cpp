@@ -125,12 +125,21 @@ void Field::Inspect(LoopPosition pos)
 			}
 		}
 	} else if (cell_status == kCellClue) {
-		Direction dir = GetDirectionValue(cells_.at(cell).direction);
+		ClueDirection clue_dir = cells_.at(cell).direction;
+		Direction dir = GetDirectionValue(clue_dir);
 		int clue_num = cells_.at(cell).clue_number;
 
 		int chain_size = 0, n_block = 0, max_extra_block = 0;
 		for (CellPosition c = cell + dir;; c = c + dir) {
 			if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
+			if (GetCellState(c) == kCellClue) {
+				Cell cell_value = GetCell(c);
+				if (cell_value.direction == clue_dir) {
+					clue_num -= cell_value.clue_number;
+					break;
+				}
+			}
+
 			if (GetCellState(c) == kCellUndecided) {
 				++chain_size;
 			} else {
@@ -150,6 +159,7 @@ void Field::Inspect(LoopPosition pos)
 		if (clue_num == n_block) {
 			for (CellPosition c = cell + dir;; c = c + dir) {
 				if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
+				if (GetCellState(c) == kCellClue && GetCell(c).direction == clue_dir) break;
 				if (GetCellState(c) != kCellClue && GetCellState(c) != kCellBlock) DecideCell(c, kCellLine);
 			}
 		} else {
@@ -157,6 +167,7 @@ void Field::Inspect(LoopPosition pos)
 				std::vector<CellPosition> chain_cells;
 				for (CellPosition c = cell + dir;; c = c + dir) {
 					if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
+					if (GetCellState(c) == kCellClue && GetCell(c).direction == clue_dir) break;
 					if (GetCellState(c) == kCellUndecided) {
 						chain_cells.push_back(c);
 					} else {
