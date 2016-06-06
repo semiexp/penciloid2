@@ -450,26 +450,38 @@ void GridLoop<T>::Check(LoopPosition pos)
 	}
 }
 template <class T>
+void GridLoop<T>::CheckAllVertex()
+{
+	QueuedRun([&]() {
+		for (Y y(0); y <= 2 * height_; ++y) {
+			for (X x(0); x <= 2 * width_; ++x) {
+				Check(LoopPosition(y, x));
+			}
+		}
+	});
+}
+
+template <class T>
 void GridLoop<T>::CheckAllCell()
 {
-	if (IsQueueStarted()) {
+	QueuedRun([&]() {
 		for (Y y(1); y < 2 * height_; ++y) {
 			for (X x(1); x < 2 * width_; ++x) {
 				Check(LoopPosition(y, x));
 			}
 		}
-	} else {
-		QueueStart();
-
-		for (Y y(1); y < 2 * height_; ++y) {
-			for (X x(1); x < 2 * width_; ++x) {
-				Check(LoopPosition(y, x));
+	});
+}
+template <class T>
+void GridLoop<T>::CheckAllEdge()
+{
+	QueuedRun([&]() {
+		for (Y y(0); y <= 2 * height_; ++y) {
+			for (X x(0); x <= 2 * width_; ++x) {
+				if (static_cast<int>(y % 2) != static_cast<int>(x % 2)) Check(LoopPosition(y, x));
 			}
 		}
-		QueueProcessAll();
-
-		QueueEnd();
-	}
+	});
 }
 template <class T>
 void GridLoop<T>::DecideChain(unsigned int id, EdgeState status)
