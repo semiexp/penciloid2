@@ -32,12 +32,12 @@ Field::Field(Problem &problem) : GridLoop<Field>(problem.height() - 1, problem.w
 			int adjacent_empty_cells = 0;
 			for (Direction d : k4Neighborhood) {
 				CellPosition cell2 = CellPosition(y, x) + d;
-				if (cell2.y >= 0 && cell2.x >= 0 && cell2.y < height() && cell2.x < width() && GetCellState(cell2) != kCellClue) ++adjacent_empty_cells;
+				if (cells_.IsPositionOnGrid(cell2) && GetCellState(cell2) != kCellClue) ++adjacent_empty_cells;
 			}
 			if (adjacent_empty_cells == 2) {
 				for (Direction d : k4Neighborhood) {
 					CellPosition cell2 = CellPosition(y, x) + d;
-					if (cell2.y >= 0 && cell2.x >= 0 && cell2.y < height() && cell2.x < width() && GetCellState(cell2) != kCellClue) {
+					if (cells_.IsPositionOnGrid(cell2) && GetCellState(cell2) != kCellClue) {
 						DecideCell(cell2, kCellLine);
 					}
 				}
@@ -66,7 +66,7 @@ void Field::DecideCell(CellPosition cell, CellState status)
 	
 	for (Direction d : k4Neighborhood) {
 		for (CellPosition c = cell + d;; c = c + d) {
-			if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
+			if (!cells_.IsPositionOnGrid(c)) break;
 			Check(LoopPosition(c.y * 2, c.x * 2));
 		}
 	}
@@ -75,7 +75,7 @@ void Field::DecideCell(CellPosition cell, CellState status)
 	if (status == kCellBlock) {
 		for (Direction d : k4Neighborhood) {
 			CellPosition cell2 = cell + d;
-			if (cell2.y >= 0 && cell2.x >= 0 && cell2.y < height() && cell2.x < width() && GetCellState(cell2) != kCellClue) {
+			if (cells_.IsPositionOnGrid(cell2) && GetCellState(cell2) != kCellClue) {
 				DecideCell(cell2, kCellLine);
 			}
 		}
@@ -120,7 +120,7 @@ void Field::Inspect(LoopPosition pos)
 
 		int chain_size = 0, n_block = 0, max_extra_block = 0;
 		for (CellPosition c = cell + dir;; c = c + dir) {
-			if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
+			if (!cells_.IsPositionOnGrid(c)) break;
 			if (GetCellState(c) == kCellClue) {
 				Cell cell_value = GetCell(c);
 				if (cell_value.clue.direction == clue.direction) {
@@ -147,7 +147,7 @@ void Field::Inspect(LoopPosition pos)
 		}
 		if (clue_num == n_block) {
 			for (CellPosition c = cell + dir;; c = c + dir) {
-				if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
+				if (!cells_.IsPositionOnGrid(c)) break;
 				if (GetCellState(c) == kCellClue && GetCell(c).clue.direction == clue.direction) break;
 				if (GetCellState(c) != kCellClue && GetCellState(c) != kCellBlock) DecideCell(c, kCellLine);
 			}
@@ -155,7 +155,7 @@ void Field::Inspect(LoopPosition pos)
 			if (n_block + max_extra_block == clue_num) {
 				std::vector<CellPosition> chain_cells;
 				for (CellPosition c = cell + dir;; c = c + dir) {
-					if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
+					if (!cells_.IsPositionOnGrid(c)) break;
 					if (GetCellState(c) == kCellClue && GetCell(c).clue.direction == clue.direction) break;
 					if (GetCellState(c) == kCellUndecided) {
 						chain_cells.push_back(c);
