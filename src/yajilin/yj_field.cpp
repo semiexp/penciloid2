@@ -16,20 +16,9 @@ Field::Field(Problem &problem) : GridLoop<Field>(problem.height() - 1, problem.w
 {
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
-			Problem::Cell clue = problem.GetClue(CellPosition(y, x));
-			if (clue.direction != Problem::kNoClue) {
-				ClueDirection d = kClueNorth;
-				switch (clue.direction) {
-				case Problem::kClueNorth:
-					d = kClueNorth; break;
-				case Problem::kClueWest:
-					d = kClueWest; break;
-				case Problem::kClueEast:
-					d = kClueEast; break;
-				case Problem::kClueSouth:
-					d = kClueSouth; break;
-				}
-				cells_.at(CellPosition(y, x)) = Cell(kCellClue, d, clue.clue_number);
+			Clue clue = problem.GetClue(CellPosition(y, x));
+			if (clue.direction != kNoClue) {
+				cells_.at(CellPosition(y, x)) = Cell(kCellClue, clue);
 			}
 		}
 	}
@@ -125,17 +114,17 @@ void Field::Inspect(LoopPosition pos)
 			}
 		}
 	} else if (cell_status == kCellClue) {
-		ClueDirection clue_dir = cells_.at(cell).direction;
-		Direction dir = GetDirectionValue(clue_dir);
-		int clue_num = cells_.at(cell).clue_number;
+		Clue clue = cells_.at(cell).clue;
+		Direction dir = GetDirectionValue(clue.direction);
+		int clue_num = cells_.at(cell).clue.clue_value;
 
 		int chain_size = 0, n_block = 0, max_extra_block = 0;
 		for (CellPosition c = cell + dir;; c = c + dir) {
 			if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
 			if (GetCellState(c) == kCellClue) {
 				Cell cell_value = GetCell(c);
-				if (cell_value.direction == clue_dir) {
-					clue_num -= cell_value.clue_number;
+				if (cell_value.clue.direction == clue.direction) {
+					clue_num -= cell_value.clue.clue_value;
 					break;
 				}
 			}
@@ -159,7 +148,7 @@ void Field::Inspect(LoopPosition pos)
 		if (clue_num == n_block) {
 			for (CellPosition c = cell + dir;; c = c + dir) {
 				if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
-				if (GetCellState(c) == kCellClue && GetCell(c).direction == clue_dir) break;
+				if (GetCellState(c) == kCellClue && GetCell(c).clue.direction == clue.direction) break;
 				if (GetCellState(c) != kCellClue && GetCellState(c) != kCellBlock) DecideCell(c, kCellLine);
 			}
 		} else {
@@ -167,7 +156,7 @@ void Field::Inspect(LoopPosition pos)
 				std::vector<CellPosition> chain_cells;
 				for (CellPosition c = cell + dir;; c = c + dir) {
 					if (c.y < 0 || c.x < 0 || c.y >= height() || c.x >= width()) break;
-					if (GetCellState(c) == kCellClue && GetCell(c).direction == clue_dir) break;
+					if (GetCellState(c) == kCellClue && GetCell(c).clue.direction == clue.direction) break;
 					if (GetCellState(c) == kCellUndecided) {
 						chain_cells.push_back(c);
 					} else {
@@ -209,13 +198,13 @@ std::ostream& operator<<(std::ostream &stream, Field &field)
 					stream << "#";
 				} else if (cell_status == Field::kCellClue) {
 					Field::Cell cell = field.GetCell(CellPosition(y / 2, x / 2));
-					switch (cell.direction) {
-					case Field::kClueNorth: stream << "^"; break;
-					case Field::kClueWest: stream << "<"; break;
-					case Field::kClueEast: stream << ">"; break;
-					case Field::kClueSouth: stream << "v"; break;
+					switch (cell.clue.direction) {
+					case kClueNorth: stream << "^"; break;
+					case kClueWest: stream << "<"; break;
+					case kClueEast: stream << ">"; break;
+					case kClueSouth: stream << "v"; break;
 					}
-					stream << cell.clue_number;
+					stream << cell.clue.clue_value;
 				} else if (cell_status == Field::kCellLine) {
 					stream << "+";
 				} else {

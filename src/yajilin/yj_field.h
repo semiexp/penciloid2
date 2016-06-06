@@ -20,21 +20,13 @@ public:
 		kCellBlock,
 		kCellClue
 	};
-	enum ClueDirection
-	{
-		kClueNorth, // The direction in which y coordinate is decreasing
-		kClueWest, // The direction in which x coordinate is decreasing
-		kClueEast, // The direction in which x coordinate is increasing
-		kClueSouth // The direction in which y coordinate is increasing
-	};
 	struct Cell
 	{
 		CellState status;
-		ClueDirection direction;
-		int clue_number;
+		Clue clue;
 
-		Cell() : status(kCellUndecided), direction(kClueNorth), clue_number(-1) {}
-		Cell(CellState status, ClueDirection direction, int clue_number) : status(status), direction(direction), clue_number(clue_number) {}
+		Cell() : status(kCellUndecided), clue() {}
+		Cell(CellState status, Clue clue) : status(status), clue(clue) {}
 	};
 
 	Field();
