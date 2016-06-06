@@ -26,6 +26,9 @@ public:
 	T &at(int pos) { return data_[pos]; }
 	const T &at(int pos) const { return data_[pos]; }
 
+	// Returns whether <pos> is within the range of this grid.
+	bool IsPositionOnGrid(CellPosition pos) const { return 0 <= pos.y && pos.y < height_ && 0 <= pos.x && pos.x < width_; }
+
 	unsigned int NumberOfCells() const { return static_cast<int>(height_) * static_cast<int>(width_); }
 	unsigned int GetIndex(CellPosition pos) const { return static_cast<int>(pos.y) * static_cast<int>(width_) + static_cast<int>(pos.x); }
 	CellPosition AsPosition(unsigned int index) const {
