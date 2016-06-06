@@ -45,7 +45,6 @@ public:
 	Cell GetCell(CellPosition cell) { return cells_.at(cell); }
 
 	void Inspect(LoopPosition pos);
-	void HasDecided(LoopPosition pos);
 
 private:
 	Grid<Cell> cells_;
