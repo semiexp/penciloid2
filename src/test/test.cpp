@@ -11,6 +11,7 @@ void RunAllTest()
 	RunAllAkariProblemTest();
 	RunAllAkariFieldTest();
 	RunAllYajilinFieldTest();
+	RunAllMasyuFieldTest();
 }
 }
 }

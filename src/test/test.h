@@ -10,5 +10,6 @@ void RunAllSlitherlinkFieldTest();
 void RunAllAkariProblemTest();
 void RunAllAkariFieldTest();
 void RunAllYajilinFieldTest();
+void RunAllMasyuFieldTest();
 }
 }
