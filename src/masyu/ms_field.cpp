@@ -56,7 +56,7 @@ void Field::Inspect(LoopPosition pos)
 	if (GetClue(clue_pos) == kClueBlack) {
 		for (int i = 0; i < 4; ++i) {
 			Direction dir = k4Neighborhood[i], dir_cross = k4Neighborhood[(i + 1) % 4];
-			if (GetEdge(pos + dir) == kEdgeBlank || GetEdge(pos + dir * 3) == kEdgeBlank || GetEdge(pos + dir * 2 + dir_cross) == kEdgeLine || GetEdge(pos + dir * 2 - dir_cross) == kEdgeLine) {
+			if (GetEdgeSafe(pos + dir) == kEdgeBlank || GetEdgeSafe(pos + dir * 3) == kEdgeBlank || GetEdgeSafe(pos + dir * 2 + dir_cross) == kEdgeLine || GetEdgeSafe(pos + dir * 2 - dir_cross) == kEdgeLine) {
 				DecideEdge(pos - dir, kEdgeLine);
 				DecideEdge(pos - dir * 3, kEdgeLine);
 			}
@@ -64,11 +64,11 @@ void Field::Inspect(LoopPosition pos)
 	} else if (GetClue(clue_pos) == kClueWhite) {
 		for (int i = 0; i < 2; ++i) {
 			Direction dir = k4Neighborhood[i], dir_cross = k4Neighborhood[i + 1];
-			if (GetEdge(pos + dir) == kEdgeLine || GetEdge(pos - dir) == kEdgeLine) {
+			if (GetEdgeSafe(pos + dir) == kEdgeLine || GetEdgeSafe(pos - dir) == kEdgeLine) {
 				DecideEdge(pos + dir, kEdgeLine);
 				DecideEdge(pos - dir, kEdgeLine);
 			}
-			if ((GetEdge(pos + dir) == kEdgeBlank && GetEdge(pos - dir) == kEdgeBlank) || (GetEdge(pos + 3 * dir) == kEdgeLine && GetEdge(pos - 3 * dir) == kEdgeLine)) {
+			if (GetEdgeSafe(pos + dir) == kEdgeBlank || GetEdgeSafe(pos - dir) == kEdgeBlank || (GetEdgeSafe(pos + 3 * dir) == kEdgeLine && GetEdge(pos - 3 * dir) == kEdgeLine)) {
 				DecideEdge(pos + dir_cross, kEdgeLine);
 				DecideEdge(pos - dir_cross, kEdgeLine);
 			}
