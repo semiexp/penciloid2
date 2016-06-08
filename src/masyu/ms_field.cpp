@@ -61,6 +61,28 @@ void Field::AddClue(CellPosition cell, Clue clue)
 	ApplyTheorem(LoopPosition(cell.y * 2, cell.x * 2));
 	Check(LoopPosition(cell.y * 2, cell.x * 2));
 }
+void Field::CheckNeighborhood(LoopPosition edge)
+{
+	if (edge.y % 2 == 1) {
+		Check(edge + Direction(Y(-1), X(0)));
+		Check(edge + Direction(Y(-3), X(0)));
+		Check(edge + Direction(Y(-1), X(-2)));
+		Check(edge + Direction(Y(-1), X(2)));
+		Check(edge + Direction(Y(1), X(0)));
+		Check(edge + Direction(Y(3), X(0)));
+		Check(edge + Direction(Y(1), X(-2)));
+		Check(edge + Direction(Y(1), X(2)));
+	} else {
+		Check(edge + Direction(Y(0), X(-1)));
+		Check(edge + Direction(Y(0), X(-3)));
+		Check(edge + Direction(Y(-2), X(-1)));
+		Check(edge + Direction(Y(-2), X(-1)));
+		Check(edge + Direction(Y(0), X(1)));
+		Check(edge + Direction(Y(0), X(3)));
+		Check(edge + Direction(Y(-2), X(1)));
+		Check(edge + Direction(Y(-2), X(1)));
+	}
+}
 void Field::Inspect(LoopPosition pos)
 {
 	if (pos.y % 2 != 0 || pos.x % 2 != 0) return;
