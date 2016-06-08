@@ -21,6 +21,9 @@ public:
 
 	~Field();
 
+	Field &operator=(const Field &other);
+	Field &operator=(Field &&other);
+
 	Y height() const { return clues_.height(); }
 	X width() const { return clues_.width(); }
 

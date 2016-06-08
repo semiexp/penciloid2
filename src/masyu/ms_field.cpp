@@ -34,6 +34,20 @@ Field::Field(Field &&other) : GridLoop<Field>(other), clues_(std::move(other.clu
 Field::~Field()
 {
 }
+Field &Field::operator=(const Field &other)
+{
+	GridLoop<Field>::operator=(other);
+	clues_ = other.clues_;
+
+	return *this;
+}
+Field &Field::operator=(Field &&other)
+{
+	GridLoop<Field>::operator=(other);
+	clues_ = std::move(other.clues_);
+
+	return *this;
+}
 void Field::AddClue(CellPosition cell, Clue clue)
 {
 	if (GetClue(cell) != kNoClue) {
@@ -59,6 +73,7 @@ void Field::Inspect(LoopPosition pos)
 			if (GetEdgeSafe(pos + dir) == kEdgeBlank || GetEdgeSafe(pos + dir * 3) == kEdgeBlank || GetEdgeSafe(pos + dir * 2 + dir_cross) == kEdgeLine || GetEdgeSafe(pos + dir * 2 - dir_cross) == kEdgeLine) {
 				DecideEdge(pos - dir, kEdgeLine);
 				DecideEdge(pos - dir * 3, kEdgeLine);
+				DecideEdge(pos + dir, kEdgeBlank);
 			}
 		}
 	} else if (GetClue(clue_pos) == kClueWhite) {
