@@ -35,5 +35,7 @@ private:
 	Grid<Clue> clues_;
 };
 
+std::ostream& operator<<(std::ostream &stream, Field &field);
+
 }
 }

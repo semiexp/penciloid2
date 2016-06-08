@@ -109,5 +109,30 @@ void Field::ApplyTheorem(LoopPosition pos)
 		}
 	}
 }
+std::ostream &operator<<(std::ostream &stream, Field &field)
+{
+	for (Y y(0); y <= 2 * (field.height() - 1); ++y) {
+		for (X x(0); x <= 2 * (field.width() - 1); ++x) {
+			if (y % 2 == 0 && x % 2 == 0) {
+				Clue c = field.GetClue(CellPosition(y / 2, x / 2));
+				if (c == kClueBlack) stream << "#";
+				else if (c == kClueWhite) stream << "O";
+				else stream << "+";
+			} else if (y % 2 == 1 && x % 2 == 0) {
+				Field::EdgeState e = field.GetEdge(LoopPosition(y, x));
+				if (e == Field::kEdgeUndecided) stream << " ";
+				else if (e == Field::kEdgeLine) stream << "|";
+				else stream << "X";
+			} else if (y % 2 == 0 && x % 2 == 1) {
+				Field::EdgeState e = field.GetEdge(LoopPosition(y, x));
+				if (e == Field::kEdgeUndecided) stream << "   ";
+				else if (e == Field::kEdgeLine) stream << "---";
+				else stream << " X ";
+			} else stream << "   ";
+		}
+		stream << "\n";
+	}
+	return stream;
+}
 }
 }
