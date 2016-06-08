@@ -68,7 +68,7 @@ void Field::Inspect(LoopPosition pos)
 				DecideEdge(pos + dir, kEdgeLine);
 				DecideEdge(pos - dir, kEdgeLine);
 			}
-			if (GetEdgeSafe(pos + dir) == kEdgeBlank || GetEdgeSafe(pos - dir) == kEdgeBlank || (GetEdgeSafe(pos + 3 * dir) == kEdgeLine && GetEdge(pos - 3 * dir) == kEdgeLine)) {
+			if (GetEdgeSafe(pos + dir) == kEdgeBlank || GetEdgeSafe(pos - dir) == kEdgeBlank || (GetEdgeSafe(pos + 3 * dir) == kEdgeLine && GetEdgeSafe(pos - 3 * dir) == kEdgeLine)) {
 				DecideEdge(pos + dir_cross, kEdgeLine);
 				DecideEdge(pos - dir_cross, kEdgeLine);
 			}
