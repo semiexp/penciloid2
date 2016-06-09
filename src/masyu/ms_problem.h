@@ -17,6 +17,9 @@ public:
 
 	~Problem();
 
+	Problem &operator=(const Problem &other);
+	Problem &operator=(Problem &&other);
+
 	Y height() const { return cells_.height(); }
 	X width() const { return cells_.width(); }
 
