@@ -108,7 +108,9 @@ void Field::Inspect(LoopPosition pos)
 				if (GetEdgeSafe(pos + dir * 3) == kEdgeLine) DecideEdge(pos - dir * 3, kEdgeBlank);
 				if (GetEdgeSafe(pos - dir * 3) == kEdgeLine) DecideEdge(pos + dir * 3, kEdgeBlank);
 			}
-			if (GetEdgeSafe(pos + dir) == kEdgeBlank || GetEdgeSafe(pos - dir) == kEdgeBlank || (GetEdgeSafe(pos + 3 * dir) == kEdgeLine && GetEdgeSafe(pos - 3 * dir) == kEdgeLine)) {
+			if (GetEdgeSafe(pos + dir) == kEdgeBlank || GetEdgeSafe(pos - dir) == kEdgeBlank || (
+				(GetEdgeSafe(pos + 3 * dir) == kEdgeLine || (clues_.IsPositionOnGrid(clue_pos + dir) && GetClue(clue_pos + dir) == kClueWhite)) &&
+				(GetEdgeSafe(pos - 3 * dir) == kEdgeLine || (clues_.IsPositionOnGrid(clue_pos - dir) && GetClue(clue_pos - dir) == kClueWhite)))) {
 				DecideEdge(pos + dir_cross, kEdgeLine);
 				DecideEdge(pos - dir_cross, kEdgeLine);
 			}
