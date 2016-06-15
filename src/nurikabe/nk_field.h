@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nk_type.h"
+#include "nk_problem.h"
 #include "../common/type.h"
 #include "../common/grid.h"
 
@@ -19,7 +20,7 @@ public:
 	};
 
 	Field();
-	Field(Y height, X width);
+	Field(const Problem &problem);
 	Field(const Field &other);
 	Field(Field &&other);
 	~Field();
@@ -57,8 +58,15 @@ private:
 		int group_next_cell;
 	};
 
+	int GetIndex(CellPosition pos) { return cells_.GetIndex(pos); }
 	int GetRoot(int cell_idx);
+	int GetGroupSize(int cell_idx) { return -cells_.at(GetRoot(cell_idx)).group_parent_cell; }
+	bool HasClueInGroup(int cell_idx) { return cells_.at(GetRoot(cell_idx)).clue != kNoClue; }
 	void Join(int cell_idx1, int cell_idx2);
+	
+	void CheckCluster(CellPosition top);
+	void AvoidGroupWithSeveralClue(CellPosition pos);
+	void CloseGroup(int cell_idx);
 
 	Grid<Cell> cells_;
 	bool inconsistent_, fully_solved_;
