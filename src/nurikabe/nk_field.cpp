@@ -43,6 +43,14 @@ Field &Field::operator=(const Field &other)
 	cells_ = other.cells_;
 	inconsistent_ = other.inconsistent_;
 	fully_solved_ = other.fully_solved_;
+	return *this;
+}
+Field &Field::operator=(Field &&other)
+{
+	cells_ = std::move(other.cells_);
+	inconsistent_ = other.inconsistent_;
+	fully_solved_ = other.fully_solved_;
+	return *this;
 }
 void Field::DecideCell(CellPosition pos, CellState status)
 {
