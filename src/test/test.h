@@ -11,5 +11,6 @@ void RunAllAkariProblemTest();
 void RunAllAkariFieldTest();
 void RunAllYajilinFieldTest();
 void RunAllMasyuFieldTest();
+void RunAllNurikabeFieldTest();
 }
 }

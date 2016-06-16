@@ -12,6 +12,7 @@ void RunAllTest()
 	RunAllAkariFieldTest();
 	RunAllYajilinFieldTest();
 	RunAllMasyuFieldTest();
+	RunAllNurikabeFieldTest();
 }
 }
 }
