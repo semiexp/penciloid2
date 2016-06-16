@@ -14,6 +14,8 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width(),
 {
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
+			cells_.at(CellPosition(y, x)).group_next_cell = cells_.GetIndex(CellPosition(y, x));
+
 			Clue c = problem.GetClue(CellPosition(y, x));
 			if (c != kNoClue) {
 				cells_.at(CellPosition(y, x)).clue = c;
@@ -80,6 +82,8 @@ void Field::DecideCell(CellPosition pos, CellState status)
 		int root_idx = GetRoot(GetIndex(pos));
 		Cell &root_cell = cells_.at(root_idx);
 		if (root_cell.clue != kNoClue) {
+			AvoidGroupWithSeveralClue(pos);
+
 			if (root_cell.clue.clue_high == GetGroupSize(root_idx)) {
 				CloseGroup(root_idx);
 			} else if (root_cell.clue.clue_high < GetGroupSize(root_idx)) {
@@ -106,10 +110,10 @@ void Field::Join(int cell_idx1, int cell_idx2)
 
 	if (cell1.clue == kNoClue && (cell2.clue != kNoClue || cell1.group_parent_cell > cell2.group_parent_cell)) {
 		cell2.group_parent_cell += cell1.group_parent_cell;
-		cell1.group_parent_cell = cell2.group_parent_cell;
+		cell1.group_parent_cell = cell_idx2;
 	} else {
 		cell1.group_parent_cell += cell2.group_parent_cell;
-		cell2.group_parent_cell = cell1.group_parent_cell;
+		cell2.group_parent_cell = cell_idx1;
 	}
 
 	std::swap(cell1.group_next_cell, cell2.group_next_cell);
@@ -164,13 +168,13 @@ void Field::AvoidGroupWithSeveralClue(CellPosition pos)
 }
 void Field::CloseGroup(int cell_idx)
 {
-	CellPosition pos = cells_.AsPosition(cell_idx);
 	int p = cell_idx;
 	do {
+		CellPosition pos = cells_.AsPosition(p);
 		for (Direction d : k4Neighborhood) {
 			CellPosition pos2 = pos + d;
-			if (cells_.IsPositionOnGrid(pos2) && GetCell(pos) == kCellUndecided) {
-				DecideCell(pos, kCellBlack);
+			if (cells_.IsPositionOnGrid(pos2) && GetCell(pos2) == kCellUndecided) {
+				DecideCell(pos2, kCellBlack);
 			}
 		}
 		p = cells_.at(p).group_next_cell;
