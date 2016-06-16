@@ -7,6 +7,7 @@ namespace test
 void RunAllTest()
 {
 	RunAllGridLoopTest();
+	RunAllGraphSeparationTest();
 	RunAllSlitherlinkFieldTest();
 	RunAllAkariProblemTest();
 	RunAllAkariFieldTest();

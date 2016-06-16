@@ -12,5 +12,6 @@ void RunAllAkariFieldTest();
 void RunAllYajilinFieldTest();
 void RunAllMasyuFieldTest();
 void RunAllNurikabeFieldTest();
+void RunAllGraphSeparationTest();
 }
 }
