@@ -40,6 +40,8 @@ public:
 
 	void DecideCell(CellPosition pos, CellState status);
 
+	void ExpandBlack();
+
 private:
 	struct Cell
 	{

@@ -3,6 +3,8 @@
 #include <xutility>
 #include <algorithm>
 
+#include "../common/graph_separation.h"
+
 namespace penciloid
 {
 namespace nurikabe
@@ -179,6 +181,52 @@ void Field::CloseGroup(int cell_idx)
 		}
 		p = cells_.at(p).group_next_cell;
 	} while (p != cell_idx);
+}
+void Field::ExpandBlack()
+{
+	struct Vector2
+	{
+		Vector2(int n_cell = 0, int n_black = 0) : n_cell(n_cell), n_black(n_black) {}
+
+		inline Vector2 operator+(const Vector2 &other) { return Vector2(n_cell + other.n_cell, n_black + other.n_black); }
+		inline Vector2 operator-() { return Vector2(-n_cell, -n_black); }
+
+		int n_cell, n_black;
+	};
+	int n_cells = static_cast<int>(height()) * static_cast<int>(width());
+	GraphSeparation<Vector2> graph(n_cells, n_cells * 2);
+
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			CellState cell = GetCell(CellPosition(y, x));
+			int idx = GetIndex(CellPosition(y, x));
+			if (cell == kCellUndecided) graph.SetValue(idx, Vector2(1, 0));
+			else if (cell == kCellBlack) graph.SetValue(idx, Vector2(1, 1));
+			else continue;
+
+			if (y != height() - 1 && GetCell(CellPosition(y + 1, x)) != kCellWhite) {
+				graph.AddEdge(idx, GetIndex(CellPosition(y + 1, x)));
+			}
+			if (x != width() - 1 && GetCell(CellPosition(y, x + 1)) != kCellWhite) {
+				graph.AddEdge(idx, GetIndex(CellPosition(y, x + 1)));
+			}
+		}
+	}
+	graph.Construct();
+
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			if (GetCell(CellPosition(y, x)) != kCellUndecided) continue;
+			std::vector<Vector2> separate_info = graph.Separate(GetIndex(CellPosition(y, x)));
+			int n_black_unit = 0;
+			for (Vector2 &vec : separate_info) {
+				if (vec.n_black > 0) ++n_black_unit;
+			}
+			if (n_black_unit >= 2) {
+				DecideCell(CellPosition(y, x), kCellBlack);
+			}
+		}
+	}
 }
 }
 }

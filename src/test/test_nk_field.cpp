@@ -15,6 +15,7 @@ void RunAllNurikabeFieldTest()
 {
 	NurikabeFieldAdjacentClueTest();
 	NurikabeFieldCloseGroupTest();
+	NurikabeFieldExpandBlackTest();
 }
 void NurikabeFieldAdjacentClueTest()
 {
@@ -70,6 +71,22 @@ void NurikabeFieldCloseGroupTest()
 		assert(f.GetCell(CellPosition(Y(2), X(3))) == Field::kCellBlack);
 		assert(f.GetCell(CellPosition(Y(3), X(2))) == Field::kCellBlack);
 		assert(f.IsInconsistent() == false);
+	}
+}
+void NurikabeFieldExpandBlackTest()
+{
+	using namespace nurikabe;
+
+	{
+		Problem p(Y(5), X(5));
+		p.SetClue(CellPosition(Y(0), X(1)), Clue(10));
+		p.SetClue(CellPosition(Y(0), X(3)), Clue(3));
+
+		Field f(p);
+		f.DecideCell(CellPosition(Y(4), X(4)), Field::kCellBlack);
+		f.ExpandBlack();
+
+		assert(f.GetCell(CellPosition(Y(1), X(2))) == Field::kCellBlack);
 	}
 }
 }
