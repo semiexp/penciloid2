@@ -41,6 +41,7 @@ public:
 	void DecideCell(CellPosition pos, CellState status);
 
 	void ExpandBlack();
+	void ExpandWhite();
 
 private:
 	struct Cell

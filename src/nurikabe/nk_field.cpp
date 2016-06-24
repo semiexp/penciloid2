@@ -2,6 +2,7 @@
 
 #include <xutility>
 #include <algorithm>
+#include <queue>
 
 #include "../common/graph_separation.h"
 
@@ -224,6 +225,258 @@ void Field::ExpandBlack()
 			}
 			if (n_black_unit >= 2) {
 				DecideCell(CellPosition(y, x), kCellBlack);
+			}
+		}
+	}
+}
+void Field::ExpandWhite()
+{
+	/*
+	necessary information for each cell:
+	- the status of the cell (black / white local / white global)
+	- master cell for local cells
+	- identifier
+	 */
+	enum CellType
+	{
+		kBlack, kWhiteLocal, kWhiteGlobal
+	};
+	struct CellData
+	{
+		int master, id;
+		CellType type;
+
+		CellData() : master(-1), id(-1), type(kBlack) {}
+	};
+	Grid<CellData> data(height(), width());
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			if (GetCell(CellPosition(y, x)) == kCellBlack) continue;
+			if (HasClueInGroup(GetIndex(CellPosition(y, x)))) {
+				data.at(CellPosition(y, x)).type = kWhiteLocal;
+				for (Direction d : k4Neighborhood) {
+					CellPosition nb = CellPosition(y, x) + d;
+					if (cells_.IsPositionOnGrid(nb) && GetCell(nb) != kCellBlack) {
+						data.at(nb).type = kWhiteLocal;
+					}
+				}
+			} else {
+				if (data.at(CellPosition(y, x)).type == kBlack) {
+					data.at(CellPosition(y, x)).type = kWhiteGlobal;
+				}
+			}
+		}
+	}
+	int id_next = 0;
+	std::queue<CellPosition> q;
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			CellType type = data.at(CellPosition(y, x)).type;
+			if (type == kBlack || (type == kWhiteLocal && cells_.at(CellPosition(y, x)).clue == kNoClue)) continue;
+			if (data.at(CellPosition(y, x)).id != -1) continue;
+
+			int master_id = GetIndex(CellPosition(y, x));
+			q.push(CellPosition(y, x));
+			data.at(CellPosition(y, x)).id = id_next;
+			while (!q.empty()) {
+				CellPosition pos = q.front(); q.pop();
+				data.at(pos).master = master_id;
+
+				for (Direction d : k4Neighborhood) {
+					CellPosition pos2 = pos + d;
+					if (data.IsPositionOnGrid(pos2) && data.at(pos).type == data.at(pos2).type && data.at(pos2).id == -1) {
+						q.push(pos2);
+
+						data.at(pos2).id = id_next;
+					}
+				}
+			}
+
+			++id_next;
+		}
+	}
+
+	struct Adjacency
+	{
+		int local_cell;
+		int local_master, global_master;
+
+		Adjacency(int local_cell, int local_master, int global_master) :
+			local_cell(local_cell), local_master(local_master), global_master(global_master) {}
+		inline bool operator<(const Adjacency &other)
+		{
+			return std::make_pair(local_master, global_master) < std::make_pair(other.local_master, other.global_master);
+		}
+		inline bool operator==(const Adjacency &other)
+		{
+			return local_master == other.local_master && global_master == other.global_master;
+		}
+	};
+	std::vector<Adjacency> lg_adjacency;
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			CellPosition pos(y, x);
+			if (data.at(pos).type != kWhiteLocal) continue;
+			for (Direction d : k4Neighborhood) {
+				CellPosition pos2 = pos + d;
+				if (data.IsPositionOnGrid(pos2) && data.at(pos2).type == kWhiteGlobal) {
+					lg_adjacency.push_back(Adjacency(GetIndex(pos), data.at(pos).master, data.at(pos2).master));
+				}
+			}
+		}
+	}
+	std::sort(lg_adjacency.begin(), lg_adjacency.end());
+
+	struct GroupData
+	{
+		int clue_min, clue_max;
+		int n_cells, n_whites;
+
+		GroupData(int clue_min = 0, int clue_max = 0, int n_cells = 0, int n_whites = 0) :
+			clue_min(clue_min), clue_max(clue_max), n_cells(n_cells), n_whites(n_whites) {}
+
+		inline GroupData operator+(const GroupData &other) {
+			return GroupData(clue_min + other.clue_min, clue_max + other.clue_max, n_cells + other.n_cells, n_whites + other.n_whites);
+		}
+		inline GroupData operator-() {
+			return GroupData(-clue_min, -clue_max, -n_cells, -n_whites);
+		}
+	};
+	std::vector<GroupData> group_summary(id_next, GroupData());
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			Cell cell = cells_.at(CellPosition(y, x));
+			if (cell.status == kCellBlack) continue;
+
+			int id = data.at(CellPosition(y, x)).id;
+			group_summary[id].n_cells += 1;
+			if (cell.status == kCellWhite) {
+				group_summary[id].n_whites += 1;
+				if (cell.clue != kNoClue) {
+					group_summary[id].clue_min += cell.clue.clue_low;
+					group_summary[id].clue_max += cell.clue.clue_high;
+				}
+			}
+		}
+	}
+
+	int field_size = static_cast<int>(height()) * static_cast<int>(width());
+
+	// Process local cells
+	int n_global_units = 0;
+	for (int i = 0; i < lg_adjacency.size(); ++i) {
+		if (i == 0 || !(lg_adjacency[i] == lg_adjacency[i - 1])) {
+			int global_id = data.at(lg_adjacency[i].global_master).id;
+			int local_id = data.at(lg_adjacency[i].local_master).id;
+			group_summary[global_id] = group_summary[global_id] + group_summary[local_id];
+			++n_global_units;
+		}
+	}
+	GraphSeparation<GroupData> graph_local(field_size + n_global_units, field_size * 2);
+	// edges: local -- local
+	const int kClueMaster = 1 << 28;
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			CellPosition pos(y, x);
+			if (data.at(pos).type != kWhiteLocal) continue;
+
+			if (y > 0 && data.at(pos - Direction(Y(1), X(0))).type == kWhiteLocal) {
+				graph_local.AddEdge(GetIndex(pos), GetIndex(pos - Direction(Y(1), X(0))));
+			}
+			if (x > 0 && data.at(pos - Direction(Y(0), X(1))).type == kWhiteLocal) {
+				graph_local.AddEdge(GetIndex(pos), GetIndex(pos - Direction(Y(0), X(1))));
+			}
+
+			if (cells_.at(pos).clue == kNoClue) {
+				graph_local.SetValue(GetIndex(pos), GroupData(
+					0, 0, 1, GetCell(pos) == kCellWhite ? 1 : 0
+				));
+			} else {
+				graph_local.SetValue(GetIndex(pos), GroupData(
+					kClueMaster, kClueMaster, 1, 1
+				));
+			}
+		}
+	}
+	// edges: local -- global
+	int vertex_id = field_size;
+	for (int i = 0; i < lg_adjacency.size(); ++i) {
+		graph_local.AddEdge(vertex_id, lg_adjacency[i].local_cell);
+		if (i != lg_adjacency.size() - 1 && !(lg_adjacency[i] == lg_adjacency[i + 1])) {
+			int global_id = data.at(lg_adjacency[i].global_master).id;
+			int local_id = data.at(lg_adjacency[i].local_master).id;
+			graph_local.SetValue(vertex_id, group_summary[global_id] + (-group_summary[local_id]));
+			++vertex_id;
+		}
+	}
+	graph_local.Construct();
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			int idx = GetIndex(CellPosition(y, x));
+			if (data.at(idx).type != kWhiteLocal) continue;
+
+			std::vector<GroupData> sep = graph_local.Separate(idx);
+			for (GroupData d : sep) {
+				bool only_master = (d.clue_min & ~kClueMaster) == 0;
+				if (d.clue_min & kClueMaster) {
+					d.clue_min = (d.clue_min ^ kClueMaster) + cells_.at(GetRoot(idx)).clue.clue_low;
+					d.clue_max = (d.clue_max ^ kClueMaster) + cells_.at(GetRoot(idx)).clue.clue_high;
+				}
+				if (d.clue_max < d.n_whites || (only_master && d.n_cells < d.clue_min) || (d.clue_max == 0 && d.n_cells >= 2)) {
+					DecideCell(CellPosition(y, x), kCellWhite);
+				}
+			}
+		}
+	}
+
+	// Process global cells
+	GraphSeparation<GroupData> graph_global(field_size, field_size * 2);
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			CellPosition pos(y, x);
+			if (data.at(pos).type == kBlack) continue;
+			bool is_local = (data.at(pos).type == kWhiteLocal);
+
+			bool flg = (y == 1 && x == 2);
+			if (y > 0) {
+				CellPosition pos2 = pos + Direction(Y(-1), X(0));
+				if (data.at(pos2).type != kBlack && !(is_local && data.at(pos).id == data.at(pos2).id)) {
+					graph_global.AddEdge(
+						is_local ? data.at(pos).master : GetIndex(pos),
+						data.at(pos2).type == kWhiteLocal ? data.at(pos2).master : GetIndex(pos2)
+					);
+				}
+			}
+			if (x > 0) {
+				CellPosition pos2 = pos + Direction(Y(0), X(-1));
+				if (data.at(pos2).type != kBlack && !(is_local && data.at(pos).id == data.at(pos2).id)) {
+					graph_global.AddEdge(
+						is_local ? data.at(pos).master : GetIndex(pos),
+						data.at(pos2).type == kWhiteLocal ? data.at(pos2).master : GetIndex(pos2)
+					);
+				}
+			}
+
+			if (is_local) {
+				if (data.at(pos).master == GetIndex(pos)) {
+					graph_global.SetValue(GetIndex(pos), group_summary[data.at(pos).id]);
+				}
+			} else {
+				graph_global.SetValue(GetIndex(pos), GroupData(0, 0, 1, GetCell(pos) == kCellWhite ? 1 : 0));
+			}
+		}
+	}
+	graph_global.Construct();
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			if (data.at(CellPosition(y, x)).type != kWhiteGlobal) continue;
+			std::vector<GroupData> sep = graph_global.Separate(GetIndex(CellPosition(y, x)));
+
+			for (GroupData &d : sep) {
+				if (d.clue_max < d.n_whites || d.n_cells < d.clue_min || (d.clue_max == 0 && d.n_cells >= 2)) {
+					DecideCell(CellPosition(y, x), kCellWhite);
+					break;
+				}
 			}
 		}
 	}

@@ -16,6 +16,7 @@ void RunAllNurikabeFieldTest()
 	NurikabeFieldAdjacentClueTest();
 	NurikabeFieldCloseGroupTest();
 	NurikabeFieldExpandBlackTest();
+	NurikabeFieldExpandWhiteTest();
 }
 void NurikabeFieldAdjacentClueTest()
 {
@@ -87,6 +88,54 @@ void NurikabeFieldExpandBlackTest()
 		f.ExpandBlack();
 
 		assert(f.GetCell(CellPosition(Y(1), X(2))) == Field::kCellBlack);
+	}
+}
+void NurikabeFieldExpandWhiteTest()
+{
+	using namespace nurikabe;
+
+	{
+		Problem p(Y(5), X(5));
+		p.SetClue(CellPosition(Y(0), X(0)), Clue(8));
+		p.SetClue(CellPosition(Y(0), X(2)), Clue(8));
+
+		Field f(p);
+		f.ExpandWhite();
+
+		assert(f.GetCell(CellPosition(Y(1), X(0))) == Field::kCellWhite);
+		assert(f.IsInconsistent() == false);
+	}
+	{
+		Problem p(Y(5), X(5));
+		p.SetClue(CellPosition(Y(0), X(0)), Clue(11));
+		p.SetClue(CellPosition(Y(0), X(4)), Clue(6));
+
+		Field f(p);
+		f.DecideCell(CellPosition(Y(0), X(2)), Field::kCellBlack);
+		f.DecideCell(CellPosition(Y(2), X(2)), Field::kCellBlack);
+		f.DecideCell(CellPosition(Y(3), X(2)), Field::kCellBlack);
+		f.DecideCell(CellPosition(Y(4), X(2)), Field::kCellBlack);
+		f.ExpandWhite();
+
+		assert(f.GetCell(CellPosition(Y(1), X(1))) == Field::kCellWhite);
+		assert(f.GetCell(CellPosition(Y(1), X(2))) == Field::kCellWhite);
+		assert(f.IsInconsistent() == false);
+	}
+	{
+		Problem p(Y(5), X(5));
+		p.SetClue(CellPosition(Y(0), X(0)), Clue(5));
+		p.SetClue(CellPosition(Y(4), X(4)), Clue(9));
+
+		Field f(p);
+		f.DecideCell(CellPosition(Y(0), X(1)), Field::kCellBlack);
+		f.DecideCell(CellPosition(Y(2), X(1)), Field::kCellBlack);
+		f.DecideCell(CellPosition(Y(3), X(0)), Field::kCellBlack);
+		f.DecideCell(CellPosition(Y(1), X(0)), Field::kCellWhite);
+		f.ExpandWhite();
+
+		assert(f.GetCell(CellPosition(Y(1), X(1))) == Field::kCellWhite);
+		assert(f.GetCell(CellPosition(Y(1), X(2))) == Field::kCellWhite);
+		assert(f.IsInconsistent() == false);
 	}
 }
 }
