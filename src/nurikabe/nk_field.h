@@ -5,6 +5,8 @@
 #include "../common/type.h"
 #include "../common/grid.h"
 
+#include <iostream>
+
 namespace penciloid
 {
 namespace nurikabe
@@ -74,5 +76,8 @@ private:
 	Grid<Cell> cells_;
 	bool inconsistent_, fully_solved_;
 };
+
+std::ostream &operator<<(std::ostream &stream, const Field &field);
+
 }
 }

@@ -3,6 +3,8 @@
 #include <xutility>
 #include <algorithm>
 #include <queue>
+#include <iostream>
+#include <iomanip>
 
 #include "../common/graph_separation.h"
 
@@ -498,6 +500,24 @@ void Field::ExpandWhite()
 			}
 		}
 	}
+}
+std::ostream &operator<<(std::ostream &stream, const Field &field)
+{
+	for (Y y(0); y < field.height(); ++y) {
+		for (X x(0); x < field.width(); ++x) {
+			Field::CellState status = field.GetCell(CellPosition(y, x));
+			if (status == Field::kCellBlack) stream << "##";
+			else if (status == Field::kCellUndecided) stream << "..";
+			else {
+				Clue clue = field.GetClue(CellPosition(y, x));
+				if (clue == kNoClue) stream << "  ";
+				else stream << std::setw(2) << clue.clue_low;
+			}
+			stream << " ";
+		}
+		stream << "\n";
+	}
+	return stream;
 }
 }
 }
