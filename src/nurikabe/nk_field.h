@@ -35,8 +35,8 @@ public:
 	bool IsFullySolved() const { return fully_solved_; }
 	void SetInconsistent() { inconsistent_ = true; }
 
-	CellState GetCell(CellPosition pos) { return cells_.at(pos).status; }
-	Clue GetClue(CellPosition pos) { return cells_.at(pos).clue; }
+	CellState GetCell(CellPosition pos) const { return cells_.at(pos).status; }
+	Clue GetClue(CellPosition pos) const { return cells_.at(pos).clue; }
 
 	void DecideCell(CellPosition pos, CellState status);
 
