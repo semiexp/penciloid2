@@ -155,10 +155,10 @@ void Field::CheckCluster(CellPosition top)
 		SetInconsistent();
 		return;
 	} else if (cnt == 3) {
-		if (GetCell(top + Direction(Y(0), X(0))) == kCellUndecided) DecideCell(top + Direction(Y(0), X(0)), kCellBlack);
-		if (GetCell(top + Direction(Y(0), X(1))) == kCellUndecided) DecideCell(top + Direction(Y(0), X(1)), kCellBlack);
-		if (GetCell(top + Direction(Y(1), X(0))) == kCellUndecided) DecideCell(top + Direction(Y(1), X(0)), kCellBlack);
-		if (GetCell(top + Direction(Y(1), X(1))) == kCellUndecided) DecideCell(top + Direction(Y(1), X(1)), kCellBlack);
+		if (GetCell(top + Direction(Y(0), X(0))) == kCellUndecided) DecideCell(top + Direction(Y(0), X(0)), kCellWhite);
+		if (GetCell(top + Direction(Y(0), X(1))) == kCellUndecided) DecideCell(top + Direction(Y(0), X(1)), kCellWhite);
+		if (GetCell(top + Direction(Y(1), X(0))) == kCellUndecided) DecideCell(top + Direction(Y(1), X(0)), kCellWhite);
+		if (GetCell(top + Direction(Y(1), X(1))) == kCellUndecided) DecideCell(top + Direction(Y(1), X(1)), kCellWhite);
 	}
 }
 void Field::AvoidGroupWithSeveralClue(CellPosition pos)
@@ -422,7 +422,7 @@ void Field::ExpandWhite()
 	int vertex_id = field_size;
 	for (int i = 0; i < lg_adjacency.size(); ++i) {
 		graph_local.AddEdge(vertex_id, lg_adjacency[i].local_cell);
-		if (i != lg_adjacency.size() - 1 && !(lg_adjacency[i] == lg_adjacency[i + 1])) {
+		if (i == lg_adjacency.size() - 1 || !(lg_adjacency[i] == lg_adjacency[i + 1])) {
 			int global_id = data.at(lg_adjacency[i].global_master).id;
 			int local_id = data.at(lg_adjacency[i].local_master).id;
 			graph_local.SetValue(vertex_id, group_summary[global_id] + (-group_summary[local_id]));
@@ -439,8 +439,8 @@ void Field::ExpandWhite()
 			for (GroupData d : sep) {
 				bool only_master = (d.clue_min & ~kClueMaster) == 0;
 				if (d.clue_min & kClueMaster) {
-					d.clue_min = (d.clue_min ^ kClueMaster) + cells_.at(GetRoot(idx)).clue.clue_low;
-					d.clue_max = (d.clue_max ^ kClueMaster) + cells_.at(GetRoot(idx)).clue.clue_high;
+					d.clue_min = (d.clue_min ^ kClueMaster) + cells_.at(data.at(idx).master).clue.clue_low;
+					d.clue_max = (d.clue_max ^ kClueMaster) + cells_.at(data.at(idx).master).clue.clue_high;
 				}
 				if (d.clue_max < d.n_whites || (only_master && d.n_cells < d.clue_min) || (d.clue_max == 0 && d.n_cells >= 2)) {
 					DecideCell(CellPosition(y, x), kCellWhite);
