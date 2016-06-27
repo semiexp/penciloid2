@@ -111,6 +111,20 @@ void Field::Join(int cell_idx1, int cell_idx2)
 	auto &cell1 = cells_.at(cell_idx1);
 	auto &cell2 = cells_.at(cell_idx2);
 
+	if (cell1.clue != kNoClue && cell2.clue != kNoClue) {
+		SetInconsistent();
+		return;
+	}
+
+	std::vector<int> cells_to_be_checked;
+	if (cell1.clue != kNoClue || cell2.clue != kNoClue) {
+		int p_init = (cell1.clue != kNoClue ? cell_idx2 : cell_idx1);
+		int p = p_init;
+		do {
+			cells_to_be_checked.push_back(p);
+			p = cells_.at(p).group_next_cell;
+		} while (p != p_init);
+	}
 	if (cell1.clue == kNoClue && (cell2.clue != kNoClue || cell1.group_parent_cell > cell2.group_parent_cell)) {
 		cell2.group_parent_cell += cell1.group_parent_cell;
 		cell1.group_parent_cell = cell_idx2;
@@ -120,6 +134,10 @@ void Field::Join(int cell_idx1, int cell_idx2)
 	}
 
 	std::swap(cell1.group_next_cell, cell2.group_next_cell);
+
+	for (int p : cells_to_be_checked) {
+		AvoidGroupWithSeveralClue(cells_.AsPosition(p));
+	}
 }
 void Field::CheckCluster(CellPosition top)
 {

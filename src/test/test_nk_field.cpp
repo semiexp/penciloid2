@@ -41,6 +41,16 @@ void NurikabeFieldAdjacentClueTest()
 		assert(f.GetCell(CellPosition(Y(2), X(1))) == Field::kCellBlack);
 		assert(f.IsInconsistent() == false);
 	}
+	{
+		Problem p(Y(5), X(5));
+		p.SetClue(CellPosition(Y(0), X(0)), Clue(1, 25));
+		p.SetClue(CellPosition(Y(0), X(4)), Clue(1, 25));
+
+		Field f(p);
+		f.DecideCell(CellPosition(Y(0), X(2)), Field::kCellWhite);
+		f.DecideCell(CellPosition(Y(0), X(1)), Field::kCellWhite);
+		assert(f.GetCell(CellPosition(Y(0), X(3))) == Field::kCellBlack);
+	}
 }
 void NurikabeFieldCloseGroupTest()
 {
