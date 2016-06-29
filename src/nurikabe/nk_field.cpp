@@ -274,10 +274,12 @@ void Field::ExpandWhite()
 			if (GetCell(CellPosition(y, x)) == kCellBlack) continue;
 			if (HasClueInGroup(GetIndex(CellPosition(y, x)))) {
 				data.at(CellPosition(y, x)).type = kWhiteLocal;
+				data.at(CellPosition(y, x)).master = GetRoot(GetIndex(CellPosition(y, x)));
 				for (Direction d : k4Neighborhood) {
 					CellPosition nb = CellPosition(y, x) + d;
 					if (cells_.IsPositionOnGrid(nb) && GetCell(nb) != kCellBlack) {
 						data.at(nb).type = kWhiteLocal;
+						data.at(nb).master = GetRoot(GetIndex(CellPosition(y, x)));
 					}
 				}
 			} else {
@@ -289,6 +291,9 @@ void Field::ExpandWhite()
 	}
 	int id_next = 0;
 	std::queue<CellPosition> q;
+	std::vector<CellPosition> group_undecided;
+	std::vector<CellPosition> corner_black;
+
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
 			CellType type = data.at(CellPosition(y, x)).type;
@@ -296,15 +301,18 @@ void Field::ExpandWhite()
 			if (data.at(CellPosition(y, x)).id != -1) continue;
 
 			int master_id = GetIndex(CellPosition(y, x));
+			int expected_master = (type == kWhiteLocal ? data.at(CellPosition(y, x)).master : -1);
 			q.push(CellPosition(y, x));
 			data.at(CellPosition(y, x)).id = id_next;
+			group_undecided.clear();
 			while (!q.empty()) {
 				CellPosition pos = q.front(); q.pop();
 				data.at(pos).master = master_id;
+				if (GetCell(pos) == kCellUndecided) group_undecided.push_back(pos);
 
 				for (Direction d : k4Neighborhood) {
 					CellPosition pos2 = pos + d;
-					if (data.IsPositionOnGrid(pos2) && data.at(pos).type == data.at(pos2).type && data.at(pos2).id == -1) {
+					if (data.IsPositionOnGrid(pos2) && data.at(pos).type == data.at(pos2).type && data.at(pos2).id == -1 && (expected_master == -1 || data.at(pos2).master == expected_master)) {
 						q.push(pos2);
 
 						data.at(pos2).id = id_next;
@@ -312,6 +320,15 @@ void Field::ExpandWhite()
 				}
 			}
 
+			Cell c = cells_.at(CellPosition(y, x));
+			if (c.clue != kNoClue && -c.group_parent_cell + 1 == c.clue.clue_low && c.clue.clue_low == c.clue.clue_high && group_undecided.size() == 2) {
+				for (Direction d : k4Neighborhood) {
+					CellPosition cand = group_undecided[0] + d;
+					if (abs(cand.x - group_undecided[1].x) + abs(cand.y - group_undecided[1].y) == 1 && GetCell(cand) == kCellUndecided) {
+						corner_black.push_back(cand);
+					}
+				}
+			}
 			++id_next;
 		}
 	}
@@ -339,7 +356,7 @@ void Field::ExpandWhite()
 			if (data.at(pos).type != kWhiteLocal) continue;
 			for (Direction d : k4Neighborhood) {
 				CellPosition pos2 = pos + d;
-				if (data.IsPositionOnGrid(pos2) && data.at(pos2).type == kWhiteGlobal) {
+				if (data.IsPositionOnGrid(pos2) && data.at(pos2).type != kBlack && data.at(pos2).id != data.at(pos).id) {
 					lg_adjacency.push_back(Adjacency(GetIndex(pos), data.at(pos).master, data.at(pos2).master));
 				}
 			}
@@ -388,7 +405,9 @@ void Field::ExpandWhite()
 		if (i == 0 || !(lg_adjacency[i] == lg_adjacency[i - 1])) {
 			int global_id = data.at(lg_adjacency[i].global_master).id;
 			int local_id = data.at(lg_adjacency[i].local_master).id;
-			group_summary[global_id] = group_summary[global_id] + group_summary[local_id];
+			if (data.at(lg_adjacency[i].global_master).type == kWhiteGlobal) {
+				group_summary[global_id] = group_summary[global_id] + group_summary[local_id];
+			}
 			++n_global_units;
 		}
 	}
@@ -399,11 +418,12 @@ void Field::ExpandWhite()
 		for (X x(0); x < width(); ++x) {
 			CellPosition pos(y, x);
 			if (data.at(pos).type != kWhiteLocal) continue;
+			int current_id = data.at(pos).id;
 
-			if (y > 0 && data.at(pos - Direction(Y(1), X(0))).type == kWhiteLocal) {
+			if (y > 0 && data.at(pos - Direction(Y(1), X(0))).id == current_id) {
 				graph_local.AddEdge(GetIndex(pos), GetIndex(pos - Direction(Y(1), X(0))));
 			}
-			if (x > 0 && data.at(pos - Direction(Y(0), X(1))).type == kWhiteLocal) {
+			if (x > 0 && data.at(pos - Direction(Y(0), X(1))).id == current_id) {
 				graph_local.AddEdge(GetIndex(pos), GetIndex(pos - Direction(Y(0), X(1))));
 			}
 
@@ -425,7 +445,11 @@ void Field::ExpandWhite()
 		if (i == lg_adjacency.size() - 1 || !(lg_adjacency[i] == lg_adjacency[i + 1])) {
 			int global_id = data.at(lg_adjacency[i].global_master).id;
 			int local_id = data.at(lg_adjacency[i].local_master).id;
-			graph_local.SetValue(vertex_id, group_summary[global_id] + (-group_summary[local_id]));
+			if (data.at(lg_adjacency[i].global_master).type == kWhiteGlobal) {
+				graph_local.SetValue(vertex_id, group_summary[global_id] + (-group_summary[local_id]));
+			} else {
+				graph_local.SetValue(vertex_id, group_summary[global_id]);
+			}
 			++vertex_id;
 		}
 	}
@@ -500,6 +524,8 @@ void Field::ExpandWhite()
 			}
 		}
 	}
+
+	for (CellPosition pos : corner_black) DecideCell(pos, kCellBlack);
 }
 std::ostream &operator<<(std::ostream &stream, const Field &field)
 {
