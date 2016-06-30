@@ -374,15 +374,16 @@ void Field::ExpandWhite()
 	{
 		int clue_min, clue_max;
 		int n_cells, n_whites;
+		int other_locals;
 
-		GroupData(int clue_min = 0, int clue_max = 0, int n_cells = 0, int n_whites = 0) :
-			clue_min(clue_min), clue_max(clue_max), n_cells(n_cells), n_whites(n_whites) {}
+		GroupData(int clue_min = 0, int clue_max = 0, int n_cells = 0, int n_whites = 0, int other_locals = 0) :
+			clue_min(clue_min), clue_max(clue_max), n_cells(n_cells), n_whites(n_whites), other_locals(other_locals) {}
 
 		inline GroupData operator+(const GroupData &other) {
-			return GroupData(clue_min + other.clue_min, clue_max + other.clue_max, n_cells + other.n_cells, n_whites + other.n_whites);
+			return GroupData(clue_min + other.clue_min, clue_max + other.clue_max, n_cells + other.n_cells, n_whites + other.n_whites, other_locals + other.other_locals);
 		}
 		inline GroupData operator-() {
-			return GroupData(-clue_min, -clue_max, -n_cells, -n_whites);
+			return GroupData(-clue_min, -clue_max, -n_cells, -n_whites, -other_locals);
 		}
 	};
 	std::vector<GroupData> group_summary(id_next, GroupData());
@@ -412,7 +413,7 @@ void Field::ExpandWhite()
 			int global_id = data.at(lg_adjacency[i].global_master).id;
 			int local_id = data.at(lg_adjacency[i].local_master).id;
 			if (data.at(lg_adjacency[i].global_master).type == kWhiteGlobal) {
-				group_summary[global_id] = group_summary[global_id] + group_summary[local_id];
+				group_summary[global_id] = group_summary[global_id] + GroupData(0, 0, 0, 0, 1);
 			}
 			++n_global_units;
 		}
@@ -452,9 +453,9 @@ void Field::ExpandWhite()
 			int global_id = data.at(lg_adjacency[i].global_master).id;
 			int local_id = data.at(lg_adjacency[i].local_master).id;
 			if (data.at(lg_adjacency[i].global_master).type == kWhiteGlobal) {
-				graph_local.SetValue(vertex_id, group_summary[global_id] + (-group_summary[local_id]));
+				graph_local.SetValue(vertex_id, group_summary[global_id] + GroupData(0, 0, 0, 0, -1));
 			} else {
-				graph_local.SetValue(vertex_id, group_summary[global_id]);
+				graph_local.SetValue(vertex_id, GroupData(0, 0, 0, 0, 1));
 			}
 			++vertex_id;
 		}
@@ -467,12 +468,12 @@ void Field::ExpandWhite()
 
 			std::vector<GroupData> sep = graph_local.Separate(idx);
 			for (GroupData d : sep) {
-				bool only_master = (d.clue_min & ~kClueMaster) == 0;
+				//bool only_master = (d.clue_min & ~kClueMaster) == 0;
 				if (d.clue_min & kClueMaster) {
 					d.clue_min = (d.clue_min ^ kClueMaster) + cells_.at(data.at(idx).master).clue.clue_low;
 					d.clue_max = (d.clue_max ^ kClueMaster) + cells_.at(data.at(idx).master).clue.clue_high;
 				}
-				if (d.clue_max < d.n_whites || (only_master && d.n_cells < d.clue_min) || (d.clue_max == 0 && d.n_cells >= 2)) {
+				if ((d.other_locals == 0 && d.clue_max < d.n_whites) || (d.n_cells < d.clue_min) || (d.other_locals == 0 && d.clue_max == 0 && d.n_cells >= 2)) {
 					DecideCell(CellPosition(y, x), kCellWhite);
 				}
 			}
