@@ -14,6 +14,8 @@ namespace nurikabe
 class Field
 {
 public:
+	typedef unsigned int CellCount;
+
 	enum CellState
 	{
 		kCellUndecided,
@@ -32,6 +34,8 @@ public:
 
 	Y height() const { return cells_.height(); }
 	X width() const { return cells_.width(); }
+
+	CellCount GetNumberOfDecidedCells() const { return decided_cells_; }
 
 	bool IsInconsistent() const { return inconsistent_; }
 	bool IsFullySolved() const { return fully_solved_; }
@@ -74,7 +78,7 @@ private:
 	void CloseGroup(int cell_idx);
 
 	Grid<Cell> cells_;
-	int decided_cells;
+	CellCount decided_cells_;
 	bool inconsistent_, fully_solved_;
 };
 
