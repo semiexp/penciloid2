@@ -46,6 +46,7 @@ public:
 
 	void DecideCell(CellPosition pos, CellState status);
 	void Solve();
+	void Assume();
 
 	void ExpandBlack();
 	void ExpandWhite();

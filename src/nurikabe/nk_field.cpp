@@ -117,6 +117,36 @@ void Field::Solve()
 		if (i == last_progress + 2) break;
 	}
 }
+void Field::Assume()
+{
+	Solve();
+	for (;;) {
+		bool progress = false;
+		for (Y y(0); y < height(); ++y) {
+			for (X x(0); x < width(); ++x) {
+				CellPosition pos(y, x);
+				if (GetCell(pos) != kCellUndecided) continue;
+
+				Field assume_black = *this, assume_white = *this;
+				assume_black.DecideCell(pos, kCellBlack);
+				assume_black.Solve();
+				if (assume_black.IsInconsistent()) {
+					DecideCell(pos, kCellWhite);
+					progress = true;
+					continue;
+				}
+				assume_white.DecideCell(pos, kCellWhite);
+				assume_white.Solve();
+				if (assume_white.IsInconsistent()) {
+					*this = assume_black;
+					progress = true;
+					continue;
+				}
+			}
+		}
+		if (!progress || IsInconsistent() || IsFullySolved()) break;
+	}
+}
 int Field::GetRoot(int cell_idx)
 {
 	if (cells_.at(cell_idx).group_parent_cell < 0) return cell_idx;
@@ -347,6 +377,10 @@ void Field::ExpandWhite()
 						corner_black.push_back(cand);
 					}
 				}
+			}
+			if (c.clue != kNoClue && group_undecided.size() == 0 && -c.group_parent_cell < c.clue.clue_low) {
+				SetInconsistent();
+				return;
 			}
 			++id_next;
 		}
