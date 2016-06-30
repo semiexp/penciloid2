@@ -74,6 +74,7 @@ private:
 	void CloseGroup(int cell_idx);
 
 	Grid<Cell> cells_;
+	int decided_cells;
 	bool inconsistent_, fully_solved_;
 };
 

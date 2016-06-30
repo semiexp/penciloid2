@@ -12,10 +12,10 @@ namespace penciloid
 {
 namespace nurikabe
 {
-Field::Field() : cells_(), inconsistent_(false), fully_solved_(false)
+Field::Field() : cells_(), decided_cells(0), inconsistent_(false), fully_solved_(false)
 {
 }
-Field::Field(const Problem &problem) : cells_(problem.height(), problem.width(), Cell(kNoClue, kCellUndecided)), inconsistent_(false), fully_solved_(false)
+Field::Field(const Problem &problem) : cells_(problem.height(), problem.width(), Cell(kNoClue, kCellUndecided)), decided_cells(0), inconsistent_(false), fully_solved_(false)
 {
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
@@ -36,10 +36,10 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width(),
 		}
 	}
 }
-Field::Field(const Field &other) : cells_(other.cells_), inconsistent_(other.inconsistent_), fully_solved_(other.fully_solved_)
+Field::Field(const Field &other) : cells_(other.cells_), inconsistent_(other.inconsistent_), decided_cells(other.decided_cells), fully_solved_(other.fully_solved_)
 {
 }
-Field::Field(Field &&other) : cells_(std::move(other.cells_)), inconsistent_(other.inconsistent_), fully_solved_(other.fully_solved_)
+Field::Field(Field &&other) : cells_(std::move(other.cells_)), decided_cells(other.decided_cells), inconsistent_(other.inconsistent_), fully_solved_(other.fully_solved_)
 {
 }
 Field::~Field()
@@ -48,6 +48,7 @@ Field::~Field()
 Field &Field::operator=(const Field &other)
 {
 	cells_ = other.cells_;
+	decided_cells = other.decided_cells;
 	inconsistent_ = other.inconsistent_;
 	fully_solved_ = other.fully_solved_;
 	return *this;
@@ -55,6 +56,7 @@ Field &Field::operator=(const Field &other)
 Field &Field::operator=(Field &&other)
 {
 	cells_ = std::move(other.cells_);
+	decided_cells = other.decided_cells;
 	inconsistent_ = other.inconsistent_;
 	fully_solved_ = other.fully_solved_;
 	return *this;
@@ -67,6 +69,10 @@ void Field::DecideCell(CellPosition pos, CellState status)
 			SetInconsistent();
 		}
 		return;
+	}
+
+	if (++decided_cells == static_cast<int>(height()) * static_cast<int>(width())) {
+		fully_solved_ = true;
 	}
 
 	cell.status = status;
