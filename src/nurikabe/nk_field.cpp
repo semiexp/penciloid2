@@ -104,6 +104,19 @@ void Field::DecideCell(CellPosition pos, CellState status)
 		}
 	}
 }
+void Field::Solve()
+{
+	int last_progress = -1;
+	for (int i = 0;; ++i) {
+		CellCount prev = GetNumberOfDecidedCells();
+		if (i % 2 == 0) ExpandBlack();
+		else if (i % 2 == 1) ExpandWhite();
+		if (prev != GetNumberOfDecidedCells()) {
+			last_progress = i;
+		}
+		if (i == last_progress + 2) break;
+	}
+}
 int Field::GetRoot(int cell_idx)
 {
 	if (cells_.at(cell_idx).group_parent_cell < 0) return cell_idx;

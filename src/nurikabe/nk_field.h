@@ -45,6 +45,7 @@ public:
 	Clue GetClue(CellPosition pos) const { return cells_.at(pos).clue; }
 
 	void DecideCell(CellPosition pos, CellState status);
+	void Solve();
 
 	void ExpandBlack();
 	void ExpandWhite();
