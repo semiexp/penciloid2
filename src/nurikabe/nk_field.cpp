@@ -7,6 +7,7 @@
 #include <iomanip>
 
 #include "../common/graph_separation.h"
+#include "../common/union_find.h"
 
 namespace penciloid
 {
@@ -264,8 +265,36 @@ void Field::ExpandBlack()
 		int n_cell, n_black;
 	};
 	int n_cells = static_cast<int>(height()) * static_cast<int>(width());
-	GraphSeparation<Vector2> graph(n_cells, n_cells * 2);
 
+	UnionFind black_connectability(n_cells);
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			if (GetCell(CellPosition(y, x)) == kCellWhite) continue;
+			int idx = GetIndex(CellPosition(y, x));
+
+			if (y > 0 && GetCell(CellPosition(y - 1, x)) != kCellWhite) {
+				black_connectability.Join(idx, GetIndex(CellPosition(y - 1, x)));
+			}
+			if (x > 0 && GetCell(CellPosition(y, x - 1)) != kCellWhite) {
+				black_connectability.Join(idx, GetIndex(CellPosition(y, x - 1)));
+			}
+		}
+	}
+	int black_root = -1;
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			if (GetCell(CellPosition(y, x)) == kCellBlack) {
+				int root = black_connectability.Root(GetIndex(CellPosition(y, x)));
+				if (black_root == -1) black_root = root;
+				else if (black_root != root) {
+					SetInconsistent();
+					return;
+				}
+			}
+		}
+	}
+
+	GraphSeparation<Vector2> graph(n_cells, n_cells * 2);
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
 			CellState cell = GetCell(CellPosition(y, x));
