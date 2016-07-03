@@ -48,6 +48,7 @@ public:
 	void Solve();
 	void Assume();
 
+	void CheckConsistency();
 	void ExpandBlack();
 	void ExpandWhite();
 

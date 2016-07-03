@@ -253,6 +253,71 @@ void Field::CloseGroup(int cell_idx)
 		p = cells_.at(p).group_next_cell;
 	} while (p != cell_idx);
 }
+void Field::CheckConsistency()
+{
+	int n_cells = static_cast<int>(height()) * static_cast<int>(width());
+
+	// Black groups should be connected
+	UnionFind black_connectability(n_cells);
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			if (GetCell(CellPosition(y, x)) == kCellWhite) continue;
+			int idx = GetIndex(CellPosition(y, x));
+
+			if (y > 0 && GetCell(CellPosition(y - 1, x)) != kCellWhite) {
+				black_connectability.Join(idx, GetIndex(CellPosition(y - 1, x)));
+			}
+			if (x > 0 && GetCell(CellPosition(y, x - 1)) != kCellWhite) {
+				black_connectability.Join(idx, GetIndex(CellPosition(y, x - 1)));
+			}
+		}
+	}
+	int black_root = -1;
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			if (GetCell(CellPosition(y, x)) == kCellBlack) {
+				int root = black_connectability.Root(GetIndex(CellPosition(y, x)));
+				if (black_root == -1) black_root = root;
+				else if (black_root != root) {
+					SetInconsistent();
+					return;
+				}
+			}
+		}
+	}
+
+	// White groups each group should contain a cell with clue
+	UnionFind white_connectability(n_cells);
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			if (GetCell(CellPosition(y, x)) == kCellBlack) continue;
+			int idx = GetIndex(CellPosition(y, x));
+
+			if (y > 0 && GetCell(CellPosition(y - 1, x)) != kCellBlack) {
+				white_connectability.Join(idx, GetIndex(CellPosition(y - 1, x)));
+			}
+			if (x > 0 && GetCell(CellPosition(y, x - 1)) != kCellBlack) {
+				white_connectability.Join(idx, GetIndex(CellPosition(y, x - 1)));
+			}
+		}
+	}
+	std::vector<bool> has_clue(n_cells, false), has_white(n_cells, false);
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			int root = white_connectability.Root(GetIndex(CellPosition(y, x)));
+			if (GetCell(CellPosition(y, x)) == kCellWhite) {
+				has_white[root] = true;
+				if (GetClue(CellPosition(y, x)) != kNoClue) has_clue[root] = true;
+			}
+		}
+	}
+	for (int i = 0; i < n_cells; ++i) {
+		if (has_white[i] && !has_clue[i]) {
+			SetInconsistent();
+			return;
+		}
+	}
+}
 void Field::ExpandBlack()
 {
 	struct Vector2

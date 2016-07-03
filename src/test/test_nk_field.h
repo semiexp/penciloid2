@@ -8,5 +8,6 @@ void NurikabeFieldAdjacentClueTest();
 void NurikabeFieldCloseGroupTest();
 void NurikabeFieldExpandBlackTest();
 void NurikabeFieldExpandWhiteTest();
+void NurikabeFieldConsistencyTest();
 }
 }
