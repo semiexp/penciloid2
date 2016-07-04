@@ -94,6 +94,9 @@ void GraphSeparation<Abelian>::Construct()
 	for (int i = 0; i < n_vertex_; ++i) if (idx[i] == -1) {
 		Dfs(i, -1, idx, lowlink, &idx_next);
 	}
+
+	delete[] idx;
+	delete[] lowlink;
 }
 template <typename Abelian>
 void GraphSeparation<Abelian>::Dfs(int p, int rt, int *idx, int *lowlink, int *idx_next)
