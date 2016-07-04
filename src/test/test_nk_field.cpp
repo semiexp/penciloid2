@@ -182,6 +182,19 @@ void NurikabeFieldConsistencyTest()
 		assert(f.IsInconsistent() == true);
 	}
 	{
+		// White group whose size is more than the clue
+		Problem p(Y(5), X(5));
+		p.SetClue(CellPosition(Y(1), X(0)), Clue(1, 2));
+		p.SetClue(CellPosition(Y(4), X(4)), Clue(1, 25));
+
+		Field f(p);
+		f.DecideCell(CellPosition(Y(3), X(0)), Field::kCellWhite);
+		f.DecideCell(CellPosition(Y(2), X(0)), Field::kCellWhite);
+		f.CheckConsistency();
+
+		assert(f.IsInconsistent() == true);
+	}
+	{
 		// Disconnected black group
 		Problem p(Y(5), X(5));
 		p.SetClue(CellPosition(Y(0), X(0)), Clue(1, 25));
