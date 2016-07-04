@@ -534,6 +534,10 @@ void Field::ExpandWhite()
 			if (cell.status == kCellBlack) continue;
 
 			int id = data.at(CellPosition(y, x)).id;
+			if (id == -1) {
+				SetInconsistent();
+				return;
+			}
 			group_summary[id].n_cells += 1;
 			if (cell.status == kCellWhite) {
 				group_summary[id].n_whites += 1;
