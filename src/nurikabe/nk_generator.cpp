@@ -45,8 +45,8 @@ bool GenerateByLocalSearch(Y height, X width, std::mt19937 *rnd, Problem *ret)
 	int clue_max = static_cast<int>(height) + static_cast<int>(width);
 
 	// add an arbitrary clue (completely empty problem will cause inconsistency)
-	Y initial_y = Y(std::uniform_int_distribution<int>(1, static_cast<int>(height))(*rnd));
-	X initial_x = X(std::uniform_int_distribution<int>(1, static_cast<int>(width))(*rnd));
+	Y initial_y = Y(std::uniform_int_distribution<int>(0, static_cast<int>(height) - 1)(*rnd));
+	X initial_x = X(std::uniform_int_distribution<int>(0, static_cast<int>(width) - 1)(*rnd));
 	current_problem.SetClue(CellPosition(initial_y, initial_x), Clue(1, clue_max));
 	++n_clue;
 
