@@ -71,6 +71,8 @@ bool GenerateByLocalSearch(Y height, X width, std::mt19937 *rnd, Problem *ret)
 						double threshold = exp((current_energy - next_energy) / temperature);
 						if (real_dist(*rnd) < threshold) transition = true;
 					}
+
+					if (transition) current_energy = next_energy;
 				}
 			}
 
