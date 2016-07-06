@@ -52,6 +52,7 @@ public:
 	void ExpandBlack();
 	void ExpandWhite();
 
+	void RestrictClueOfClosedGroups();
 private:
 	struct Cell
 	{

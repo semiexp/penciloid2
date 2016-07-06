@@ -148,6 +148,33 @@ void Field::Assume()
 		if (!progress || IsInconsistent() || IsFullySolved()) break;
 	}
 }
+void Field::RestrictClueOfClosedGroups()
+{
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			CellPosition pos(y, x);
+			if (!(GetCell(pos) == kCellWhite && GetClue(pos) != kNoClue)) continue;
+
+			bool is_closed = true;
+			int p_init = GetIndex(pos);
+			int p = p_init;
+			do {
+				for (Direction d : k4Neighborhood) {
+					CellPosition pos2 = pos + d;
+					if (cells_.IsPositionOnGrid(pos2) && GetCell(pos2) == kCellUndecided) {
+						is_closed = false;
+					}
+				}
+				p = cells_.at(p).group_next_cell;
+			} while (p != p_init);
+
+			if (is_closed) {
+				int size = GetGroupSize(p_init);
+				cells_.at(pos).clue = Clue(size, size);
+			}
+		}
+	}
+}
 int Field::GetRoot(int cell_idx)
 {
 	if (cells_.at(cell_idx).group_parent_cell < 0) return cell_idx;
