@@ -94,6 +94,15 @@ bool GenerateByLocalSearch(Y height, X width, std::mt19937 *rnd, Problem *ret)
 			double next_energy = ComputeEnergy(next_field);
 			if (!next_field.IsInconsistent()) {
 				if (next_field.IsFullySolved()) {
+					next_field.RestrictClueOfClosedGroups();
+					for (Y y(0); y < height; ++y) {
+						for (X x(0); x < width; ++x) {
+							Clue clue = next_field.GetClue(CellPosition(y, x));
+							if (clue != kNoClue) {
+								current_problem.SetClue(CellPosition(y, x), clue);
+							}
+						}
+					}
 					*ret = current_problem;
 					return true;
 				}
