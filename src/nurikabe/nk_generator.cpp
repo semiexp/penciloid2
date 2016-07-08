@@ -27,6 +27,34 @@ double ComputeEnergy(penciloid::nurikabe::Field &field)
 	}
 	return energy;
 }
+void UpdateClueChangeCandidate(penciloid::Grid<bool> &candidate, penciloid::nurikabe::Field &field, penciloid::CellPosition pos)
+{
+	using namespace penciloid;
+	using namespace nurikabe;
+	if (!candidate.IsPositionOnGrid(pos) || field.GetCell(pos) == Field::kCellBlack || candidate.at(pos)) return;
+	candidate.at(pos) = true;
+	for (Direction d : k4Neighborhood) {
+		UpdateClueChangeCandidate(candidate, field, pos + d);
+	}
+}
+int ProblemHash(penciloid::nurikabe::Problem &problem)
+{
+	using namespace penciloid;
+	using namespace nurikabe;
+
+	const long long kHashMul = 1009, kHashMod = 1083441539;
+	long long ret = 0;
+	for (Y y(0); y < problem.height(); ++y) {
+		for (X x(0); x < problem.width(); ++x) {
+			ret = ret * kHashMul * kHashMul % kHashMod;
+			Clue c = problem.GetClue(CellPosition(y, x));
+			if (c != kNoClue) {
+				ret = (ret + c.clue_low * kHashMul + c.clue_high) % kHashMod;
+			}
+		}
+	}
+	return static_cast<int>(ret);
+}
 }
 
 namespace penciloid
@@ -41,6 +69,10 @@ bool GenerateByLocalSearch(Y height, X width, std::mt19937 *rnd, Problem *ret)
 	double temperature = 10.0;
 	std::uniform_real_distribution<double> real_dist(0.0, 1.0);
 
+	const int kTabuListSize = 9;
+	int tabu_list[kTabuListSize], tabu_list_end = 0;
+	for (int i = 0; i < kTabuListSize; ++i) tabu_list[i] = -1;
+
 	int n_clue = 0;
 	int clue_max = static_cast<int>(height) + static_cast<int>(width);
 
@@ -53,12 +85,31 @@ bool GenerateByLocalSearch(Y height, X width, std::mt19937 *rnd, Problem *ret)
 	Field current_field(current_problem);
 
 	for (; step < max_step; ++step) {
+		printf("%d (%f, %f)\n", step, current_energy, temperature);
+		std::cout << current_field << std::endl;
+		
+		Grid<bool> clue_change_candidate(height, width);
+		for (Y y(0); y < height; ++y) {
+			for (X x(0); x < width; ++x) {
+				if (current_field.GetCell(CellPosition(y, x)) != Field::kCellUndecided) continue;
+				for (int dy = -2; dy <= 2; ++dy) {
+					for (int dx = -2; dx <= 2; ++dx) {
+						if (abs(dy) + abs(dx) > 2) continue;
+						CellPosition pos2(y + dy, x + dx);
+						if (clue_change_candidate.IsPositionOnGrid(pos2) && current_field.GetCell(pos2) != Field::kCellUndecided) {
+							UpdateClueChangeCandidate(clue_change_candidate, current_field, pos2);
+						}
+					}
+				}
+			}
+		}
 		std::vector<std::pair<CellPosition, Clue> > candidate;
 		for (Y y(0); y < height; ++y) {
 			for (X x(0); x < width; ++x) {
 				CellPosition pos(y, x);
 				Clue current_clue = current_problem.GetClue(pos);
 				if (current_clue != kNoClue) {
+					if (!clue_change_candidate.at(pos)) continue;
 					if (n_clue > 1) {
 						candidate.push_back({ pos, kNoClue });
 					}
@@ -85,6 +136,18 @@ bool GenerateByLocalSearch(Y height, X width, std::mt19937 *rnd, Problem *ret)
 			CellPosition pos = c.first; Clue clue = c.second;
 			Clue previous_clue = current_problem.GetClue(pos);
 			current_problem.SetClue(pos, clue);
+
+			int hash = ProblemHash(current_problem);
+			bool is_tabu = false;
+			for (int i = 0; i < kTabuListSize; ++i) {
+				if (tabu_list[i] == hash) {
+					is_tabu = true; break;
+				}
+			}
+			if (is_tabu) {
+				current_problem.SetClue(pos, previous_clue);
+				continue;
+			}
 
 			Field next_field(current_problem);
 			bool transition = false;
@@ -114,15 +177,18 @@ bool GenerateByLocalSearch(Y height, X width, std::mt19937 *rnd, Problem *ret)
 			}
 
 			if (transition) {
+				tabu_list[tabu_list_end] = ProblemHash(current_problem);
+				if (++tabu_list_end == kTabuListSize) tabu_list_end = 0;
+
 				current_field = next_field;
 				current_energy = next_energy;
 				if (previous_clue != kNoClue) --n_clue;
 				if (clue != kNoClue) ++n_clue;
+				break;
 			} else {
 				current_problem.SetClue(pos, previous_clue);
 			}
 		}
-
 		temperature *= 0.995;
 	}
 
