@@ -590,7 +590,7 @@ void Field::ExpandWhite()
 			++n_global_units;
 		}
 	}
-	GraphSeparation<GroupData> graph_local(field_size + n_global_units, field_size * 2);
+	GraphSeparation<GroupData> graph_local(field_size + n_global_units, field_size * 4);
 	// edges: local -- local
 	const int kClueMaster = 1 << 28;
 	for (Y y(0); y < height(); ++y) {
