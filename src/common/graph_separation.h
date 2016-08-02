@@ -46,7 +46,7 @@ private:
 	int n_vertex_, n_edge_, pool_last_;
 };
 template <typename Abelian>
-GraphSeparation<Abelian>::GraphSeparation() : pool_(nullptr), vertices_(nullptr), value_(nullptr), root_(nullptr), n_vertex_(0), n_edge_(0), pool_last_(0)
+GraphSeparation<Abelian>::GraphSeparation() : pool_(nullptr), graph_(nullptr), value_(nullptr), root_(nullptr), n_vertex_(0), n_edge_(0), pool_last_(0)
 {
 }
 template <typename Abelian>
