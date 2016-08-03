@@ -111,7 +111,7 @@ public:
 
 	// Invoke func() with the internal queue enabled.
 	template <class F>
-	void QueuedRun(F &func) {
+	void QueuedRun(F func) {
 		if (IsQueueStarted()) func();
 		else {
 			QueueStart();
