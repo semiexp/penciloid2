@@ -5,6 +5,13 @@
 
 namespace penciloid
 {
+// Abelian should be the type of an Abelian group.
+// It should be equipped with binary operator+ and unary operator-.
+// Also, it should suffice the axioms of Abelian groups:
+// 1. for any a, a + Abelian() == Abelian() + a == a.
+// 2. for any a, b and c, (a + b) + c == a + (b + c).
+// 3. for any a, a + (-a) == (-a) + a == Abelian().
+// 4. for any a and b, a + b == b + a.
 template <typename Abelian>
 class GraphSeparation
 {
@@ -23,8 +30,13 @@ public:
 	inline void SetValue(int p, const Abelian &val);
 
 	// Call this method before calling Separate.
+	// Once it was called, further AddEdge / SetValue operations will lead to an inconsistency.
 	void Construct();
 
+	// Let S(V) be \sum_{v \in V} value[v].
+	// After removing vertex <p>, the connected component which <p> belonged before will be separated into some components (let them be V1, V2, ...)
+	// This method returns {S(V1), S(V2), ...} (in random order).
+	// As the base type is an Abelian group, the return value is well-defined.
 	std::vector<Abelian> Separate(int p);
 
 private:
