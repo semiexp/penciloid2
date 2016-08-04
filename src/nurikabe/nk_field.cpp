@@ -706,6 +706,64 @@ void Field::ExpandWhite()
 
 	for (CellPosition pos : corner_black) DecideCell(pos, kCellBlack);
 }
+void Field::CheckReachability()
+{
+	struct QueueEntry
+	{
+		CellPosition pos;
+		int value;
+
+		QueueEntry() : pos(), value(-1) {}
+		QueueEntry(CellPosition pos, int value) : pos(pos), value(value) {}
+
+		inline bool operator<(const QueueEntry &other) const {
+			return value < other.value;
+		}
+	};
+	Grid<bool> is_local(height(), width(), false);
+	Grid<bool> visited(height(), width(), false);
+	std::priority_queue<QueueEntry> q;
+
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			CellPosition pos(y, x);
+			int root_idx = GetRoot(GetIndex(pos));
+			Cell root_cell = cells_.at(root_idx);
+			if (GetCell(pos) == kCellWhite && root_cell.clue != kNoClue) {
+				visited.at(pos) = true;
+				int remain_max = root_cell.clue.clue_high - (-root_cell.group_parent_cell);
+				for (Direction d : k4Neighborhood) {
+					CellPosition pos2 = pos + d;
+					if (is_local.IsPositionOnGrid(pos2) && GetCell(pos2) != kCellBlack) {
+						is_local.at(pos2) = true;
+						q.push(QueueEntry(pos2, remain_max));
+					}
+				}
+			}
+		}
+	}
+
+	while (!q.empty()) {
+		QueueEntry cur = q.top(); q.pop();
+		if (visited.at(cur.pos)) continue;
+		visited.at(cur.pos) = true;
+
+		if (cur.value > 1) {
+			for (Direction d : k4Neighborhood) {
+				CellPosition pos2 = cur.pos + d;
+				if (is_local.IsPositionOnGrid(pos2) && GetCell(pos2) != kCellBlack && !is_local.at(pos2)) {
+					q.push(QueueEntry(pos2, cur.value - 1));
+				}
+			}
+		}
+	}
+
+	for (Y y(0); y < height(); ++y) {
+		for (X x(0); x < width(); ++x) {
+			if (!visited.at(CellPosition(y, x))) DecideCell(CellPosition(y, x), kCellBlack);
+		}
+	}
+}
 std::ostream &operator<<(std::ostream &stream, const Field &field)
 {
 	for (Y y(0); y < field.height(); ++y) {

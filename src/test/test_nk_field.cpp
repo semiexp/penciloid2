@@ -18,6 +18,7 @@ void RunAllNurikabeFieldTest()
 	NurikabeFieldExpandBlackTest();
 	NurikabeFieldExpandWhiteTest();
 	NurikabeFieldConsistencyTest();
+	NurikabeFieldCheckReachabilityTest();
 }
 void NurikabeFieldAdjacentClueTest()
 {
@@ -208,6 +209,35 @@ void NurikabeFieldConsistencyTest()
 		f.CheckConsistency();
 
 		assert(f.IsInconsistent() == true);
+	}
+}
+void NurikabeFieldCheckReachabilityTest()
+{
+	using namespace nurikabe;
+	{
+		Problem p(Y(5), X(5));
+		p.SetClue(CellPosition(Y(0), X(0)), Clue(7, 7));
+		p.SetClue(CellPosition(Y(0), X(3)), Clue(2, 2));
+		p.SetClue(CellPosition(Y(4), X(0)), Clue(2, 2));
+
+		Field f(p);
+		f.CheckReachability();
+
+		assert(f.GetCell(CellPosition(Y(3), X(4))) == Field::kCellBlack);
+		assert(f.GetCell(CellPosition(Y(4), X(3))) == Field::kCellBlack);
+		assert(f.GetCell(CellPosition(Y(4), X(4))) == Field::kCellBlack);
+		assert(f.IsInconsistent() == false);
+	}
+	{
+		Problem p(Y(5), X(7));
+		p.SetClue(CellPosition(Y(4), X(0)), Clue(12, 12));
+		p.SetClue(CellPosition(Y(3), X(3)), Clue(2, 2));
+
+		Field f(p);
+		f.CheckReachability();
+
+		assert(f.GetCell(CellPosition(Y(4), X(6))) == Field::kCellBlack);
+		assert(f.IsInconsistent() == false);
 	}
 }
 }

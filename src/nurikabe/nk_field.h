@@ -51,6 +51,7 @@ public:
 	void CheckConsistency();
 	void ExpandBlack();
 	void ExpandWhite();
+	void CheckReachability();
 
 	void RestrictClueOfClosedGroups();
 private:
