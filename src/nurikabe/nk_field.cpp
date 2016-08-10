@@ -514,11 +514,11 @@ void Field::ExpandWhite()
 
 		Adjacency(int local_cell, int local_master, int global_master) :
 			local_cell(local_cell), local_master(local_master), global_master(global_master) {}
-		inline bool operator<(const Adjacency &other)
+		inline bool operator<(const Adjacency &other) const
 		{
 			return std::make_pair(local_master, global_master) < std::make_pair(other.local_master, other.global_master);
 		}
-		inline bool operator==(const Adjacency &other)
+		inline bool operator==(const Adjacency &other) const
 		{
 			return local_master == other.local_master && global_master == other.global_master;
 		}
