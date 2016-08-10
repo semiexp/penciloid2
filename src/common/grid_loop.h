@@ -142,7 +142,7 @@ private:
 	};
 
 	bool IsVertex(LoopPosition pos) const { return pos.y % 2 == 0 && pos.x % 2 == 0; }
-	bool IsEdge(LoopPosition pos) const { return pos.y % 2 != pos.x % 2; }
+	bool IsEdge(LoopPosition pos) const { return static_cast<int>(pos.y % 2) != static_cast<int>(pos.x % 2); }
 
 	unsigned int Id(Y y, X x) const { return int(y) * (2 * int(width_) + 1) + int(x); }
 	unsigned int Id(LoopPosition pos) const { return int(pos.y) * (2 * int(width_) + 1) + int(pos.x); }
