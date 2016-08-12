@@ -1,6 +1,7 @@
 #include "sl_evaluator.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include "../common/union_find.h"
 #include "sl_method.h"
