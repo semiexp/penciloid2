@@ -49,7 +49,7 @@ double Evaluator::Evaluate()
 
 		std::vector<ScoredMove> scored_candidates;
 		for (Move &m : move_candidates_) {
-			scored_candidates.push_back(ScoredMove(GetScoreOfMethod(m.method), m));
+			scored_candidates.push_back(ScoredMove(GetScoreOfMove(m), m));
 		}
 
 		for (ScoredMove &m : scored_candidates) {
@@ -159,9 +159,9 @@ void Evaluator::EliminateDoneMoves()
 
 	move_candidates_.swap(new_move_candidates);
 }
-double Evaluator::GetScoreOfMethod(AppliedMethod method)
+double Evaluator::GetScoreOfMove(Move &move)
 {
-	switch (method)
+	switch (move.method)
 	{
 	case kTwoLines: return param_.two_lines;
 	case kAvoidCycle: return param_.avoid_cycle;

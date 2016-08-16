@@ -98,7 +98,7 @@ private:
 
 	void EnumerateMoves();
 	void EliminateDoneMoves();
-	double GetScoreOfMethod(AppliedMethod method);
+	double GetScoreOfMove(Move &move);
 
 	void CheckAvoidCycleRule();
 	void CheckClosedChain();
