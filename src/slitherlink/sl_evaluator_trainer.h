@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <ctime>
+#include <cstdio>
 
 #include "sl_evaluator_training_set.h"
 #include "sl_evaluator.h"
