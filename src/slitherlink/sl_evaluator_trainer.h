@@ -38,6 +38,7 @@ EvaluatorParameter TrainEvaluator(EvaluatorTrainingSet &training_set, const std:
 	for (int i = 0; i < 300; ++i) {
 		std::vector<int> cand;
 		for (int j = 0; j < EvaluatorParameter::kNumberOfEffectiveParameters; ++j) {
+			if (j == EvaluatorParameter::kIndexLocalityDistance) continue;
 			if (param[j] - technique_step >= technique_min - EPS) {
 				cand.push_back(~j);
 			}

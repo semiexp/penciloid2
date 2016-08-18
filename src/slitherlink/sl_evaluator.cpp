@@ -63,7 +63,7 @@ double Evaluator::Evaluate()
 					locality_distance = std::min(locality_distance, d);
 				}
 			}
-			double locality_weight = pow(param_.locality_base, std::min(1.0, (locality_distance - 1) / 4.0) - 1);
+			double locality_weight = pow(param_.locality_base, std::min(1.0, (locality_distance - 1) / param_.locality_distance) - 1);
 			m.score *= locality_weight;
 		}
 

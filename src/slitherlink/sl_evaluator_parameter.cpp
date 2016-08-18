@@ -39,36 +39,39 @@ EvaluatorParameter::EvaluatorParameter()
 	locality_base = 2.3;
 	alternative_dimension = 3.95;
 	undecided_power = 0.35;
+
+	locality_distance = 4.0;
 }
 double* EvaluatorParameter::at(int i)
 {
 	switch (i)
 	{
-	case 0: return &avoid_cycle;
-	case 1: return &eliminate_closed_chain;
-	case 2: return &hourglass_rule;
-	case 3: return &(adjacent_lines[0]);
-	case 4: return &(adjacent_lines[1]);
-	case 5: return &(adjacent_lines[2]);
-	case 6: return &(adjacent_lines[3]);
-	case 7: return &adjacent_3;
-	case 8: return &diagonal_3;
-	case 9: return &diagonal_3_avoid_cycle;
-	case 10: return &(corner_clue[1]);
-	case 11: return &(corner_clue[2]);
-	case 12: return &(corner_clue[3]);
-	case 13: return &corner_clue_2_hard;
-	case 14: return &(line_to_clue[1]);
-	case 15: return &(line_to_clue[2]);
-	case 16: return &(line_to_clue[3]);
-	case 17: return &(line_from_clue[1]);
-	case 18: return &(line_from_clue[3]);
-	case 19: return &almost_line_to_2;
-	case 20: return &diagonal_chain;
-	case 21: return &inout_rule;
-	case 22: return &locality_base;
-	case 23: return &alternative_dimension;
-	case 24: return &undecided_power;
+	case kIndexAvoidCycle: return &avoid_cycle;
+	case kIndexEliminateClosedChain: return &eliminate_closed_chain;
+	case kIndexHourglassRule: return &hourglass_rule;
+	case kIndexAdjacentLines0: return &(adjacent_lines[0]);
+	case kIndexAdjacentLines1: return &(adjacent_lines[1]);
+	case kIndexAdjacentLines2: return &(adjacent_lines[2]);
+	case kIndexAdjacentLines3: return &(adjacent_lines[3]);
+	case kIndexAdjacent3: return &adjacent_3;
+	case kIndexDiagonal3: return &diagonal_3;
+	case kIndexDiagonal3AvoidCycle: return &diagonal_3_avoid_cycle;
+	case kIndexCornerClue1: return &(corner_clue[1]);
+	case kIndexCornerClue2: return &(corner_clue[2]);
+	case kIndexCornerClue3: return &(corner_clue[3]);
+	case kIndexCornerClue2Hard: return &corner_clue_2_hard;
+	case kIndexLineToClue1: return &(line_to_clue[1]);
+	case kIndexLineToClue2: return &(line_to_clue[2]);
+	case kIndexLineToClue3: return &(line_to_clue[3]);
+	case kIndexLineFromClue1: return &(line_from_clue[1]);
+	case kIndexLineFromClue3: return &(line_from_clue[3]);
+	case kIndexAlmostLineTo2: return &almost_line_to_2;
+	case kIndexDiagonalChain: return &diagonal_chain;
+	case kIndexInoutRule: return &inout_rule;
+	case kIndexLocalityBase: return &locality_base;
+	case kIndexAlternativeDimension: return &alternative_dimension;
+	case kIndexUndecidedPower: return &undecided_power;
+	case kIndexLocalityDistance: return &locality_distance;
 	}
 	return nullptr;
 }
