@@ -14,6 +14,7 @@ void RunAllTest()
 	RunAllYajilinFieldTest();
 	RunAllMasyuFieldTest();
 	RunAllNurikabeFieldTest();
+	RunAllKakuroFieldTest();
 }
 }
 }

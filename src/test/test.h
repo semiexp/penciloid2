@@ -13,5 +13,6 @@ void RunAllYajilinFieldTest();
 void RunAllMasyuFieldTest();
 void RunAllNurikabeFieldTest();
 void RunAllGraphSeparationTest();
+void RunAllKakuroFieldTest();
 }
 }

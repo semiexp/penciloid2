@@ -7,6 +7,7 @@ SOURCE_DIR := src
 SOURCES_BASE := $(wildcard $(SOURCE_DIR)/akari/*.cpp)\
     $(wildcard $(SOURCE_DIR)/masyu/*.cpp) $(wildcard $(SOURCE_DIR)/nurikabe/*.cpp) \
     $(wildcard $(SOURCE_DIR)/slitherlink/*.cpp) $(wildcard $(SOURCE_DIR)/yajilin/*.cpp) \
+	$(wildcard $(SOURCE_DIR)/kakuro/*.cpp) \
     $(wildcard $(SOURCE_DIR)/common/*.cpp) $(wildcard $(SOURCE_DIR)/test/*.cpp)
     
 SOURCES := $(SOURCE_DIR)/main.cpp $(SOURCES_BASE)
