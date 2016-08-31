@@ -586,6 +586,12 @@ void Evaluator::CheckDiagonalChain(CellPosition pos)
 			if (!(0 <= loop_pos.y && loop_pos.y <= 2 * height() && 0 <= loop_pos.x && loop_pos.x <= 2 * width())) break;
 			Clue clue = field_.GetClue(cell_pos);
 
+			if (GetEdgeSafe(loop_pos + k4Neighborhood[0]) != kEdgeUndecided
+			 && GetEdgeSafe(loop_pos + k4Neighborhood[1]) != kEdgeUndecided
+			 && GetEdgeSafe(loop_pos + k4Neighborhood[2]) != kEdgeUndecided
+			 && GetEdgeSafe(loop_pos + k4Neighborhood[3]) != kEdgeUndecided) {
+				break;
+			}
 			if (clue == 2) {
 				Move m(kDiagonalChain);
 				if (GetEdgeSafe(loop_pos + dy) != kEdgeUndecided) {
