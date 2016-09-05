@@ -155,7 +155,7 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 		}
 	}
 
-	Field latest_field(current_problem, constraint.field_database, constraint.method);
+	Field latest_field(current_problem, constraint.field_dictionary, constraint.method);
 	Field::EdgeCount previous_decided_edges = 0;
 
 	int no_progress = 0;
@@ -194,7 +194,7 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 			if (previous_clue == kNoClue) common = latest_field;
 			else {
 				current_problem.SetClue(pos, kNoClue);
-				common = Field(current_problem, constraint.field_database, constraint.method);
+				common = Field(current_problem, constraint.field_dictionary, constraint.method);
 			}
 
 			for (Clue new_clue : new_clue_candidates) {

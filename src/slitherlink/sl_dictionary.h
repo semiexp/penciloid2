@@ -6,7 +6,7 @@ namespace penciloid
 {
 namespace slitherlink
 {
-class Database
+class Dictionary
 {
 public:
 	static const unsigned int kUndecided = 0;
@@ -14,14 +14,14 @@ public:
 	static const unsigned int kBlank = 2;
 	static const Direction kNeighbor[12];
 
-	Database();
+	Dictionary();
 
-	Database(const Database &) = delete;
-	Database(Database &&) = delete;
-	Database &operator=(const Database &) = delete;
-	Database &operator=(Database&&) = delete;
+	Dictionary(const Dictionary &) = delete;
+	Dictionary(Dictionary &&) = delete;
+	Dictionary &operator=(const Dictionary &) = delete;
+	Dictionary &operator=(Dictionary&&) = delete;
 
-	~Database();
+	~Dictionary();
 	
 	void CreateDefault();
 	void Release();

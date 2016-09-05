@@ -5,7 +5,7 @@
 #include <utility>
 
 #include "sl_problem.h"
-#include "sl_database.h"
+#include "sl_dictionary.h"
 
 namespace penciloid
 {
@@ -14,7 +14,7 @@ namespace slitherlink
 Field::Field() : GridLoop<Field>(), field_clue_(), database_(nullptr), method_()
 {
 }
-Field::Field(Y height, X width, Database *database, const Method &met) :
+Field::Field(Y height, X width, Dictionary *database, const Method &met) :
 	GridLoop<Field>(height, width), field_clue_(height, width, kNoClue), database_(database), method_(met)
 {
 	GridLoop<Field>::SetMethod(met.grid_loop_method);
@@ -47,7 +47,7 @@ Field &Field::operator=(Field&& other)
 
 	return *this;
 }
-Field::Field(const Problem& problem, Database *database, const Method &met) :
+Field::Field(const Problem& problem, Dictionary *database, const Method &met) :
 	GridLoop<Field>(problem.height(), problem.width()), field_clue_(problem.height(), problem.width(), kNoClue), database_(database), method_(met)
 {
 	GridLoop<Field>::SetMethod(met.grid_loop_method);
@@ -85,11 +85,11 @@ void Field::Inspect(LoopPosition pos)
 	if (database_ != nullptr && method_.around_cell) {
 		unsigned int db_id = 0;
 		for (int i = 11; i >= 0; --i) {
-			EdgeState status = GetEdgeSafe(pos + Database::kNeighbor[i]);
+			EdgeState status = GetEdgeSafe(pos + Dictionary::kNeighbor[i]);
 
-			if (status == kEdgeUndecided) db_id = db_id * 3 + Database::kUndecided;
-			else if (status == kEdgeLine) db_id = db_id * 3 + Database::kLine;
-			else if (status == kEdgeBlank) db_id = db_id * 3 + Database::kBlank;
+			if (status == kEdgeUndecided) db_id = db_id * 3 + Dictionary::kUndecided;
+			else if (status == kEdgeLine) db_id = db_id * 3 + Dictionary::kLine;
+			else if (status == kEdgeBlank) db_id = db_id * 3 + Dictionary::kBlank;
 		}
 
 		Clue c = GetClue(CellPosition(pos.y / 2, pos.x / 2));
@@ -101,13 +101,13 @@ void Field::Inspect(LoopPosition pos)
 
 		for (int i = 0; i < 12; ++i) {
 			int new_status = (db_result >> (2 * i)) & 3;
-			if (new_status == Database::kLine) {
-				DecideEdge(pos + Database::kNeighbor[i], kEdgeLine);
+			if (new_status == Dictionary::kLine) {
+				DecideEdge(pos + Dictionary::kNeighbor[i], kEdgeLine);
 			}
-			if (new_status == Database::kBlank) {
-				LoopPosition edge_pos = pos + Database::kNeighbor[i];
+			if (new_status == Dictionary::kBlank) {
+				LoopPosition edge_pos = pos + Dictionary::kNeighbor[i];
 				if (0 <= edge_pos.y && edge_pos.y <= 2 * height() && 0 <= edge_pos.x && edge_pos.x <= 2 * width()) {
-					DecideEdge(pos + Database::kNeighbor[i], kEdgeBlank);
+					DecideEdge(pos + Dictionary::kNeighbor[i], kEdgeBlank);
 				}
 			}
 		}

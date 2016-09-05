@@ -6,7 +6,7 @@
 #include "../common/grid.h"
 #include "sl_type.h"
 #include "sl_problem.h"
-#include "sl_database.h"
+#include "sl_dictionary.h"
 #include "sl_method.h"
 
 namespace penciloid
@@ -17,8 +17,8 @@ class Field : public GridLoop<Field>
 {
 public:
 	Field();
-	Field(Y height, X width, Database *database = nullptr, const Method &met = Method());
-	Field(const Problem& problem, Database *database = nullptr, const Method &met = Method());
+	Field(Y height, X width, Dictionary *database = nullptr, const Method &met = Method());
+	Field(const Problem& problem, Dictionary *database = nullptr, const Method &met = Method());
 
 	Field(const Field &other);
 	Field(Field &&other);
@@ -32,8 +32,8 @@ public:
 
 	void Inspect(LoopPosition pos);
 
-	void SetDatabase(Database* database) { database_ = database; }
-	Database* GetDatabase() { return database_; }
+	void SetDatabase(Dictionary* database) { database_ = database; }
+	Dictionary* GetDatabase() { return database_; }
 
 	Method GetMethod() const { return method_; }
 	void SetMethod(const Method &m) {
@@ -44,7 +44,7 @@ public:
 
 private:
 	Grid<Clue> field_clue_;
-	Database *database_;
+	Dictionary *database_;
 	Method method_;
 
 	unsigned int CellId(CellPosition pos) { return field_clue_.GetIndex(pos); }

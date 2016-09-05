@@ -1,10 +1,10 @@
-#include "sl_database.h"
+#include "sl_dictionary.h"
 
 namespace penciloid
 {
 namespace slitherlink
 {
-const Direction Database::kNeighbor[12] = {
+const Direction Dictionary::kNeighbor[12] = {
 	Direction(Y(-2), X(-1)),
 	Direction(Y(-2), X(1)),
 	Direction(Y(-1), X(-2)),
@@ -19,14 +19,14 @@ const Direction Database::kNeighbor[12] = {
 	Direction(Y(2), X(1)),
 };
 
-Database::Database() : data_(nullptr)
+Dictionary::Dictionary() : data_(nullptr)
 {
 }
-Database::~Database()
+Dictionary::~Dictionary()
 {
 	Release();
 }
-void Database::CreateDefault()
+void Dictionary::CreateDefault()
 {
 	data_ = new unsigned int[kDatabaseSize];
 
@@ -78,11 +78,11 @@ void Database::CreateDefault()
 		}
 	}
 }
-void Database::Release()
+void Dictionary::Release()
 {
 	if (data_) delete[] data_;
 }
-unsigned int Database::PatternToId(int (&pattern)[12])
+unsigned int Dictionary::PatternToId(int (&pattern)[12])
 {
 	unsigned int ret = 0;
 	for (int i = 11; i >= 0; --i) {
@@ -90,7 +90,7 @@ unsigned int Database::PatternToId(int (&pattern)[12])
 	}
 	return ret;
 }
-void Database::IdToPattern(unsigned int id, int (*pattern)[12])
+void Dictionary::IdToPattern(unsigned int id, int (*pattern)[12])
 {
 	for (int i = 0; i < 12; ++i) {
 		(*pattern)[i] = id % 3;

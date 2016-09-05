@@ -5,12 +5,12 @@
 #include <vector>
 
 #include "../slitherlink/sl_field.h"
-#include "../slitherlink/sl_database.h"
+#include "../slitherlink/sl_dictionary.h"
 
 namespace
 {
 // Place clues and check edges
-void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const char*> test_target, penciloid::slitherlink::Database *db, bool inconsistent = false, bool fully_solved = false)
+void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const char*> test_target, penciloid::slitherlink::Dictionary *db, bool inconsistent = false, bool fully_solved = false)
 {
 	using namespace penciloid;
 	using namespace penciloid::slitherlink;
@@ -43,7 +43,7 @@ void DoAddClueTest(penciloid::Y height, penciloid::X width, std::vector<const ch
 	assert(field.IsInconsistent() == inconsistent);
 	assert(field.IsFullySolved() == fully_solved);
 }
-void DoProblemTest(penciloid::Y height, penciloid::X width, std::vector<const char*> test_problem, penciloid::slitherlink::Database *db)
+void DoProblemTest(penciloid::Y height, penciloid::X width, std::vector<const char*> test_problem, penciloid::slitherlink::Dictionary *db)
 {
 	using namespace penciloid;
 	using namespace penciloid::slitherlink;
@@ -72,7 +72,7 @@ void RunAllSlitherlinkFieldTest()
 {
 	using namespace slitherlink;
 
-	Database db;
+	Dictionary db;
 	db.CreateDefault();
 
 	SlitherlinkFieldAddClue(db);
@@ -81,7 +81,7 @@ void RunAllSlitherlinkFieldTest()
 	SlitherlinkFieldSolveProblem(db);
 	SlitherlinkFieldDiagonalChain(db);
 }
-void SlitherlinkFieldAddClue(penciloid::slitherlink::Database &db)
+void SlitherlinkFieldAddClue(penciloid::slitherlink::Dictionary &db)
 {
 	using namespace slitherlink;
 
@@ -149,7 +149,7 @@ void SlitherlinkFieldAddClue(penciloid::slitherlink::Database &db)
 		"+ +x+x+",
 	}, &db);
 }
-void SlitherlinkFieldTheorem(penciloid::slitherlink::Database &db)
+void SlitherlinkFieldTheorem(penciloid::slitherlink::Dictionary &db)
 {
 	using namespace slitherlink;
 
@@ -181,7 +181,7 @@ void SlitherlinkFieldTheorem(penciloid::slitherlink::Database &db)
 		"+x+x+ +",
 	}, &db);
 }
-void SlitherlinkFieldFullySolvableProblem(penciloid::slitherlink::Database &db)
+void SlitherlinkFieldFullySolvableProblem(penciloid::slitherlink::Dictionary &db)
 {
 	using namespace slitherlink;
 
@@ -204,7 +204,7 @@ void SlitherlinkFieldFullySolvableProblem(penciloid::slitherlink::Database &db)
 		"+x+x+x+",
 	}, &db, false, true);
 }
-void SlitherlinkFieldSolveProblem(penciloid::slitherlink::Database &db)
+void SlitherlinkFieldSolveProblem(penciloid::slitherlink::Dictionary &db)
 {
 	using namespace slitherlink;
 
@@ -248,7 +248,7 @@ void SlitherlinkFieldSolveProblem(penciloid::slitherlink::Database &db)
 		"12-3-31-13",
 	}, &db);
 }
-void SlitherlinkFieldDiagonalChain(penciloid::slitherlink::Database &db)
+void SlitherlinkFieldDiagonalChain(penciloid::slitherlink::Dictionary &db)
 {
 	using namespace slitherlink;
 
