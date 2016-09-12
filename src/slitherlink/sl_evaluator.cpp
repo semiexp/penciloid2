@@ -672,6 +672,7 @@ void Evaluator::CheckInOutRule()
 				cell1 = (y != 0 ? cell_id(y / 2 - 1, x / 2) : out_of_grid);
 				cell2 = (y != 2 * height() ? cell_id(y / 2, x / 2) : out_of_grid);
 			} else continue;
+			if (GetEdgeSafe(LoopPosition(y, x)) != kEdgeUndecided) continue;
 
 			if (uf.Root(cell1 * 2) == uf.Root(cell2 * 2)) {
 				// TODO: avoid duplicated addition
