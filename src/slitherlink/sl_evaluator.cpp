@@ -52,7 +52,6 @@ double Evaluator::Evaluate()
 		for (Move &m : move_candidates_) {
 			scored_candidates.push_back(ScoredMove(GetScoreOfMove(m), m));
 		}
-
 		for (ScoredMove &m : scored_candidates) {
 			// These methods don't involve locality
 			// if (m.move.method == kAdjacent3s || m.move.method == kDiagonal3s || m.move.method == kAdjacentLines0) continue;
@@ -146,9 +145,13 @@ void Evaluator::EnumerateMoves()
 void Evaluator::EliminateDoneMoves()
 {
 	std::vector<Move> new_move_candidates;
-	
+	Move new_move(kTwoLines);
+
 	for (Move &move : move_candidates_) {
-		Move new_move(move.method);
+		new_move.method = move.method;
+		new_move.target_pos.clear();
+		new_move.target_state.clear();
+
 		for (int i = 0; i < move.target_pos.size(); ++i) {
 			if (GetEdgeSafe(move.target_pos[i]) == kEdgeUndecided) {
 				new_move.target_pos.push_back(move.target_pos[i]);
