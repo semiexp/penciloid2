@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "../common/union_find.h"
+#include "../common/mini_vector.h"
 #include "sl_method.h"
 
 namespace penciloid
@@ -252,7 +253,7 @@ void Evaluator::CheckClosedChain()
 }
 void Evaluator::CheckHourglassRule(LoopPosition pos)
 {
-	std::vector<int> line, undecided;
+	MiniVector<int, 4> line, undecided;
 	int line_weight = 0;
 
 	for (int d = 0; d < 4; ++d) {
