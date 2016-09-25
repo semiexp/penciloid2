@@ -28,6 +28,8 @@ Dictionary::~Dictionary()
 }
 void Dictionary::CreateDefault()
 {
+	Release();
+
 	data_ = new unsigned int[kDatabaseSize];
 
 	for (int clue = 0; clue < 4; ++clue) {
