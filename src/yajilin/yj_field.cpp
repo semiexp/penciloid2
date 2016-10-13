@@ -113,6 +113,19 @@ void Field::Inspect(LoopPosition pos)
 				if (GetEdgeSafe(pos + d) == kEdgeUndecided) DecideEdge(pos + d, kEdgeLine);
 			}
 		}
+	} else if (cell_status == kCellUndecided) {
+		if (n_line == 0 && n_undecided == 2) {
+			bool is_line = false;
+			for (Direction d : k4Neighborhood) if (GetEdgeSafe(pos + d) == kEdgeUndecided) {
+				int degree = 0;
+				for (Direction d2 : k4Neighborhood) {
+					EdgeState s = GetEdgeSafe(pos + 2 * d + d2);
+					if (s != kEdgeBlank) ++degree;
+				}
+				if (degree == 2) is_line = true;
+			}
+			if (is_line) DecideCell(cell, kCellLine);
+		}
 	} else if (cell_status == kCellClue) {
 		Clue clue = cells_.at(cell).clue;
 		Direction dir = GetDirectionValue(clue.direction);
