@@ -32,8 +32,11 @@ public:
 	Field();
 	Field(Y height, X width);
 	Field(Problem &problem);
+
 	Field(const Field &other);
 	Field(Field &&other);
+	Field &operator=(const Field &other);
+	Field &operator=(Field &&other);
 
 	~Field();
 

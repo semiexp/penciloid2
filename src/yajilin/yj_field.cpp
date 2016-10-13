@@ -51,6 +51,20 @@ Field::Field(const Field &other) : GridLoop<Field>(other), cells_(other.cells_)
 Field::Field(Field &&other) : GridLoop<Field>(other), cells_(std::move(other.cells_))
 {
 }
+Field &Field::operator=(const Field &other)
+{
+	GridLoop<Field>::operator=(other);
+	cells_ = other.cells_;
+
+	return *this;
+}
+Field &Field::operator=(Field &&other)
+{
+	GridLoop<Field>::operator=(other);
+	cells_ = std::move(other.cells_);
+
+	return *this;
+}
 Field::~Field()
 {
 }
