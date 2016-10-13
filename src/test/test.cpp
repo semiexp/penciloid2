@@ -11,6 +11,7 @@ void RunAllTest()
 	RunAllSlitherlinkFieldTest();
 	RunAllAkariProblemTest();
 	RunAllAkariFieldTest();
+	RunAllYajilinProblemTest();
 	RunAllYajilinFieldTest();
 	RunAllMasyuFieldTest();
 	RunAllNurikabeFieldTest();
