@@ -27,7 +27,7 @@ all: $(BUILD_DIR)/$(PROGRAM)
 -include $(DEPENDS)
 
 $(BUILD_DIR)/$(PROGRAM): $(OBJS)
-	$(CXX) -o $@ $^
+	$(CXX) -o $@ $^ -pthread
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
 	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
