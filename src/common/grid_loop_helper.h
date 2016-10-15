@@ -111,8 +111,8 @@ void CheckConnectability(GridLoop<T> *grid)
 template <class T>
 void Assume(T *grid)
 {
-	Y height = grid->height();
-	X width = grid->width();
+	Y height = grid->GridLoop<T>::height();
+	X width = grid->GridLoop<T>::width();
 	while (true) {
 		bool updated = false;
 		for (Y y(0); y <= height * 2; ++y) {
