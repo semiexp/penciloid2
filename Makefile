@@ -10,7 +10,7 @@ SOURCES_BASE := $(wildcard $(SOURCE_DIR)/akari/*.cpp)\
 	$(wildcard $(SOURCE_DIR)/kakuro/*.cpp) \
     $(wildcard $(SOURCE_DIR)/common/*.cpp) $(wildcard $(SOURCE_DIR)/test/*.cpp)
     
-SOURCES := $(SOURCE_DIR)/main.cpp $(SOURCES_BASE)
+SOURCES := $(SOURCES_BASE)
 SOURCES_EM := $(wildcard $(SOURCE_DIR)/em_support/*.cpp) $(SOURCES_BASE)
 SOURCE_WITHOUT_SRC_DIR := $(SOURCES:$(SOURCE_DIR)/%=%)
 OBJS := $(addprefix $(BUILD_DIR)/,$(SOURCE_WITHOUT_SRC_DIR:.cpp=.o))
@@ -22,12 +22,17 @@ CPPFLAGS = -std=c++11 -O2
 EMCC = emcc
 EMCCFLAGS = -std=c++11 -O2 --bind --memory-init-file 0
 
-all: $(BUILD_DIR)/$(PROGRAM)
+all: $(BUILD_DIR)/main $(BUILD_DIR)/slitherlink-generator
+#$(BUILD_DIR)/$(PROGRAM)
 
 -include $(DEPENDS)
 
-$(BUILD_DIR)/$(PROGRAM): $(OBJS)
-	$(CXX) -o $@ $^ -pthread
+$(BUILD_DIR)/main: $(OBJS) $(SOURCE_DIR)/main.cpp
+	$(CXX) $(CPPFLAGS) -o $@ $^ -pthread
+$(BUILD_DIR)/slitherlink-generator: $(OBJS) $(SOURCE_DIR)/frontend_slitherlink_generator.cpp
+	$(CXX) $(CPPFLAGS) -o $@ $^ -pthread
+
+# $(BUILD_DIR)/$(PROGRAM): $(OBJS)
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
 	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
