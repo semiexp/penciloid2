@@ -86,52 +86,45 @@ int main(int argc, char** argv)
 			// option ended
 			break;
 		}
-		bool is_next_int = false;
-		int val_next_int;
-		if (arg_idx + 1 < argc) {
-			std::istringstream iss(argv[arg_idx + 1]);
-			iss >> val_next_int;
-			if (!iss.fail()) is_next_int = true;
-		}
-
 		std::string opt = argv[arg_idx];
-		if (opt == "-o") {
-			if (arg_idx + 1 >= argc) {
-				std::cerr << "error: missing value after -o" << std::endl;
-				return 0;
+		if (opt[1] == 'o') {
+			if (opt.size() == 2) {
+				if (arg_idx + 1 >= argc) {
+					std::cerr << "error: missing value after -o" << std::endl;
+					return 0;
+				}
+				out_filename = argv[arg_idx + 1];
+				++arg_idx;
+			} else {
+				out_filename = opt.substr(2);
 			}
-			out_filename = argv[arg_idx + 1];
-			++arg_idx;
 		} else if (opt == "-a") {
 			gen_clue_auto = true;
-		} else if (opt == "-h") {
-			if (!is_next_int) {
-				std::cerr << "error: missing integer value after -h" << std::endl;
+		} else if (opt[1] == 'h' || opt[1] == 'w' || opt[1] == 'c' || opt[1] == 'C') {
+			std::istringstream iss;
+			if (opt.size() == 2) {
+				if (arg_idx + 1 >= argc) {
+					std::cerr << "error: missing value after -" << opt[1] << std::endl;
+					return 0;
+				}
+				iss.str(argv[arg_idx + 1]);
+				++arg_idx;
+			} else {
+				iss.str(opt.substr(2));
+			}
+			int val;
+			iss >> val;
+			if (iss.fail()) {
+				std::cerr << "error: missing value after -" << opt[1] << std::endl;
 				return 0;
 			}
-			height = val_next_int;
-			++arg_idx;
-		} else if (opt == "-w") {
-			if (!is_next_int) {
-				std::cerr << "error: missing integer value after -w" << std::endl;
-				return 0;
+
+			switch (opt[1]) {
+			case 'h': height = val; break;
+			case 'w': width = val; break;
+			case 'c': n_clue_lo = val; break;
+			case 'C': n_clue_hi = val; break;
 			}
-			width = val_next_int;
-			++arg_idx;
-		} else if (opt == "-c") {
-			if (!is_next_int) {
-				std::cerr << "error: missing integer value after -c" << std::endl;
-				return 0;
-			}
-			n_clue_lo = val_next_int;
-			++arg_idx;
-		} else if (opt == "-C") {
-			if (!is_next_int) {
-				std::cerr << "error: missing integer value after -C" << std::endl;
-				return 0;
-			}
-			n_clue_hi = val_next_int;
-			++arg_idx;
 		} else if (opt == "--help") {
 			ShowUsage(argc, argv);
 			return 0;
