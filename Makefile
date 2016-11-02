@@ -2,6 +2,7 @@ PROGRAM = main
 EM_PROGRAM = em_main.js
 
 BUILD_DIR := build
+OUTPUT_DIR := bin
 SOURCE_DIR := src
 
 SOURCES_BASE := $(wildcard $(SOURCE_DIR)/akari/*.cpp)\
@@ -12,9 +13,11 @@ SOURCES_BASE := $(wildcard $(SOURCE_DIR)/akari/*.cpp)\
     
 SOURCES := $(SOURCES_BASE)
 SOURCES_EM := $(wildcard $(SOURCE_DIR)/em_support/*.cpp) $(SOURCES_BASE)
+SOURCES_ALL := $(SOURCES) $(SOURCE_DIR)/main.cpp $(SOURCE_DIR)/frontend_slitherlink_generator.cpp
 SOURCE_WITHOUT_SRC_DIR := $(SOURCES:$(SOURCE_DIR)/%=%)
+SOURCE_ALL_WITHOUT_SRC_DIR := $(SOURCES_ALL:$(SOURCE_DIR)/%=%)
 OBJS := $(addprefix $(BUILD_DIR)/,$(SOURCE_WITHOUT_SRC_DIR:.cpp=.o))
-DEPENDS := $(addprefix $(BUILD_DIR)/,$(SOURCE_WITHOUT_SRC_DIR:.cpp=.d))
+DEPENDS := $(addprefix $(BUILD_DIR)/,$(SOURCE_ALL_WITHOUT_SRC_DIR:.cpp=.d))
 
 CXX = g++
 CPPFLAGS = -std=c++11 -O2
@@ -22,17 +25,19 @@ CPPFLAGS = -std=c++11 -O2
 EMCC = emcc
 EMCCFLAGS = -std=c++11 -O2 --bind --memory-init-file 0
 
-all: $(BUILD_DIR)/main $(BUILD_DIR)/slitherlink-generator
-#$(BUILD_DIR)/$(PROGRAM)
+all: main slitherlink-generator
 
 -include $(DEPENDS)
 
-$(BUILD_DIR)/main: $(OBJS) $(SOURCE_DIR)/main.cpp
-	$(CXX) $(CPPFLAGS) -o $@ $^ -pthread
-$(BUILD_DIR)/slitherlink-generator: $(OBJS) $(SOURCE_DIR)/frontend_slitherlink_generator.cpp
-	$(CXX) $(CPPFLAGS) -o $@ $^ -pthread
+main: $(OUTPUT_DIR)/main
+slitherlink-generator: $(OUTPUT_DIR)/slitherlink-generator
 
-# $(BUILD_DIR)/$(PROGRAM): $(OBJS)
+$(OUTPUT_DIR)/main: $(OBJS) $(BUILD_DIR)/main.o
+	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
+	$(CXX) $(CPPFLAGS) -o $@ $^ -pthread
+$(OUTPUT_DIR)/slitherlink-generator: $(OBJS) $(SOURCE_DIR)/frontend_slitherlink_generator.o
+	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
+	$(CXX) $(CPPFLAGS) -o $@ $^ -pthread
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
 	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
@@ -46,4 +51,4 @@ $(BUILD_DIR)/$(EM_PROGRAM): $(SOURCES_EM)
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: all js clean
+.PHONY: all main slitherlink-generator js clean
