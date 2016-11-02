@@ -16,15 +16,16 @@ void ShowUsage(int argc, char** argv)
 {
 	std::cerr << "Usage: " << argv[0] << " [options] [file]" << std::endl;
 	std::cerr << "Options:\n\
-  --help        Display this information\n\
-  -o <file>     Place the output into <file>\n\
-  -a            Generate the clue placement automatically\n\
-  -h <height>   Set the height of the problem <height>\n\
-  -w <width>    Set the width of the problem <width>\n\
-  -c <num>      Set the minimum number of the clues <num>\n\
-  -C <num>      Set the maximum number of the clues <num>\n\
+  --help         Display this information\n\
+  -o <file>      Place the output into <file>\n\
+  -a             Generate the clue placement automatically\n\
+  -h <height>    Set the height of the problem <height>\n\
+  -w <width>     Set the width of the problem <width>\n\
+  -c <num>       Set the minimum number of the clues <num>\n\
+  -C <num>       Set the maximum number of the clues <num>\n\
+  -s <symmetry>  Specify the symmetry of the clue placement\n\
 \n\
-Options -h, -w, -c and -C are valid only if -a is specified.\n\
+Options -h, -w, -c, -C and -s are valid only if -a is specified.\n\
 If -a is not specified, the input file should be specified for the clue placement." << std::endl;
 }
 bool GenerateWithCluePlacement(
@@ -66,6 +67,27 @@ void GenerateAuto(
 		}
 	}
 }
+int ParseSymmetry(std::string str)
+{
+	int ret = 0;
+	std::istringstream iss(str);
+	std::string token;
+	while (std::getline(iss, token, ',')) {
+		if (token == "h" || token == "horizontal") {
+			ret |= penciloid::slitherlink::kSymmetryHorizontalLine;
+		} else if (token == "v" || token == "vertical") {
+			ret |= penciloid::slitherlink::kSymmetryVerticalLine;
+		} else if (token == "90" || token == "t" || token == "tetrad") {
+			ret |= penciloid::slitherlink::kSymmetryTetrad;
+		} else if (token == "180" || token == "d" || token == "dyad") {
+			ret |= penciloid::slitherlink::kSymmetryDyad;
+		} else {
+			std::cerr << "error: unrecognized symmetry '" << token << "'" << std::endl;
+			exit(0);
+		}
+	}
+	return ret;
+}
 }
 
 int main(int argc, char** argv)
@@ -76,7 +98,7 @@ int main(int argc, char** argv)
 	}
 
 	std::string in_filename = "", out_filename = "";
-	int height = -1, width = -1, n_clue_lo = -1, n_clue_hi = -1;
+	int height = -1, width = -1, n_clue_lo = -1, n_clue_hi = -1, symmetry = 0;
 	bool gen_clue_auto = false;
 
 	// parse options
@@ -100,6 +122,17 @@ int main(int argc, char** argv)
 			}
 		} else if (opt == "-a") {
 			gen_clue_auto = true;
+		} else if (opt[1] == 's') {
+			if (opt.size() == 2) {
+				if (arg_idx + 1 >= argc) {
+					std::cerr << "error: missing value after -s" << std::endl;
+					return 0;
+				}
+				symmetry = ParseSymmetry(argv[arg_idx + 1]);
+				++arg_idx;
+			} else {
+				symmetry = ParseSymmetry(opt.substr(2));
+			}
 		} else if (opt[1] == 'h' || opt[1] == 'w' || opt[1] == 'c' || opt[1] == 'C') {
 			std::istringstream iss;
 			if (opt.size() == 2) {
@@ -198,7 +231,7 @@ int main(int argc, char** argv)
 			n_clue_lo = static_cast<int>(height * width * 0.3);
 			n_clue_hi = static_cast<int>(height * width * 0.4);
 		}
-		GenerateAuto(height, width, n_clue_lo, n_clue_hi, penciloid::slitherlink::kSymmetryDyad, opt, &rnd, &problem);
+		GenerateAuto(height, width, n_clue_lo, n_clue_hi, symmetry, opt, &rnd, &problem);
 	}
 
 	if (out_filename.empty()) {
