@@ -11,6 +11,20 @@
 
 namespace
 {
+void ShowUsage(int argc, char** argv)
+{
+	std::cerr << "Usage: " << argv[0] << " [options] [file]" << std::endl;
+	std::cerr << "Options:\n\
+  -o <file>     Place the output into <file>\n\
+  -a            Generate the clue placement automatically\n\
+  -h <height>   Set the height of the problem <height>\n\
+  -w <width>    Set the width of the problem <width>\n\
+  -c <num>      Set the minimum number of the clues <num>\n\
+  -C <num>      Set the maximum number of the clues <num>\n\
+\n\
+Options -h, -w, -c and -C are valid only if -a is specified.\n\
+If -a is not specified, the input file should be specified for the clue placement." << std::endl;
+}
 bool GenerateWithCluePlacement(
 	penciloid::slitherlink::CluePlacement &placement, 
 	penciloid::slitherlink::GeneratorOption &opt, 
@@ -55,7 +69,7 @@ void GenerateAuto(
 int main(int argc, char** argv)
 {
 	if (argc < 2) {
-		std::cerr << "Usage: " << argv[0] << " [options] file" << std::endl;
+		ShowUsage(argc, argv);
 		return 0;
 	}
 
@@ -98,7 +112,7 @@ int main(int argc, char** argv)
 			++arg_idx;
 			break;
 		case 'C':
-			// specify the minimum number of the clues
+			// specify the maximum number of the clues
 			n_clue_hi = atoi(argv[arg_idx + 1]);
 			++arg_idx;
 			break;
