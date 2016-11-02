@@ -185,7 +185,7 @@ int main(int argc, char** argv)
 					clue_placement.SetClue(CellPosition(y, x), Clue(static_cast<int>(token[0] - '0')));
 				} else if (token[0] == '5') {
 					clue_placement.SetClue(CellPosition(y, x), kSomeClue);
-				} else {
+				} else if (token[0] != '.') {
 					std::cerr << "error: invalid input format" << std::endl;
 					return 0;
 				}
