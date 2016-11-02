@@ -102,11 +102,14 @@ int main(int argc, char** argv)
 			n_clue_hi = atoi(argv[arg_idx + 1]);
 			++arg_idx;
 			break;
+		default:
+			std::cerr << "error: unrecognized option '" << argv[arg_idx] << "'" << std::endl;
+			return 0;
 		}
 	}
 	if (gen_clue_auto) {
 		if (out_filename.empty()) {
-			std::cerr << "Error: -o must be specified if -a is specified." << std::endl;
+			std::cerr << "error: -o must be specified if -a is specified." << std::endl;
 			return 0;
 		}
 	}
