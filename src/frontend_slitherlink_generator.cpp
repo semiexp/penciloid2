@@ -16,6 +16,7 @@ void ShowUsage(int argc, char** argv)
 {
 	std::cerr << "Usage: " << argv[0] << " [options] [file]" << std::endl;
 	std::cerr << "Options:\n\
+  --help        Display this information\n\
   -o <file>     Place the output into <file>\n\
   -a            Generate the clue placement automatically\n\
   -h <height>   Set the height of the problem <height>\n\
@@ -93,59 +94,48 @@ int main(int argc, char** argv)
 			if (!iss.fail()) is_next_int = true;
 		}
 
-		char opt = argv[arg_idx][1];
-		switch (opt)
-		{
-		case 'o':
-			// specify the output file
+		std::string opt = argv[arg_idx];
+		if (opt == "-o") {
 			if (arg_idx + 1 >= argc) {
 				std::cerr << "error: missing value after -o" << std::endl;
 				return 0;
 			}
 			out_filename = argv[arg_idx + 1];
 			++arg_idx;
-			break;
-		case 'a':
-			// generate clue placement automatically
+		} else if (opt == "-a") {
 			gen_clue_auto = true;
-			break;
-		case 'h':
-			// specify the height of the generated problem (enabled only if '-a' is specified)
+		} else if (opt == "-h") {
 			if (!is_next_int) {
 				std::cerr << "error: missing integer value after -h" << std::endl;
 				return 0;
 			}
 			height = val_next_int;
 			++arg_idx;
-			break;
-		case 'w':
-			// specify the width of the generated problem (enabled only if '-a' is specified)
+		} else if (opt == "-w") {
 			if (!is_next_int) {
 				std::cerr << "error: missing integer value after -w" << std::endl;
 				return 0;
 			}
 			width = val_next_int;
 			++arg_idx;
-			break;
-		case 'c':
-			// specify the minimum number of the clues
+		} else if (opt == "-c") {
 			if (!is_next_int) {
 				std::cerr << "error: missing integer value after -c" << std::endl;
 				return 0;
 			}
 			n_clue_lo = val_next_int;
 			++arg_idx;
-			break;
-		case 'C':
-			// specify the maximum number of the clues
+		} else if (opt == "-C") {
 			if (!is_next_int) {
 				std::cerr << "error: missing integer value after -C" << std::endl;
 				return 0;
 			}
 			n_clue_hi = val_next_int;
 			++arg_idx;
-			break;
-		default:
+		} else if (opt == "--help") {
+			ShowUsage(argc, argv);
+			return 0;
+		} else {
 			std::cerr << "error: unrecognized option '" << argv[arg_idx] << "'" << std::endl;
 			return 0;
 		}
@@ -157,7 +147,12 @@ int main(int argc, char** argv)
 		}
 	}
 	if (!gen_clue_auto) {
-		in_filename = argv[arg_idx];
+		if (arg_idx < argc) {
+			in_filename = argv[arg_idx];
+		} else {
+			std::cerr << "error: no input file" << std::endl;
+			return 0;
+		}
 	}
 
 	using namespace penciloid;
