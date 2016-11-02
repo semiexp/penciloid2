@@ -35,7 +35,7 @@ slitherlink-generator: $(OUTPUT_DIR)/slitherlink-generator
 $(OUTPUT_DIR)/main: $(OBJS) $(BUILD_DIR)/main.o
 	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(CXX) $(CPPFLAGS) -o $@ $^ -pthread
-$(OUTPUT_DIR)/slitherlink-generator: $(OBJS) $(SOURCE_DIR)/frontend_slitherlink_generator.o
+$(OUTPUT_DIR)/slitherlink-generator: $(OBJS) $(BUILD_DIR)/frontend_slitherlink_generator.o
 	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(CXX) $(CPPFLAGS) -o $@ $^ -pthread
 
