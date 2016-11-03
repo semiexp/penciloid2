@@ -18,6 +18,8 @@ void ShowUsage(int argc, char** argv)
 	std::cerr << "Options:\n\
   --help         Display this information\n\
   -o <file>      Place the output into <file>\n\
+  -pb            Output in the PencilBox format (default)\n\
+  -pl            Output in the Penciloid format\n\
   -a             Generate the clue placement automatically\n\
   -h <height>    Set the height of the problem <height>\n\
   -w <width>     Set the width of the problem <width>\n\
@@ -100,6 +102,7 @@ int main(int argc, char** argv)
 	std::string in_filename = "", out_filename = "";
 	int height = -1, width = -1, n_clue_lo = -1, n_clue_hi = -1, symmetry = 0;
 	bool gen_clue_auto = false;
+	bool output_in_penciloid_format = false;
 
 	// parse options
 	int arg_idx = 1;
@@ -120,6 +123,10 @@ int main(int argc, char** argv)
 			} else {
 				out_filename = opt.substr(2);
 			}
+		} else if (opt == "-pb") {
+			output_in_penciloid_format = false;
+		} else if (opt == "-pl") {
+			output_in_penciloid_format = true;
 		} else if (opt == "-a") {
 			gen_clue_auto = true;
 		} else if (opt[1] == 's') {
@@ -242,15 +249,28 @@ int main(int argc, char** argv)
 		std::cerr << "error: couldn't open file '" << in_filename << "'" << std::endl;
 		return 0;
 	}
-	ofs << height << std::endl;
-	ofs << width << std::endl;
-	for (Y y(0); y < height; ++y) {
-		for (X x(0); x < width; ++x) {
-			Clue c = problem.GetClue(CellPosition(y, x));
-			if (c == kNoClue) ofs << ". ";
-			else ofs << static_cast<int>(c) << " ";
+	if (output_in_penciloid_format) {
+		ofs << height << " " << width << std::endl;
+		for (Y y(0); y < height; ++y) {
+			for (X x(0); x < width; ++x) {
+				Clue c = problem.GetClue(CellPosition(y, x));
+				if (c == kNoClue) ofs << ".";
+				else ofs << static_cast<int>(c);
+			}
+			ofs << std::endl;
 		}
 		ofs << std::endl;
+	} else {
+		ofs << height << std::endl;
+		ofs << width << std::endl;
+		for (Y y(0); y < height; ++y) {
+			for (X x(0); x < width; ++x) {
+				Clue c = problem.GetClue(CellPosition(y, x));
+				if (c == kNoClue) ofs << ". ";
+				else ofs << static_cast<int>(c) << " ";
+			}
+			ofs << std::endl;
+		}
 	}
 	return 0;
 }
