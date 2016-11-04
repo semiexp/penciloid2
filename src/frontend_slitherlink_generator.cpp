@@ -20,14 +20,17 @@ void ShowUsage(int argc, char** argv)
   -o <file>      Place the output into <file>\n\
   -pb            Output in the PencilBox format (default)\n\
   -pl            Output in the Penciloid format\n\
-  -a             Generate the clue placement automatically\n\
+  -n <num>       Generate <num> problems under the given setting\n\
+  -a             Append to the output file\n\
+  -c             Generate the clue placement automatically\n\
   -h <height>    Set the height of the problem <height>\n\
   -w <width>     Set the width of the problem <width>\n\
-  -c <num>       Set the minimum number of the clues <num>\n\
-  -C <num>       Set the maximum number of the clues <num>\n\
+  -m <num>       Set the minimum number of the clues <num>\n\
+  -M <num>       Set the maximum number of the clues <num>\n\
   -s <symmetry>  Specify the symmetry of the clue placement\n\
 \n\
-Options -h, -w, -c, -C and -s are valid only if -a is specified.\n\
+Options -h, -w, -c, -C and -s are valid only if -c is specified.\n\
+-a is automatically set if -n is specified.\n\
 If -a is not specified, the input file should be specified for the clue placement." << std::endl;
 }
 bool GenerateWithCluePlacement(
@@ -101,7 +104,10 @@ int main(int argc, char** argv)
 
 	std::string in_filename = "", out_filename = "";
 	int height = -1, width = -1, n_clue_lo = -1, n_clue_hi = -1, symmetry = 0;
+	int n_problems = 1;
+
 	bool gen_clue_auto = false;
+	bool append_to_output = false;
 	bool output_in_penciloid_format = false;
 
 	// parse options
@@ -127,8 +133,10 @@ int main(int argc, char** argv)
 			output_in_penciloid_format = false;
 		} else if (opt == "-pl") {
 			output_in_penciloid_format = true;
-		} else if (opt == "-a") {
+		} else if (opt == "-c") {
 			gen_clue_auto = true;
+		} else if (opt == "-a") {
+			append_to_output = true;
 		} else if (opt[1] == 's') {
 			if (opt.size() == 2) {
 				if (arg_idx + 1 >= argc) {
@@ -140,7 +148,7 @@ int main(int argc, char** argv)
 			} else {
 				symmetry = ParseSymmetry(opt.substr(2));
 			}
-		} else if (opt[1] == 'h' || opt[1] == 'w' || opt[1] == 'c' || opt[1] == 'C') {
+		} else if (opt[1] == 'h' || opt[1] == 'w' || opt[1] == 'm' || opt[1] == 'M' || opt[1] == 'n') {
 			std::istringstream iss;
 			if (opt.size() == 2) {
 				if (arg_idx + 1 >= argc) {
@@ -162,8 +170,9 @@ int main(int argc, char** argv)
 			switch (opt[1]) {
 			case 'h': height = val; break;
 			case 'w': width = val; break;
-			case 'c': n_clue_lo = val; break;
-			case 'C': n_clue_hi = val; break;
+			case 'm': n_clue_lo = val; break;
+			case 'M': n_clue_hi = val; break;
+			case 'n': n_problems = val; append_to_output = true; break;
 			}
 		} else if (opt == "--help") {
 			ShowUsage(argc, argv);
@@ -175,7 +184,7 @@ int main(int argc, char** argv)
 	}
 	if (gen_clue_auto) {
 		if (out_filename.empty()) {
-			std::cerr << "error: -o must be specified if -a is specified." << std::endl;
+			std::cerr << "error: -o must be specified if -c is specified." << std::endl;
 			return 0;
 		}
 	}
@@ -199,7 +208,9 @@ int main(int argc, char** argv)
 	Problem problem;
 	std::random_device dev;
 	std::mt19937 rnd(dev());
+	std::ofstream *ofs = nullptr;
 
+	CluePlacement clue_placement;
 	if (!gen_clue_auto) {
 		std::ifstream ifs(in_filename);
 		if (ifs.fail()) {
@@ -211,7 +222,7 @@ int main(int argc, char** argv)
 			std::cerr << "error: invalid input format" << std::endl;
 			return 0;
 		}
-		CluePlacement clue_placement{ Y(height), X(width) };
+		clue_placement = CluePlacement(Y(height), X(width));
 		for (Y y(0); y < height; ++y) {
 			for (X x(0); x < width; ++x) {
 				std::string token;
@@ -231,46 +242,53 @@ int main(int argc, char** argv)
 				}
 			}
 		}
-
-		GenerateWithCluePlacement(clue_placement, opt, &rnd, &problem);
-	} else {
-		if (n_clue_lo == -1 || n_clue_hi == -1) {
-			n_clue_lo = static_cast<int>(height * width * 0.3);
-			n_clue_hi = static_cast<int>(height * width * 0.4);
-		}
-		GenerateAuto(height, width, n_clue_lo, n_clue_hi, symmetry, opt, &rnd, &problem);
 	}
 
-	if (out_filename.empty()) {
-		out_filename = in_filename + ".generated.txt";
-	}
-	std::ofstream ofs(out_filename);
-	if (!ofs.good()) {
-		std::cerr << "error: couldn't open file '" << in_filename << "'" << std::endl;
-		return 0;
-	}
-	if (output_in_penciloid_format) {
-		ofs << height << " " << width << std::endl;
-		for (Y y(0); y < height; ++y) {
-			for (X x(0); x < width; ++x) {
-				Clue c = problem.GetClue(CellPosition(y, x));
-				if (c == kNoClue) ofs << ".";
-				else ofs << static_cast<int>(c);
+	for (int np = 0; np < n_problems; ++np) {
+		if (!gen_clue_auto) {
+			GenerateWithCluePlacement(clue_placement, opt, &rnd, &problem);
+		} else {
+			if (n_clue_lo == -1 || n_clue_hi == -1) {
+				n_clue_lo = static_cast<int>(height * width * 0.3);
+				n_clue_hi = static_cast<int>(height * width * 0.4);
 			}
-			ofs << std::endl;
+			GenerateAuto(height, width, n_clue_lo, n_clue_hi, symmetry, opt, &rnd, &problem);
 		}
-		ofs << std::endl;
-	} else {
-		ofs << height << std::endl;
-		ofs << width << std::endl;
-		for (Y y(0); y < height; ++y) {
-			for (X x(0); x < width; ++x) {
-				Clue c = problem.GetClue(CellPosition(y, x));
-				if (c == kNoClue) ofs << ". ";
-				else ofs << static_cast<int>(c) << " ";
+
+		if (out_filename.empty()) {
+			out_filename = in_filename + ".generated.txt";
+		}
+		if (ofs == nullptr) {
+			ofs = new std::ofstream(out_filename);
+			if (!ofs->good()) {
+				std::cerr << "error: couldn't open file '" << in_filename << "'" << std::endl;
+				return 0;
 			}
-			ofs << std::endl;
+		}
+		if (output_in_penciloid_format) {
+			*ofs << height << " " << width << std::endl;
+			for (Y y(0); y < height; ++y) {
+				for (X x(0); x < width; ++x) {
+					Clue c = problem.GetClue(CellPosition(y, x));
+					if (c == kNoClue) *ofs << ".";
+					else *ofs << static_cast<int>(c);
+				}
+				*ofs << std::endl;
+			}
+			*ofs << std::endl;
+		} else {
+			*ofs << height << std::endl;
+			*ofs << width << std::endl;
+			for (Y y(0); y < height; ++y) {
+				for (X x(0); x < width; ++x) {
+					Clue c = problem.GetClue(CellPosition(y, x));
+					if (c == kNoClue) *ofs << ". ";
+					else *ofs << static_cast<int>(c) << " ";
+				}
+				*ofs << std::endl;
+			}
 		}
 	}
+	if (ofs) delete ofs;
 	return 0;
 }
