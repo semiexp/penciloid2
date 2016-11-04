@@ -29,9 +29,9 @@ void ShowUsage(int argc, char** argv)
   -M <num>       Set the maximum number of the clues <num>\n\
   -s <symmetry>  Specify the symmetry of the clue placement\n\
 \n\
-Options -h, -w, -c, -C and -s are valid only if -c is specified.\n\
+Options -h, -w, -m, -M and -s are valid only if -c is specified.\n\
 -a is automatically set if -n is specified.\n\
-If -a is not specified, the input file should be specified for the clue placement." << std::endl;
+If -c is not specified, the input file should be specified for the clue placement." << std::endl;
 }
 bool GenerateWithCluePlacement(
 	penciloid::slitherlink::CluePlacement &placement, 
