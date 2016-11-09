@@ -3,6 +3,8 @@
 #include <string>
 #include <random>
 #include <sstream>
+#include <thread>
+#include <mutex>
 
 #include "slitherlink/sl_dictionary.h"
 #include "slitherlink/sl_generator.h"
@@ -21,6 +23,7 @@ void ShowUsage(int argc, char** argv)
   -pb            Output in the PencilBox format (default)\n\
   -pl            Output in the Penciloid format\n\
   -n <num>       Generate <num> problems under the given setting\n\
+  -t <threads>   Generate problems using <threads> threads\n\
   -a             Append to the output file\n\
   -c             Generate the clue placement automatically\n\
   -h <height>    Set the height of the problem <height>\n\
@@ -105,6 +108,7 @@ int main(int argc, char** argv)
 	std::string in_filename = "", out_filename = "";
 	int height = -1, width = -1, n_clue_lo = -1, n_clue_hi = -1, symmetry = 0;
 	int n_problems = 1;
+	int n_threads = 1;
 
 	bool gen_clue_auto = false;
 	bool append_to_output = false;
@@ -148,7 +152,7 @@ int main(int argc, char** argv)
 			} else {
 				symmetry = ParseSymmetry(opt.substr(2));
 			}
-		} else if (opt[1] == 'h' || opt[1] == 'w' || opt[1] == 'm' || opt[1] == 'M' || opt[1] == 'n') {
+		} else if (opt[1] == 'h' || opt[1] == 'w' || opt[1] == 'm' || opt[1] == 'M' || opt[1] == 'n' || opt[1] == 't') {
 			std::istringstream iss;
 			if (opt.size() == 2) {
 				if (arg_idx + 1 >= argc) {
@@ -173,6 +177,7 @@ int main(int argc, char** argv)
 			case 'm': n_clue_lo = val; break;
 			case 'M': n_clue_hi = val; break;
 			case 'n': n_problems = val; append_to_output = true; break;
+			case 't': n_threads = val; break;
 			}
 		} else if (opt == "--help") {
 			ShowUsage(argc, argv);
@@ -244,50 +249,115 @@ int main(int argc, char** argv)
 		}
 	}
 
-	for (int np = 0; np < n_problems; ++np) {
-		if (!gen_clue_auto) {
-			GenerateWithCluePlacement(clue_placement, opt, &rnd, &problem);
-		} else {
-			if (n_clue_lo == -1 || n_clue_hi == -1) {
-				n_clue_lo = static_cast<int>(height * width * 0.3);
-				n_clue_hi = static_cast<int>(height * width * 0.4);
+	if (n_threads == 1) {
+		for (int np = 0; np < n_problems; ++np) {
+			if (!gen_clue_auto) {
+				GenerateWithCluePlacement(clue_placement, opt, &rnd, &problem);
+			} else {
+				if (n_clue_lo == -1 || n_clue_hi == -1) {
+					n_clue_lo = static_cast<int>(height * width * 0.3);
+					n_clue_hi = static_cast<int>(height * width * 0.4);
+				}
+				GenerateAuto(height, width, n_clue_lo, n_clue_hi, symmetry, opt, &rnd, &problem);
 			}
-			GenerateAuto(height, width, n_clue_lo, n_clue_hi, symmetry, opt, &rnd, &problem);
-		}
 
-		if (out_filename.empty()) {
-			out_filename = in_filename + ".generated.txt";
-		}
-		if (ofs == nullptr) {
-			ofs = new std::ofstream(out_filename);
-			if (!ofs->good()) {
-				std::cerr << "error: couldn't open file '" << in_filename << "'" << std::endl;
-				return 0;
+			if (out_filename.empty()) {
+				out_filename = in_filename + ".generated.txt";
 			}
-		}
-		if (output_in_penciloid_format) {
-			*ofs << height << " " << width << std::endl;
-			for (Y y(0); y < height; ++y) {
-				for (X x(0); x < width; ++x) {
-					Clue c = problem.GetClue(CellPosition(y, x));
-					if (c == kNoClue) *ofs << ".";
-					else *ofs << static_cast<int>(c);
+			if (ofs == nullptr) {
+				ofs = new std::ofstream(out_filename);
+				if (!ofs->good()) {
+					std::cerr << "error: couldn't open file '" << in_filename << "'" << std::endl;
+					return 0;
+				}
+			}
+			if (output_in_penciloid_format) {
+				*ofs << height << " " << width << std::endl;
+				for (Y y(0); y < height; ++y) {
+					for (X x(0); x < width; ++x) {
+						Clue c = problem.GetClue(CellPosition(y, x));
+						if (c == kNoClue) *ofs << ".";
+						else *ofs << static_cast<int>(c);
+					}
+					*ofs << std::endl;
 				}
 				*ofs << std::endl;
-			}
-			*ofs << std::endl;
-		} else {
-			*ofs << height << std::endl;
-			*ofs << width << std::endl;
-			for (Y y(0); y < height; ++y) {
-				for (X x(0); x < width; ++x) {
-					Clue c = problem.GetClue(CellPosition(y, x));
-					if (c == kNoClue) *ofs << ". ";
-					else *ofs << static_cast<int>(c) << " ";
+			} else {
+				*ofs << height << std::endl;
+				*ofs << width << std::endl;
+				for (Y y(0); y < height; ++y) {
+					for (X x(0); x < width; ++x) {
+						Clue c = problem.GetClue(CellPosition(y, x));
+						if (c == kNoClue) *ofs << ". ";
+						else *ofs << static_cast<int>(c) << " ";
+					}
+					*ofs << std::endl;
 				}
-				*ofs << std::endl;
 			}
 		}
+	} else {
+		std::mutex mtx;
+		int gen_problems = 0;
+
+		auto worker = [&]() {
+			for (;;) {
+				if (!gen_clue_auto) {
+					GenerateWithCluePlacement(clue_placement, opt, &rnd, &problem);
+				} else {
+					if (n_clue_lo == -1 || n_clue_hi == -1) {
+						n_clue_lo = static_cast<int>(height * width * 0.3);
+						n_clue_hi = static_cast<int>(height * width * 0.4);
+					}
+					GenerateAuto(height, width, n_clue_lo, n_clue_hi, symmetry, opt, &rnd, &problem);
+				}
+
+				mtx.lock();
+				if (out_filename.empty()) {
+					out_filename = in_filename + ".generated.txt";
+				}
+				if (ofs == nullptr) {
+					ofs = new std::ofstream(out_filename);
+					if (!ofs->good()) {
+						std::cerr << "error: couldn't open file '" << in_filename << "'" << std::endl;
+						return 0;
+					}
+				}
+				if (output_in_penciloid_format) {
+					*ofs << height << " " << width << std::endl;
+					for (Y y(0); y < height; ++y) {
+						for (X x(0); x < width; ++x) {
+							Clue c = problem.GetClue(CellPosition(y, x));
+							if (c == kNoClue) *ofs << ".";
+							else *ofs << static_cast<int>(c);
+						}
+						*ofs << std::endl;
+					}
+					*ofs << std::endl;
+				} else {
+					*ofs << height << std::endl;
+					*ofs << width << std::endl;
+					for (Y y(0); y < height; ++y) {
+						for (X x(0); x < width; ++x) {
+							Clue c = problem.GetClue(CellPosition(y, x));
+							if (c == kNoClue) *ofs << ". ";
+							else *ofs << static_cast<int>(c) << " ";
+						}
+						*ofs << std::endl;
+					}
+				}
+				if (++gen_problems == n_problems) {
+					mtx.unlock();
+					break;
+				}
+				mtx.unlock();
+			}
+		};
+		std::vector<std::thread> threads;
+		n_threads = std::min(n_threads, n_problems);
+		for (int i = 0; i < n_threads; ++i) {
+			threads.push_back(std::thread(worker));
+		}
+		for (int i = 0; i < n_threads; ++i) threads[i].join();
 	}
 	if (ofs) delete ofs;
 	return 0;
