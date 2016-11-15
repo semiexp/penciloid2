@@ -23,7 +23,7 @@ void ShowUsage(int argc, char** argv)
   -pb            Output in the PencilBox format (default)\n\
   -pl            Output in the Penciloid format\n\
   -n <num>       Generate <num> problems under the given setting\n\
-  -t <threads>   Generate problems using <threads> threads\n\
+  -p <threads>   Generate problems using <threads> threads\n\
   -a             Append to the output file\n\
   -c             Generate the clue placement automatically\n\
   -h <height>    Set the height of the problem <height>\n\
@@ -31,6 +31,7 @@ void ShowUsage(int argc, char** argv)
   -m <num>       Set the minimum number of the clues <num>\n\
   -M <num>       Set the maximum number of the clues <num>\n\
   -s <symmetry>  Specify the symmetry of the clue placement\n\
+  -t             Use the trial-and-error technique\n\
 \n\
 Options -h, -w, -m, -M and -s are valid only if -c is specified.\n\
 -a is automatically set if -n is specified.\n\
@@ -113,6 +114,7 @@ int main(int argc, char** argv)
 	bool gen_clue_auto = false;
 	bool append_to_output = false;
 	bool output_in_penciloid_format = false;
+	bool use_trial_and_error = false;
 
 	// parse options
 	int arg_idx = 1;
@@ -141,6 +143,8 @@ int main(int argc, char** argv)
 			gen_clue_auto = true;
 		} else if (opt == "-a") {
 			append_to_output = true;
+		} else if (opt == "-t") {
+			use_trial_and_error = true;
 		} else if (opt[1] == 's') {
 			if (opt.size() == 2) {
 				if (arg_idx + 1 >= argc) {
@@ -152,7 +156,7 @@ int main(int argc, char** argv)
 			} else {
 				symmetry = ParseSymmetry(opt.substr(2));
 			}
-		} else if (opt[1] == 'h' || opt[1] == 'w' || opt[1] == 'm' || opt[1] == 'M' || opt[1] == 'n' || opt[1] == 't') {
+		} else if (opt[1] == 'h' || opt[1] == 'w' || opt[1] == 'm' || opt[1] == 'M' || opt[1] == 'n' || opt[1] == 'p') {
 			std::istringstream iss;
 			if (opt.size() == 2) {
 				if (arg_idx + 1 >= argc) {
@@ -177,7 +181,7 @@ int main(int argc, char** argv)
 			case 'm': n_clue_lo = val; break;
 			case 'M': n_clue_hi = val; break;
 			case 'n': n_problems = val; append_to_output = true; break;
-			case 't': n_threads = val; break;
+			case 'p': n_threads = val; break;
 			}
 		} else if (opt == "--help") {
 			ShowUsage(argc, argv);
@@ -209,6 +213,7 @@ int main(int argc, char** argv)
 	Dictionary dic;
 	dic.CreateDefault();
 	opt.field_dictionary = &dic;
+	opt.use_assumption = use_trial_and_error;
 
 	Problem problem;
 	std::random_device dev;
