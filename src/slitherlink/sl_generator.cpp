@@ -203,6 +203,8 @@ bool GenerateByLocalSearch(const CluePlacement &placement, const GeneratorOption
 				Field next_field_candidate(common);
 				next_field_candidate.AddClue(pos, new_clue);
 
+				if (constraint.use_assumption) Assume(&next_field_candidate);
+
 				if (next_field_candidate.IsInconsistent()) continue;
 
 				long long next_hash = FieldHash(next_field_candidate, kTabuHashSize);
