@@ -18,6 +18,7 @@ SOURCE_WITHOUT_SRC_DIR := $(SOURCES:$(SOURCE_DIR)/%=%)
 SOURCE_ALL_WITHOUT_SRC_DIR := $(SOURCES_ALL:$(SOURCE_DIR)/%=%)
 OBJS := $(addprefix $(BUILD_DIR)/,$(SOURCE_WITHOUT_SRC_DIR:.cpp=.o))
 DEPENDS := $(addprefix $(BUILD_DIR)/,$(SOURCE_ALL_WITHOUT_SRC_DIR:.cpp=.d))
+OBJS_EM := $(addprefix $(BUILD_DIR)/js/,$(SOURCE_WITHOUT_SRC_DIR:.cpp=.o))
 
 CXX = g++
 CPPFLAGS = -std=c++11 -O2
@@ -43,11 +44,17 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
 	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(CXX) $(CPPFLAGS) -MMD -MF $(@:.o=.d) -o $@ -c $<
 
-js: $(BUILD_DIR)/$(EM_PROGRAM)
+js: $(OUTPUT_DIR)/$(EM_PROGRAM)
 
-$(BUILD_DIR)/$(EM_PROGRAM): $(SOURCES_EM)
-	$(EMCC) $(EMCCFLAGS) $^ -o $(BUILD_DIR)/$(EM_PROGRAM)
+$(OUTPUT_DIR)/$(EM_PROGRAM): $(OBJS_EM) $(BUILD_DIR)/js/em_support/em_sl.o
+	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
+	$(EMCC) $(EMCCFLAGS) $^ -o $@
 	
+# $(BUILD_DIR)/%.o is required because the dependency file is needed
+$(BUILD_DIR)/js/%.o: $(SOURCE_DIR)/%.cpp $(BUILD_DIR)/%.o
+	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
+	$(EMCC) $(CPPFLAGS) -o $@ -c $<
+
 clean:
 	rm -rf $(BUILD_DIR)
 
