@@ -215,9 +215,6 @@ int main(int argc, char** argv)
 	opt.field_dictionary = &dic;
 	opt.use_assumption = use_trial_and_error;
 
-	Problem problem;
-	std::random_device dev;
-	std::mt19937 rnd(dev());
 	std::ofstream *ofs = nullptr;
 
 	CluePlacement clue_placement;
@@ -255,6 +252,12 @@ int main(int argc, char** argv)
 	}
 
 	if (n_threads == 1) {
+		Problem problem;
+		std::random_device dev;
+		std::vector<int> seed(10);
+		std::generate(seed.begin(), seed.end(), std::ref(dev));
+		std::seed_seq seq(seed.begin(), seed.end());
+		std::mt19937 rnd(seq);
 		for (int np = 0; np < n_problems; ++np) {
 			if (!gen_clue_auto) {
 				GenerateWithCluePlacement(clue_placement, opt, &rnd, &problem);
@@ -305,6 +308,12 @@ int main(int argc, char** argv)
 		int gen_problems = 0;
 
 		auto worker = [&]() {
+			Problem problem;
+			std::random_device dev;
+			std::vector<int> seed(10);
+			std::generate(seed.begin(), seed.end(), std::ref(dev));
+			std::seed_seq seq(seed.begin(), seed.end());
+			std::mt19937 rnd(seq);
 			for (;;) {
 				if (!gen_clue_auto) {
 					GenerateWithCluePlacement(clue_placement, opt, &rnd, &problem);
