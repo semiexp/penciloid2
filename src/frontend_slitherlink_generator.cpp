@@ -251,14 +251,17 @@ int main(int argc, char** argv)
 		}
 	}
 
-	if (n_threads == 1) {
+	std::mutex mtx;
+	int gen_problems = 0;
+
+	auto worker = [&]() {
 		Problem problem;
 		std::random_device dev;
 		std::vector<int> seed(10);
 		std::generate(seed.begin(), seed.end(), std::ref(dev));
 		std::seed_seq seq(seed.begin(), seed.end());
 		std::mt19937 rnd(seq);
-		for (int np = 0; np < n_problems; ++np) {
+		for (;;) {
 			if (!gen_clue_auto) {
 				GenerateWithCluePlacement(clue_placement, opt, &rnd, &problem);
 			} else {
@@ -269,11 +272,12 @@ int main(int argc, char** argv)
 				GenerateAuto(height, width, n_clue_lo, n_clue_hi, symmetry, opt, &rnd, &problem);
 			}
 
+			mtx.lock();
 			if (out_filename.empty()) {
 				out_filename = in_filename + ".generated.txt";
 			}
 			if (ofs == nullptr) {
-				ofs = new std::ofstream(out_filename);
+				ofs = new std::ofstream(out_filename, append_to_output ? std::ios::app : std::ios::out);
 				if (!ofs->good()) {
 					std::cerr << "error: couldn't open file '" << in_filename << "'" << std::endl;
 					return 0;
@@ -302,77 +306,20 @@ int main(int argc, char** argv)
 					*ofs << std::endl;
 				}
 			}
-		}
-	} else {
-		std::mutex mtx;
-		int gen_problems = 0;
-
-		auto worker = [&]() {
-			Problem problem;
-			std::random_device dev;
-			std::vector<int> seed(10);
-			std::generate(seed.begin(), seed.end(), std::ref(dev));
-			std::seed_seq seq(seed.begin(), seed.end());
-			std::mt19937 rnd(seq);
-			for (;;) {
-				if (!gen_clue_auto) {
-					GenerateWithCluePlacement(clue_placement, opt, &rnd, &problem);
-				} else {
-					if (n_clue_lo == -1 || n_clue_hi == -1) {
-						n_clue_lo = static_cast<int>(height * width * 0.3);
-						n_clue_hi = static_cast<int>(height * width * 0.4);
-					}
-					GenerateAuto(height, width, n_clue_lo, n_clue_hi, symmetry, opt, &rnd, &problem);
-				}
-
-				mtx.lock();
-				if (out_filename.empty()) {
-					out_filename = in_filename + ".generated.txt";
-				}
-				if (ofs == nullptr) {
-					ofs = new std::ofstream(out_filename);
-					if (!ofs->good()) {
-						std::cerr << "error: couldn't open file '" << in_filename << "'" << std::endl;
-						return 0;
-					}
-				}
-				if (output_in_penciloid_format) {
-					*ofs << height << " " << width << std::endl;
-					for (Y y(0); y < height; ++y) {
-						for (X x(0); x < width; ++x) {
-							Clue c = problem.GetClue(CellPosition(y, x));
-							if (c == kNoClue) *ofs << ".";
-							else *ofs << static_cast<int>(c);
-						}
-						*ofs << std::endl;
-					}
-					*ofs << std::endl;
-				} else {
-					*ofs << height << std::endl;
-					*ofs << width << std::endl;
-					for (Y y(0); y < height; ++y) {
-						for (X x(0); x < width; ++x) {
-							Clue c = problem.GetClue(CellPosition(y, x));
-							if (c == kNoClue) *ofs << ". ";
-							else *ofs << static_cast<int>(c) << " ";
-						}
-						*ofs << std::endl;
-					}
-				}
-				if (++gen_problems == n_problems) {
-					mtx.unlock();
-					break;
-				}
+			if (++gen_problems == n_problems) {
 				mtx.unlock();
+				break;
 			}
-		};
-		std::vector<std::thread> threads;
-		n_threads = std::min(n_threads, n_problems);
-		for (int i = 0; i < n_threads; ++i) {
-			threads.push_back(std::thread(worker));
+			mtx.unlock();
 		}
-		for (int i = 0; i < n_threads; ++i) threads[i].join();
+	};
+	std::vector<std::thread> threads;
+	n_threads = std::min(n_threads, n_problems);
+	for (int i = 0; i < n_threads; ++i) {
+		threads.push_back(std::thread(worker));
 	}
+	for (int i = 0; i < n_threads; ++i) threads[i].join();
+
 	if (ofs) delete ofs;
 	return 0;
 }
