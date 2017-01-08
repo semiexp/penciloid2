@@ -12,6 +12,10 @@ Solver::Solver() :
 	width_(0),
 	problem_(),
 	answer_(),
+	contiguous_line_up_(),
+	contiguous_line_left_(),
+	contiguous_empty_up_(),
+	contiguous_empty_left_(),
 	frontier_size_(0)
 {
 }
@@ -20,6 +24,10 @@ Solver::Solver(const Problem &problem) :
 	width_(problem.width()),
 	problem_(problem),
 	answer_(problem.height(), problem.width(), 0),
+	contiguous_line_up_(problem.height(), problem.width(), 0),
+	contiguous_line_left_(problem.height(), problem.width(), 0),
+	contiguous_empty_up_(problem.height(), problem.width(), 0),
+	contiguous_empty_left_(problem.height(), problem.width(), 0),
 	frontier_size_(problem.width())
 {
 }
@@ -61,9 +69,26 @@ void Solver::Search(Y y, X x, Frontier frontier)
 		puts("");
 		return;
 	}
+
 	if (y > 0 && x > 0) {
-		if ((answer_.at(CellPosition(y - 1, x - 1)) & 1) && (answer_.at(CellPosition(y, x - 1)) & 1) && ((answer_.at(CellPosition(y - 1, x - 1)) & 2) || (answer_.at(CellPosition(y - 1, x)) & 2))) return;
-		if ((answer_.at(CellPosition(y - 1, x - 1)) & 2) && (answer_.at(CellPosition(y - 1, x)) & 2) && ((answer_.at(CellPosition(y - 1, x - 1)) & 1) || (answer_.at(CellPosition(y, x - 1)) & 1))) return;
+		int line_up = contiguous_line_up_.at(CellPosition(y, x));
+		int line_left = contiguous_line_left_.at(CellPosition(y, x));
+		if (line_up >= 1) {
+			if (line_left >= 1) {
+				if ((answer_.at(CellPosition(y - 1, x - line_left)) & 2) && contiguous_empty_left_.at(CellPosition(y - 1, x - 1)) == line_left - 1) return;
+			} else {
+				int line_left2 = contiguous_line_left_.at(CellPosition(y - 1, x));
+				if ((answer_.at(CellPosition(y - 1, x - line_left2)) & 2) && contiguous_empty_left_.at(CellPosition(y, x - 1)) == line_left2 - 1) return;
+			}
+		}
+		if (line_left >= 1) {
+			if (line_up >= 1) {
+				if ((answer_.at(CellPosition(y - line_up, x - 1)) & 1) && contiguous_empty_up_.at(CellPosition(y - 1, x - 1)) == line_up - 1) return;
+			} else {
+				int line_up2 = contiguous_line_up_.at(CellPosition(y, x - 1));
+				if ((answer_.at(CellPosition(y - line_up2, x - 1)) & 1) && contiguous_empty_up_.at(CellPosition(y - 1, x)) == line_up2 - 1) return;
+			}
+		}
 		if ((answer_.at(CellPosition(y, x - 1)) & 1) && (answer_.at(CellPosition(y - 1, x - 1)) & 2)) {
 			if (answer_.at(CellPosition(y - 1, x)) == 0 && !(answer_.at(CellPosition(y - 1, x - 1)) & 1) && (y == 1 || !(answer_.at(CellPosition(y - 2, x)) & 2))) {
 				return;
@@ -76,13 +101,17 @@ void Solver::Search(Y y, X x, Frontier frontier)
 		}
 	}
 
+	contiguous_empty_up_.at(CellPosition(y, x)) = contiguous_empty_left_.at(CellPosition(y, x)) = 0;
+
 	CellState tmp[20];
 	if (x < width() - 1) {
 		CopyFrontier(frontier, tmp);
 		if (Join(tmp, x, x + 1)) {
+			contiguous_line_left_.at(CellPosition(y, x + 1)) = contiguous_line_left_.at(CellPosition(y, x)) + 1;
 			if (tmp[x] == x || tmp[x] == frontier_size_) {
 				// cut here
 				answer_.at(CellPosition(y, x)) = 1;
+				if (y < height() - 1) contiguous_line_up_.at(CellPosition(y + 1, x)) = 0;
 				if (y < problem_.height() - 1) {
 					int clue = static_cast<int>(problem_.GetClue(CellPosition(y + 1, x)));
 					if (clue == 0) tmp[x] = x;
@@ -95,6 +124,7 @@ void Solver::Search(Y y, X x, Frontier frontier)
 			} else if (y < height() - 1) {
 				int clue = static_cast<int>(problem_.GetClue(CellPosition(y + 1, x)));
 				answer_.at(CellPosition(y, x)) = 3;
+				contiguous_line_up_.at(CellPosition(y + 1, x)) = contiguous_line_up_.at(CellPosition(y, x)) + 1;
 				if (x >= 1 && answer_.at(CellPosition(y, x - 1)) == 3) {
 				} else {
 					if (clue != 0 && (tmp[x] > frontier_size_ && tmp[x] != clue + frontier_size_)) {
@@ -117,9 +147,15 @@ void Solver::Search(Y y, X x, Frontier frontier)
 	}
 	{
 		CopyFrontier(frontier, tmp);
+		contiguous_line_left_.at(CellPosition(y, x + 1)) = 0;
 		if (tmp[x] == x || tmp[x] == frontier_size_) {
 			// cut here
 			answer_.at(CellPosition(y, x)) = 0;
+			if (y < height() - 1) contiguous_line_up_.at(CellPosition(y + 1, x)) = 0;
+			if ((y == 0 || !(answer_.at(CellPosition(y - 1, x)) & 2)) && (x == 0 || !(answer_.at(CellPosition(y, x - 1)) & 1))) {
+				contiguous_empty_up_.at(CellPosition(y, x)) = (y == 0 ? 0 : contiguous_empty_up_.at(CellPosition(y - 1, x))) + 1;
+				contiguous_empty_left_.at(CellPosition(y, x)) = (x == 0 ? 0 : contiguous_empty_left_.at(CellPosition(y, x - 1))) + 1;
+			}
 			if (y < problem_.height() - 1) {
 				int clue = static_cast<int>(problem_.GetClue(CellPosition(y + 1, x)));
 				if (clue == 0) tmp[x] = x;
@@ -132,6 +168,7 @@ void Solver::Search(Y y, X x, Frontier frontier)
 		} else if (y < height() - 1) {
 			int clue = static_cast<int>(problem_.GetClue(CellPosition(y + 1, x)));
 			answer_.at(CellPosition(y, x)) = 2;
+			contiguous_line_up_.at(CellPosition(y + 1, x)) = contiguous_line_up_.at(CellPosition(y, x)) + 1;
 			if (x >= 1 && answer_.at(CellPosition(y, x - 1)) == 3) {
 			} else {
 				if (clue != 0 && (tmp[x] > frontier_size_ && tmp[x] != clue + frontier_size_)) {

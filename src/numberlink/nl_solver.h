@@ -42,7 +42,7 @@ private:
 	X width_;
 	Problem problem_;
 
-	Grid<int> answer_;
+	Grid<int> answer_, contiguous_line_up_, contiguous_line_left_, contiguous_empty_up_, contiguous_empty_left_;
 	int frontier_size_;
 };
 }
