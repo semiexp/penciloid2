@@ -103,19 +103,19 @@ void Dictionary::CreateRestricted(const DictionaryMethod &method)
 			}
 
 			bool inconsistent = false;
-			for (int t = 0; t < 2; ++t) {
-				inconsistent |= ApplyCornerClue(method, field, clue);
-				inconsistent |= ApplyLineToClue(method, field, clue);
-				inconsistent |= ApplyLineFromClue(method, field, clue);
-				inconsistent |= ApplyPartialLineToClue(method, field, clue);
-				inconsistent |= ApplyAdjacentLines(method, field, clue);
-				inconsistent |= ApplyTwoLines(method, field, clue);
-			}
+			if (ApplyAdjacentLines(method, field, clue)) goto fail;
+			if (ApplyTwoLines(method, field, clue)) goto fail;
+			if (ApplyCornerClue(method, field, clue)) goto fail;
+			if (ApplyLineToClue(method, field, clue)) goto fail;
+			if (ApplyLineFromClue(method, field, clue)) goto fail;
+			if (ApplyPartialLineToClue(method, field, clue)) goto fail;
+			if (ApplyAdjacentLines(method, field, clue)) goto fail;
+			if (ApplyTwoLines(method, field, clue)) goto fail;
 
 			for (Y y(0); y < 5; ++y) {
 				for (X x(0); x < 5; ++x) {
 					if (static_cast<int>(y % 2) != static_cast<int>(x % 2) && field.at(CellPosition(y, x)) == 3) {
-						inconsistent = true;
+						goto fail;
 					}
 				}
 			}
@@ -135,6 +135,10 @@ void Dictionary::CreateRestricted(const DictionaryMethod &method)
 			for (int i = 0; i < 12; ++i) {
 				if (pattern[i] != kUndecided) data_[offset + id] &= ~(3 << (2 * i));
 			}
+			continue;
+
+		fail:
+			data_[offset + id] = 0xffffffffU;
 		}
 	}
 }
