@@ -44,14 +44,14 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
 	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(CXX) $(CPPFLAGS) -MMD -MF $(@:.o=.d) -o $@ -c $<
 
-js: $(OUTPUT_DIR)/$(EM_PROGRAM)
+js: main $(OUTPUT_DIR)/$(EM_PROGRAM)
 
-$(OUTPUT_DIR)/$(EM_PROGRAM): $(OBJS_EM) $(BUILD_DIR)/js/em_support/em_sl.o
+$(OUTPUT_DIR)/$(EM_PROGRAM): $(OBJS_EM) $(BUILD_DIR)/js/em_support/em_main.o
 	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(EMCC) $(EMCCFLAGS) $^ -o $@
 	
 # $(BUILD_DIR)/%.o is required because the dependency file is needed
-$(BUILD_DIR)/js/%.o: $(SOURCE_DIR)/%.cpp $(BUILD_DIR)/%.o
+$(BUILD_DIR)/js/%.o: $(SOURCE_DIR)/%.cpp
 	@if [ ! -e `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(EMCC) $(CPPFLAGS) -o $@ -c $<
 
