@@ -103,12 +103,14 @@ void Dictionary::CreateRestricted(const DictionaryMethod &method)
 			}
 
 			bool inconsistent = false;
-			ApplyCornerClue(method, field, clue);
-			ApplyLineToClue(method, field, clue);
-			ApplyLineFromClue(method, field, clue);
-			ApplyPartialLineToClue(method, field, clue);
-			ApplyAdjacentLines(method, field, clue);
-			ApplyTwoLines(method, field, clue);
+			for (int t = 0; t < 2; ++t) {
+				inconsistent |= ApplyCornerClue(method, field, clue);
+				inconsistent |= ApplyLineToClue(method, field, clue);
+				inconsistent |= ApplyLineFromClue(method, field, clue);
+				inconsistent |= ApplyPartialLineToClue(method, field, clue);
+				inconsistent |= ApplyAdjacentLines(method, field, clue);
+				inconsistent |= ApplyTwoLines(method, field, clue);
+			}
 
 			for (Y y(0); y < 5; ++y) {
 				for (X x(0); x < 5; ++x) {
@@ -128,6 +130,8 @@ void Dictionary::CreateRestricted(const DictionaryMethod &method)
 			for (int i = 0; i < 12; ++i) {
 				data_[offset + id] |= pattern[i] << (2 * i);
 			}
+
+			IdToPattern(id, &pattern);
 			for (int i = 0; i < 12; ++i) {
 				if (pattern[i] != kUndecided) data_[offset + id] &= ~(3 << (2 * i));
 			}
@@ -162,7 +166,7 @@ bool Dictionary::ApplyTwoLines(const DictionaryMethod &method, Grid<int> &field,
 			}
 		}
 	}
-	return true;
+	return false;
 }
 bool Dictionary::ApplyAdjacentLines(const DictionaryMethod &method, Grid<int> &field, int clue)
 {
@@ -284,7 +288,7 @@ bool Dictionary::ApplyLineToClue(const DictionaryMethod &method, Grid<int> &fiel
 			}
 		}
 	}
-	return true;
+	return false;
 }
 bool Dictionary::ApplyPartialLineToClue(const DictionaryMethod &method, Grid<int> &field, int clue)
 {
@@ -308,7 +312,7 @@ bool Dictionary::ApplyPartialLineToClue(const DictionaryMethod &method, Grid<int
 			}
 		}
 	}
-	return true;
+	return false;
 }
 bool Dictionary::ApplyLineFromClue(const DictionaryMethod &method, Grid<int> &field, int clue)
 {
@@ -323,7 +327,7 @@ bool Dictionary::ApplyLineFromClue(const DictionaryMethod &method, Grid<int> &fi
 			if (field.at(kCenter - d2 - d1 * 2) == kBlank) field.at(kCenter - d2 * 2 - d1) |= kLine;
 		}
 	}
-	return true;
+	return false;
 }
 void Dictionary::Release()
 {

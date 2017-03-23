@@ -23,10 +23,7 @@ void SlitherlinkDictionaryRestricted()
 			int val_default = dic_default.Get(i, j);
 			int val_restricted = dic_restricted.Get(i, j);
 			
-			if ((val_default & val_restricted) != val_restricted) {
-				printf("%d %d %d %d\n", i, j, val_default, val_restricted);
-			}
-			assert((val_default & val_restricted) == val_restricted);
+			assert(val_default == val_restricted);
 		}
 	}
 }
