@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../common/type.h"
+#include "../common/grid.h"
+#include "sl_dictionary_method.h"
 
 namespace penciloid
 {
@@ -24,6 +26,7 @@ public:
 	~Dictionary();
 	
 	void CreateDefault();
+	void CreateRestricted(const DictionaryMethod &method);
 	void Release();
 
 	// clue: 0, 1, 2 or 3
@@ -50,6 +53,15 @@ private:
 		int count = CountLines(pattern, p1, p2, p3, p4);
 		return count == 0 || count == 2;
 	}
+
+	// Apply methods to <field>.
+	// Returns true if and only if inconsistency is detected.
+	bool ApplyTwoLines(const DictionaryMethod &method, Grid<int> &field, int clue);
+	bool ApplyAdjacentLines(const DictionaryMethod &method, Grid<int> &field, int clue);
+	bool ApplyCornerClue(const DictionaryMethod &method, Grid<int> &field, int clue);
+	bool ApplyLineToClue(const DictionaryMethod &method, Grid<int> &field, int clue);
+	bool ApplyPartialLineToClue(const DictionaryMethod &method, Grid<int> &field, int clue);
+	bool ApplyLineFromClue(const DictionaryMethod &method, Grid<int> &field, int clue);
 
 	unsigned int *data_;
 };

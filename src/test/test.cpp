@@ -9,6 +9,7 @@ void RunAllTest()
 	RunAllGridLoopTest();
 	RunAllGraphSeparationTest();
 	RunAllSlitherlinkFieldTest();
+	RunAllSlitherlinkDictionaryTest();
 	RunAllAkariProblemTest();
 	RunAllAkariFieldTest();
 	RunAllYajilinProblemTest();

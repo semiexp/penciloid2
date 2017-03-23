@@ -1,9 +1,14 @@
 #include "sl_dictionary.h"
+#include "../common/grid.h"
 
 namespace penciloid
 {
 namespace slitherlink
 {
+namespace
+{
+const CellPosition kCenter{ Y(2), X(2) };
+}
 const Direction Dictionary::kNeighbor[12] = {
 	Direction(Y(-2), X(-1)),
 	Direction(Y(-2), X(1)),
@@ -79,6 +84,246 @@ void Dictionary::CreateDefault()
 			}
 		}
 	}
+}
+void Dictionary::CreateRestricted(const DictionaryMethod &method)
+{
+	Release();
+
+	data_ = new unsigned int[kDatabaseSize];
+
+	for (int clue = 0; clue < 4; ++clue) {
+		unsigned int offset = clue * kDatabaseSizeForEachClue;
+		for (unsigned int id = 0; id < kDatabaseSizeForEachClue; ++id) {
+			int pattern[12];
+			Grid<int> field(Y(5), X(5), 0);
+
+			IdToPattern(id, &pattern);
+			for (int i = 0; i < 12; ++i) {
+				field.at(CellPosition(Y(2), X(2)) + kNeighbor[i]) = pattern[i];
+			}
+
+			bool inconsistent = false;
+			ApplyCornerClue(method, field, clue);
+			ApplyLineToClue(method, field, clue);
+			ApplyLineFromClue(method, field, clue);
+			ApplyPartialLineToClue(method, field, clue);
+			ApplyAdjacentLines(method, field, clue);
+			ApplyTwoLines(method, field, clue);
+
+			for (Y y(0); y < 5; ++y) {
+				for (X x(0); x < 5; ++x) {
+					if (static_cast<int>(y % 2) != static_cast<int>(x % 2) && field.at(CellPosition(y, x)) == 3) {
+						inconsistent = true;
+					}
+				}
+			}
+			if (inconsistent) {
+				data_[offset + id] = 0xffffffffU;
+				continue;
+			}
+			for (int i = 0; i < 12; ++i) {
+				pattern[i] = field.at(kCenter + kNeighbor[i]);
+			}
+			data_[offset + id] = 0;
+			for (int i = 0; i < 12; ++i) {
+				data_[offset + id] |= pattern[i] << (2 * i);
+			}
+			for (int i = 0; i < 12; ++i) {
+				if (pattern[i] != kUndecided) data_[offset + id] &= ~(3 << (2 * i));
+			}
+		}
+	}
+}
+bool Dictionary::ApplyTwoLines(const DictionaryMethod &method, Grid<int> &field, int clue)
+{
+	for (Y y : {Y(1), Y(3)}) {
+		for (X x : {X(1), X(3)}) {
+			CellPosition center(y, x);
+			int n_lines = 0, n_blanks = 0;
+			
+			for (Direction d : k4Neighborhood) {
+				if (field.at(center + d) == kLine) ++n_lines;
+				if (field.at(center + d) == kBlank) ++n_blanks;
+			}
+
+			if (n_lines >= 3) return true;
+			if (n_lines == 1 && n_blanks == 3) return true;
+			if (n_lines == 2 || n_blanks == 3) {
+				// undecided edges -> blank edges
+				for (Direction d : k4Neighborhood) {
+					if (field.at(center + d) == kUndecided) field.at(center + d) |= kBlank;
+				}
+			}
+			if (n_lines == 1 && n_blanks == 2) {
+				// undecided edge -> line edge
+				for (Direction d : k4Neighborhood) {
+					if (field.at(center + d) == kUndecided) field.at(center + d) |= kLine;
+				}
+			}
+		}
+	}
+	return true;
+}
+bool Dictionary::ApplyAdjacentLines(const DictionaryMethod &method, Grid<int> &field, int clue)
+{
+	if (!method.adjacent_lines) return false;
+
+	int n_lines = 0, n_blanks = 0;
+	for (int i = 0; i < 4; ++i) {
+		int edge = field.at(kCenter + k4Neighborhood[i]);
+		if (edge == kLine) ++n_lines;
+		else if (edge == kBlank) ++n_blanks;
+	}
+
+	if (n_lines > clue || n_blanks > 4 - clue) return true;
+
+	if (n_lines == clue) {
+		for (int i = 0; i < 4; ++i) {
+			CellPosition pos = kCenter + k4Neighborhood[i];
+			if (field.at(pos) == kUndecided) field.at(pos) |= kBlank;
+		}
+	} else if (n_blanks == 4 - clue) {
+		for (int i = 0; i < 4; ++i) {
+			CellPosition pos = kCenter + k4Neighborhood[i];
+			if (field.at(pos) == kUndecided) field.at(pos) |= kLine;
+		}
+	}
+	return false;
+}
+bool Dictionary::ApplyCornerClue(const DictionaryMethod &method, Grid<int> &field, int clue)
+{
+	for (int d = 0; d < 4; ++d) {
+		Direction d1 = k4Neighborhood[d], d2 = k4Neighborhood[(d + 1) % 4];
+		if (!(field.at(kCenter + d1 + d2 * 2) == kBlank && field.at(kCenter + d1 * 2 + d2) == kBlank)) continue;
+
+		if (clue == 1 && method.corner_clue_1) {
+			field.at(kCenter + d1) |= kBlank;
+			field.at(kCenter + d2) |= kBlank;
+		}
+		if (clue == 2 && method.corner_clue_2) {
+			if (field.at(kCenter - d1) == kBlank
+			 || field.at(kCenter - d2) == kBlank
+			 || field.at(kCenter - d1 - d2 * 2) == kLine
+			 || field.at(kCenter - d1 * 2 - d2) == kLine) {
+				field.at(kCenter - d1) |= kBlank;
+				field.at(kCenter - d2) |= kBlank;
+				field.at(kCenter + d1) |= kLine;
+				field.at(kCenter + d2) |= kLine;
+			}
+			if (field.at(kCenter - d1) == kLine
+			 || field.at(kCenter - d2) == kLine) {
+				field.at(kCenter - d1) |= kLine;
+				field.at(kCenter - d2) |= kLine;
+				field.at(kCenter + d1) |= kBlank;
+				field.at(kCenter + d2) |= kBlank;
+			}
+			if (field.at(kCenter - d1 - d2 * 2) == kBlank
+			 || field.at(kCenter - d1 * 2 - d2) == kBlank) {
+				field.at(kCenter - d1 - d2 * 2) |= kBlank;
+				field.at(kCenter - d1 * 2 - d2) |= kBlank;
+			}
+		}
+		if (clue == 2 && method.corner_clue_2_hard) {
+			for (int sgn : {-1, 1}) {
+				if (field.at(kCenter - sgn * (d1 - d2 * 2)) == kLine
+				 || field.at(kCenter - sgn * (d1 * 2 - d2)) == kBlank) {
+					field.at(kCenter - sgn * (d1 - d2 * 2)) |= kLine;
+					field.at(kCenter - sgn * (d1 * 2 - d2)) |= kBlank;
+				}
+				if (field.at(kCenter - sgn * (d1 - d2 * 2)) == kBlank
+				 || field.at(kCenter - sgn * (d1 * 2 - d2)) == kLine) {
+					field.at(kCenter - sgn * (d1 - d2 * 2)) |= kBlank;
+					field.at(kCenter - sgn * (d1 * 2 - d2)) |= kLine;
+				}
+			}
+		}
+		if (clue == 3 && method.corner_clue_3) {
+			field.at(kCenter + d1) |= kLine;
+			field.at(kCenter + d2) |= kLine;
+		}
+	}
+	return false;
+}
+bool Dictionary::ApplyLineToClue(const DictionaryMethod &method, Grid<int> &field, int clue)
+{
+	for (int d = 0; d < 4; ++d) {
+		Direction d1 = k4Neighborhood[d], d2 = k4Neighborhood[(d + 1) % 4];
+
+		if (clue == 3 && method.line_to_clue_3) {
+			if (field.at(kCenter + d1 + d2 * 2) == kLine) {
+				field.at(kCenter + d1 * 2 + d2) |= kBlank;
+				field.at(kCenter - d1) |= kLine;
+				field.at(kCenter - d2) |= kLine;
+			}
+			if (field.at(kCenter + d1 * 2 + d2) == kLine) {
+				field.at(kCenter + d1 + d2 * 2) |= kBlank;
+				field.at(kCenter - d1) |= kLine;
+				field.at(kCenter - d2) |= kLine;
+			}
+		}
+		if ((field.at(kCenter + d1 + d2 * 2) == kLine && field.at(kCenter + d1 * 2 + d2) == kBlank)
+		 || (field.at(kCenter + d1 + d2 * 2) == kBlank && field.at(kCenter + d1 * 2 + d2) == kLine)) {
+			if (clue == 1 && method.line_to_clue_1) {
+				field.at(kCenter - d1) |= kBlank;
+				field.at(kCenter - d2) |= kBlank;
+			}
+		}
+		if ((field.at(kCenter + d1 + d2 * 2) == kLine && field.at(kCenter + d1 * 2 + d2) == kBlank)
+		 || (field.at(kCenter + d1 + d2 * 2) == kBlank && field.at(kCenter + d1 * 2 + d2) == kLine)
+		 || (field.at(kCenter + d1) == kLine && field.at(kCenter + d2) == kBlank)
+		 || (field.at(kCenter + d1) == kBlank && field.at(kCenter + d2) == kLine)) {
+			if (clue == 2 && method.line_to_clue_2) {
+				if (field.at(kCenter - d1) == kLine) field.at(kCenter - d2) |= kBlank;
+				if (field.at(kCenter - d1) == kBlank) field.at(kCenter - d2) |= kLine;
+				if (field.at(kCenter - d2) == kLine) field.at(kCenter - d1) |= kBlank;
+				if (field.at(kCenter - d2) == kBlank) field.at(kCenter - d1) |= kLine;
+				if (field.at(kCenter - d1 - d2 * 2) == kLine) field.at(kCenter - d2 - d1 * 2) |= kBlank;
+				if (field.at(kCenter - d1 - d2 * 2) == kBlank) field.at(kCenter - d2 - d1 * 2) |= kLine;
+				if (field.at(kCenter - d2 - d1 * 2) == kLine) field.at(kCenter - d1 - d2 * 2) |= kBlank;
+				if (field.at(kCenter - d2 - d1 * 2) == kBlank) field.at(kCenter - d1 - d2 * 2) |= kLine;
+			}
+		}
+	}
+	return true;
+}
+bool Dictionary::ApplyPartialLineToClue(const DictionaryMethod &method, Grid<int> &field, int clue)
+{
+	for (int d = 0; d < 4; ++d) {
+		Direction d1 = k4Neighborhood[d], d2 = k4Neighborhood[(d + 1) % 4];
+
+		if (clue == 2 && method.partial_line_to_clue_2) {
+			if ((field.at(kCenter + d1 + d2 * 2) == kLine || field.at(kCenter + d1 * 2 + d2) == kLine)
+			 && (field.at(kCenter - d1) == kBlank || field.at(kCenter - d2) == kBlank)) {
+				if (field.at(kCenter + d1 + d2 * 2) == kLine) field.at(kCenter + d1 * 2 + d2) |= kBlank;
+				if (field.at(kCenter + d1 * 2 + d2) == kLine) field.at(kCenter + d1 + d2 * 2) |= kBlank;
+				if (field.at(kCenter - d1) == kBlank) field.at(kCenter - d2) |= kLine;
+				if (field.at(kCenter - d2) == kBlank) field.at(kCenter - d1) |= kLine;
+			}
+			if ((field.at(kCenter + d1 + d2 * 2) == kLine || field.at(kCenter + d1 * 2 + d2) == kLine)
+			 && (field.at(kCenter - d1 - d2 * 2) == kLine || field.at(kCenter - d1 * 2 - d2) == kLine)) {
+				if (field.at(kCenter + d1 + d2 * 2) == kLine) field.at(kCenter + d1 * 2 + d2) |= kBlank;
+				if (field.at(kCenter + d1 * 2 + d2) == kLine) field.at(kCenter + d1 + d2 * 2) |= kBlank;
+				if (field.at(kCenter - d1 - d2 * 2) == kLine) field.at(kCenter - d1 * 2 - d2) |= kBlank;
+				if (field.at(kCenter - d1 * 2 - d2) == kLine) field.at(kCenter - d1 - d2 * 2) |= kBlank;
+			}
+		}
+	}
+	return true;
+}
+bool Dictionary::ApplyLineFromClue(const DictionaryMethod &method, Grid<int> &field, int clue)
+{
+	for (int d = 0; d < 4; ++d) {
+		Direction d1 = k4Neighborhood[d], d2 = k4Neighborhood[(d + 1) % 4];
+
+		if ((clue == 1 && method.line_from_clue_1 && field.at(kCenter + d1) == kBlank && field.at(kCenter + d2) == kBlank)
+		 || (clue == 3 && method.line_from_clue_3 && field.at(kCenter + d1) == kLine && field.at(kCenter + d2) == kLine)) {
+			if (field.at(kCenter - d1 - d2 * 2) == kLine) field.at(kCenter - d1 * 2 - d2) |= kBlank;
+			if (field.at(kCenter - d1 - d2 * 2) == kBlank) field.at(kCenter - d1 * 2 - d2) |= kLine;
+			if (field.at(kCenter - d2 - d1 * 2) == kLine) field.at(kCenter - d2 * 2 - d1) |= kBlank;
+			if (field.at(kCenter - d2 - d1 * 2) == kBlank) field.at(kCenter - d2 * 2 - d1) |= kLine;
+		}
+	}
+	return true;
 }
 void Dictionary::Release()
 {
