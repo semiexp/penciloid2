@@ -113,6 +113,7 @@ void Assume(T *grid)
 {
 	Y height = grid->GridLoop<T>::height();
 	X width = grid->GridLoop<T>::width();
+	T field_line, field_blank;
 	while (true) {
 		bool updated = false;
 		for (Y y(0); y <= height * 2; ++y) {
@@ -120,7 +121,8 @@ void Assume(T *grid)
 				if (static_cast<int>(y % 2) == static_cast<int>(x % 2)) continue;
 				if (grid->GetEdge(LoopPosition(y, x)) != T::kEdgeUndecided) continue;
 
-				T field_line = *grid, field_blank = *grid;
+				field_line = *grid;
+				field_blank = *grid;
 				field_line.DecideEdge(LoopPosition(y, x), T::kEdgeLine);
 				field_blank.DecideEdge(LoopPosition(y, x), T::kEdgeBlank);
 
