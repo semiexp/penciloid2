@@ -8,6 +8,7 @@
 #include "type.h"
 #include "mini_vector.h"
 #include "grid_loop_method.h"
+#include "auto_array.h"
 
 namespace penciloid
 {
@@ -181,9 +182,9 @@ private:
 	}
 	void QueueProcessAll();
 
-	FieldComponent *field_;
-	int *queue_;
-	bool *queue_stored_;
+	AutoArray<FieldComponent> field_;
+	AutoArray<int> queue_;
+	AutoArray<bool> queue_stored_;
 
 	Y height_;
 	X width_;
@@ -195,9 +196,9 @@ private:
 };
 template<class T>
 GridLoop<T>::GridLoop()
-	: field_(nullptr),
-	  queue_(nullptr),
-	  queue_stored_(nullptr),
+	: field_(),
+	  queue_(),
+	  queue_stored_(),
 	  height_(0),
 	  width_(0),
 	  decided_edges_(0),
@@ -213,9 +214,9 @@ GridLoop<T>::GridLoop()
 }
 template<class T>
 GridLoop<T>::GridLoop(Y height, X width)
-	: field_(nullptr),
-	  queue_(nullptr),
-	  queue_stored_(nullptr),
+	: field_((static_cast<int>(height) * 2 + 1) * (static_cast<int>(width) * 2 + 1)),
+	  queue_((static_cast<int>(height) * 2 + 1) * (static_cast<int>(width) * 2 + 1) + 1),
+	  queue_stored_((static_cast<int>(height) * 2 + 1) * (static_cast<int>(width) * 2 + 1)),
 	  height_(height),
 	  width_(width),
 	  decided_edges_(0),
@@ -228,10 +229,7 @@ GridLoop<T>::GridLoop(Y height, X width)
 	  queue_end_(-1),
 	  queue_size_(0)
 {
-	field_ = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
-	queue_ = new int[Id(2 * height_, 2 * width_) + 2];
-	queue_stored_ = new bool[Id(2 * height_, 2 * width_) + 1];
-	std::fill(queue_stored_, queue_stored_ + Id(2 * height_, 2 * width_) + 1, false);
+	std::fill(queue_stored_.begin(), queue_stored_.end(), false);
 	queue_size_ = Id(2 * height_, 2 * width_) + 2;
 
 	for (Y y(0); y <= 2 * height_; ++y) {
@@ -263,9 +261,9 @@ GridLoop<T>::GridLoop(Y height, X width)
 }
 template<class T>
 GridLoop<T>::GridLoop(const GridLoop<T> &other)
-	: field_(nullptr),
-	  queue_(nullptr),
-	  queue_stored_(nullptr),
+	: field_(other.field_),
+	  queue_((static_cast<int>(other.height()) * 2 + 1) * (static_cast<int>(other.width()) * 2 + 1) + 1),
+	  queue_stored_((static_cast<int>(other.height()) * 2 + 1) * (static_cast<int>(other.width()) * 2 + 1)),
 	  height_(other.height_),
 	  width_(other.width_),
 	  decided_edges_(other.decided_edges_),
@@ -278,11 +276,7 @@ GridLoop<T>::GridLoop(const GridLoop<T> &other)
 	  queue_end_(-1),
 	  queue_size_(other.queue_size_)
 {
-	field_ = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
-	memcpy(field_, other.field_, (Id(2 * height_, 2 * width_) + 1) * sizeof(FieldComponent));
-	queue_ = new int[Id(2 * height_, 2 * width_) + 2];
-	queue_stored_ = new bool[Id(2 * height_, 2 * width_) + 1];
-	std::fill(queue_stored_, queue_stored_ + Id(2 * height_, 2 * width_) + 1, false);
+	std::fill(queue_stored_.begin(), queue_stored_.end(), false);
 }
 template<class T>
 GridLoop<T>::GridLoop(GridLoop<T> &&other)
@@ -301,9 +295,9 @@ GridLoop<T>::GridLoop(GridLoop<T> &&other)
 	  queue_end_(-1),
 	  queue_size_(other.queue_size_)
 {
-	other.field_ = nullptr;
-	other.queue_ = nullptr;
-	other.queue_stored_ = nullptr;
+	field_ = std::move(other.field_);
+	queue_ = std::move(other.queue_);
+	queue_stored_ = std::move(other.queue_stored_);
 }
 template<class T>
 GridLoop<T> &GridLoop<T>::operator=(const GridLoop<T> &other)
@@ -317,16 +311,9 @@ GridLoop<T> &GridLoop<T>::operator=(const GridLoop<T> &other)
 	abnormal_ = other.abnormal_;
 	method_ = other.method_;
 
-	if (field_) delete[] field_;
-	if (queue_) delete[] queue_;
-	if (queue_stored_) delete[] queue_stored_;
-
-	field_ = new FieldComponent[Id(2 * height_, 2 * width_) + 1];
-	memcpy(field_, other.field_, (Id(2 * height_, 2 * width_) + 1) * sizeof(FieldComponent));
-	queue_ = new int[Id(2 * height_, 2 * width_) + 2];
-	queue_stored_ = new bool[Id(2 * height_, 2 * width_) + 1];
-	std::fill(queue_stored_, queue_stored_ + Id(2 * height_, 2 * width_) + 1, false);
-	queue_size_ = other.queue_size_;
+	field_ = other.field_;
+	queue_ = other.queue_;
+	queue_stored_ = other.queue_stored_;
 
 	return *this;
 }
@@ -342,26 +329,15 @@ GridLoop<T> &GridLoop<T>::operator=(GridLoop<T> &&other)
 	abnormal_ = other.abnormal_;
 	method_ = other.method_;
 
-	if (field_) delete[] field_;
-	if (queue_) delete[] queue_;
-	if (queue_stored_) delete[] queue_stored_;
-
-	field_ = other.field_;
-	other.field_ = nullptr;
-	queue_ = other.queue_;
-	other.queue_ = nullptr;
-	queue_stored_ = other.queue_stored_;
-	other.queue_stored_ = nullptr;
-	queue_size_ = other.queue_size_;
+	field_ = std::move(other.field_);
+	queue_ = std::move(other.queue_);
+	queue_stored_ = std::move(other.queue_stored_);
 
 	return *this;
 }
 template<class T>
 GridLoop<T>::~GridLoop()
 {
-	if (field_) delete[] field_;
-	if (queue_) delete[] queue_;
-	if (queue_stored_) delete[] queue_stored_;
 }
 template<class T> 
 typename GridLoop<T>::EdgeState GridLoop<T>::GetEdge(LoopPosition edge) const
