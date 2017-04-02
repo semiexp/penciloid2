@@ -26,9 +26,11 @@ public:
 	~AutoArray() { delete[] data_; }
 
 	AutoArray<T> &operator=(const AutoArray<T> &other) {
-		delete[] data_;
-		data_ = new T[other.length_];
-		length_ = other.length_;
+		if (length_ != other.length_) {
+			delete[] data_;
+			data_ = new T[other.length_];
+			length_ = other.length_;
+		}
 		std::copy(other.begin(), other.end(), begin());
 
 		return *this;
