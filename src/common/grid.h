@@ -3,6 +3,8 @@
 #include "type.h"
 #include <algorithm>
 
+#include <cassert>
+
 namespace penciloid
 {
 template <class T>
@@ -24,8 +26,14 @@ public:
 
 	T &at(CellPosition pos) { return data_[GetIndex(pos)]; }
 	const T &at(CellPosition pos) const { return data_[GetIndex(pos)]; }
-	T &at(int pos) { return data_[pos]; }
-	const T &at(int pos) const { return data_[pos]; }
+	T &at(int pos) {
+		assert(0 <= pos && pos < (int)height_ * (int)width_);
+		return data_[pos];
+	}
+	const T &at(int pos) const {
+		assert(0 <= pos && pos < (int)height_ * (int)width_);
+		return data_[pos];
+	}
 
 	// Returns whether <pos> is within the range of this grid.
 	bool IsPositionOnGrid(CellPosition pos) const { return 0 <= pos.y && pos.y < height_ && 0 <= pos.x && pos.x < width_; }
