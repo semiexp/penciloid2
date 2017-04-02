@@ -1,6 +1,7 @@
 #pragma once
 
 #include "type.h"
+#include "../common/auto_array.h"
 #include <algorithm>
 
 #include <cassert>
@@ -11,7 +12,7 @@ template <class T>
 class Grid
 {
 public:
-	Grid() : data_(nullptr), height_(0), width_(0) {}
+	Grid() : data_(), height_(0), width_(0) {}
 	Grid(Y height, X width, const T &init_value = T());
 
 	Grid(const Grid &other);
@@ -19,7 +20,7 @@ public:
 	Grid &operator=(const Grid &other);
 	Grid &operator=(Grid &&other);
 
-	~Grid() { if (data_) delete[] data_; }
+	~Grid() { }
 
 	Y height() const { return height_; }
 	X width() const { return width_; }
@@ -44,52 +45,39 @@ public:
 		return CellPosition(Y(index / static_cast<int>(width_)), X(index % static_cast<int>(width_)));
 	}
 private:
-	T *data_;
+	AutoArray<T> data_;
 	Y height_;
 	X width_;
 };
 template<class T>
-Grid<T>::Grid(Y height, X width, const T &init_value) : data_(nullptr), height_(height), width_(width)
+Grid<T>::Grid(Y height, X width, const T &init_value) : data_(static_cast<int>(height) * static_cast<int>(width)), height_(height), width_(width)
 {
-	unsigned int n_cells = NumberOfCells();
-	data_ = new T[n_cells];
-	std::fill(data_, data_ + n_cells, init_value);
+	std::fill(data_.begin(), data_.end(), init_value);
 }
 template<class T>
-Grid<T>::Grid(const Grid<T> &other) : data_(nullptr), height_(other.height_), width_(other.width_)
+Grid<T>::Grid(const Grid<T> &other) : data_(other.data_), height_(other.height_), width_(other.width_)
 {
-	int cell_count = NumberOfCells();
-	data_ = new T[cell_count];
-	for (int i = 0; i < cell_count; ++i) data_[i] = other.data_[i];
 }
 template<class T>
-Grid<T>::Grid(Grid<T> &&other) : data_(other.data_), height_(other.height_), width_(other.width_)
+Grid<T>::Grid(Grid<T> &&other) : height_(other.height_), width_(other.width_)
 {
-	other.data_ = nullptr;
+	data_ = std::move(other.data_);
 }
 template<class T>
 Grid<T> &Grid<T>::operator=(const Grid<T> &other)
 {
+	data_ = other.data_;
 	height_ = other.height_;
 	width_ = other.width_;
-
-	if (data_) delete[] data_;
-
-	int cell_count = NumberOfCells();
-	data_ = new T[cell_count];
-	for (int i = 0; i < cell_count; ++i) data_[i] = other.data_[i];
 
 	return *this;
 }
 template<class T>
 Grid<T> &Grid<T>::operator=(Grid<T> &&other)
 {
+	data_ = std::move(other.data_);
 	height_ = other.height_;
 	width_ = other.width_;
-
-	if (data_) delete[] data_;
-	data_ = other.data_;
-	other.data_ = nullptr;
 
 	return *this;
 }
