@@ -85,6 +85,15 @@ public:
 	// Non-const version changes internal status to perform "path compression".
 	std::pair<LoopPosition, LoopPosition> GetEndsOfChain(LoopPosition edge) const;
 
+	// Returns the identifier of the chain which edge <edge> belongs to.
+	// All edges of a chain have the same identifier.
+	// It is guaranteed that the identifier of a chain is changed only if the chain is connected to another one.
+	unsigned int GetChainIdentifier(LoopPosition edge) const;
+
+	// Returs whether <edge> is the representative of the chain it belongs to.
+	// It is guaranteed that there is exactly one representative edge in a chain.
+	bool IsRepresentativeOfChain(LoopPosition edge) const;
+
 	// Check around position <pos>.
 	// This method internally invokes Inspect(pos).
 	void Check(LoopPosition pos);
@@ -399,6 +408,21 @@ std::pair<LoopPosition, LoopPosition> GridLoop<T>::GetEndsOfChain(LoopPosition e
 		edge_id = field_[edge_id].another_end_edge;
 	}
 	return{ AsPosition(field_[edge_id].end_vertices[0]), AsPosition(field_[edge_id].end_vertices[1]) };
+}
+template <class T>
+unsigned int GridLoop<T>::GetChainIdentifier(LoopPosition edge) const
+{
+	unsigned int edge_id = Id(edge);
+	while (!IsEndOfAChain(edge_id)) {
+		edge_id = field_[edge_id].another_end_edge;
+	}
+	return std::min(edge_id, field_[edge_id].another_end_edge);
+}
+template <class T>
+bool GridLoop<T>::IsRepresentativeOfChain(LoopPosition edge) const
+{
+	unsigned int edge_id = Id(edge);
+	return IsEndOfAChain(edge_id) && edge_id <= field_[edge_id].another_end_edge;
 }
 template<class T>
 bool GridLoop<T>::IsEndOfAChainVertex(unsigned int edge_id, unsigned int vertex_id) const {

@@ -11,5 +11,6 @@ void GridLoopCopy();
 void GridLoopClosedLoop();
 void GridLoopHourglassRule();
 void GridLoopComplexAccessors();
+void GridLoopChainIdentifier();
 }
 }

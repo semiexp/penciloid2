@@ -18,6 +18,7 @@ void RunAllGridLoopTest()
 	GridLoopClosedLoop();
 	GridLoopHourglassRule();
 	GridLoopComplexAccessors();
+	GridLoopChainIdentifier();
 }
 void GridLoopBasicAccessors()
 {
@@ -181,6 +182,18 @@ void GridLoopComplexAccessors()
 			(ends.second == LoopPosition(Y(6), X(2)) && ends.first == LoopPosition(Y(4), X(4)))
 			);
 	}
+}
+void GridLoopChainIdentifier()
+{
+	PlainGridLoop field(Y(3), X(3));
+	assert(field.GetChainIdentifier(LoopPosition(Y(0), X(1))) == field.GetChainIdentifier(LoopPosition(Y(1), X(0))));
+	assert(field.GetChainIdentifier(LoopPosition(Y(0), X(1))) != field.GetChainIdentifier(LoopPosition(Y(0), X(3))));
+	assert(field.IsRepresentativeOfChain(LoopPosition(Y(0), X(1))) || field.IsRepresentativeOfChain(LoopPosition(Y(1), X(0))));
+	assert(!(field.IsRepresentativeOfChain(LoopPosition(Y(0), X(1))) && field.IsRepresentativeOfChain(LoopPosition(Y(1), X(0)))));
+	assert(field.IsRepresentativeOfChain(LoopPosition(Y(1), X(2))) == true);
+
+	field.DecideEdge(LoopPosition(Y(0), X(3)), PlainGridLoop::kEdgeBlank);
+	assert(field.GetChainIdentifier(LoopPosition(Y(0), X(1))) == field.GetChainIdentifier(LoopPosition(Y(1), X(2))));
 }
 }
 }
