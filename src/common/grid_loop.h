@@ -289,9 +289,9 @@ GridLoop<T>::GridLoop(const GridLoop<T> &other)
 }
 template<class T>
 GridLoop<T>::GridLoop(GridLoop<T> &&other)
-	: field_(other.field_),
-	  queue_(other.queue_),
-	  queue_stored_(other.queue_stored_),
+	: field_(std::move(other.field_)),
+	  queue_(std::move(other.queue_)),
+	  queue_stored_(std::move(other.queue_stored_)),
 	  height_(other.height_),
 	  width_(other.width_),
 	  decided_edges_(other.decided_edges_),
@@ -304,9 +304,6 @@ GridLoop<T>::GridLoop(GridLoop<T> &&other)
 	  queue_end_(-1),
 	  queue_size_(other.queue_size_)
 {
-	field_ = std::move(other.field_);
-	queue_ = std::move(other.queue_);
-	queue_stored_ = std::move(other.queue_stored_);
 }
 template<class T>
 GridLoop<T> &GridLoop<T>::operator=(const GridLoop<T> &other)
