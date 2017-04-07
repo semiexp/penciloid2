@@ -320,6 +320,7 @@ GridLoop<T> &GridLoop<T>::operator=(const GridLoop<T> &other)
 	field_ = other.field_;
 	queue_ = other.queue_;
 	queue_stored_ = other.queue_stored_;
+	queue_size_ = other.queue_size_;
 
 	return *this;
 }
@@ -338,6 +339,7 @@ GridLoop<T> &GridLoop<T>::operator=(GridLoop<T> &&other)
 	field_ = std::move(other.field_);
 	queue_ = std::move(other.queue_);
 	queue_stored_ = std::move(other.queue_stored_);
+	queue_size_ = other.queue_size_;
 
 	return *this;
 }
