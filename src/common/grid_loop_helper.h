@@ -18,7 +18,7 @@ void ApplyInOutRule(GridLoop<T> *grid)
 	// uf[2 * i] : i-th cell
 	// uf[2 * i + 1] : virtual cell which is opposite to i-th cell
 	UnionFind uf(2 * (number_of_cells + 1));
-	
+
 	auto cell_id = [height, width, field_outside](CellPosition pos) -> int {
 		if (0 <= pos.y && pos.y < height && 0 <= pos.x && pos.x < width) {
 			return 2 * (static_cast<int>(pos.y) * static_cast<int>(width) + static_cast<int>(pos.x));
@@ -113,7 +113,7 @@ void Assume(T *grid)
 {
 	Y height = grid->GridLoop<T>::height();
 	X width = grid->GridLoop<T>::width();
-	T field_line, field_blank;
+	T field_line = *grid, field_blank = *grid;
 	while (true) {
 		bool updated = false;
 		for (Y y(0); y <= height * 2; ++y) {
@@ -121,21 +121,25 @@ void Assume(T *grid)
 				if (static_cast<int>(y % 2) == static_cast<int>(x % 2)) continue;
 				if (grid->GetEdge(LoopPosition(y, x)) != T::kEdgeUndecided) continue;
 
-				field_line = *grid;
-				field_blank = *grid;
+				field_line.AddRestorePoint();
+				field_blank.AddRestorePoint();
 				field_line.DecideEdge(LoopPosition(y, x), T::kEdgeLine);
 				field_blank.DecideEdge(LoopPosition(y, x), T::kEdgeBlank);
-
 				if (field_line.IsInconsistent() && field_blank.IsInconsistent()) {
 					grid->SetInconsistent();
 					return;
 				}
 				if (field_line.IsInconsistent()) {
 					*grid = field_blank;
+					field_line = field_blank;
 					updated = true;
 				} else if (field_blank.IsInconsistent()) {
 					*grid = field_line;
+					field_blank = field_line;
 					updated = true;
+				} else {
+					field_line.Rollback();
+					field_blank.Rollback();
 				}
 			}
 		}
