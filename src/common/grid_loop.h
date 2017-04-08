@@ -10,6 +10,8 @@
 #include "grid_loop_method.h"
 #include "auto_array.h"
 
+#include<cassert>
+
 namespace penciloid
 {
 // Manages a loop on 2D-grid.
@@ -55,7 +57,12 @@ public:
 	bool IsInconsistent() const { return inconsistent_; }
 	bool IsFullySolved() const { return fully_solved_; }
 	bool IsInAbnormalCondition() const { return abnormal_; }
-	void SetInconsistent() { inconsistent_ = true; }
+	void SetInconsistent() { 
+		if (!history_.empty() && !inconsistent_) {
+			history_.push_back({ kHistorySetInconsistent, FieldComponent() });
+		}
+		inconsistent_ = true;
+	}
 
 	GridLoopMethod GetMethod() const { return method_; }
 	void SetMethod(const GridLoopMethod &m) { method_ = m; }
@@ -103,6 +110,12 @@ public:
 	void CheckAllCell();
 	void CheckAllEdge();
 
+	// Add a restore point
+	void AddRestorePoint();
+
+	// Roll back this field to the last restore point
+	void Rollback();
+
 	//
 	// Public methods below are intended to be "overridden" by the subclass.
 	//
@@ -130,6 +143,7 @@ public:
 			QueueEnd();
 		}
 	}
+
 private:
 	struct FieldComponent
 	{
@@ -150,6 +164,10 @@ private:
 			};
 		};
 	};
+
+	const int kHistoryRestorePoint = -1;
+	const int kHistorySetInconsistent = -2;
+	const int kHistorySetSolved = -3;
 
 	bool IsVertex(LoopPosition pos) const { return pos.y % 2 == 0 && pos.x % 2 == 0; }
 	bool IsEdge(LoopPosition pos) const { return static_cast<int>(pos.y % 2) != static_cast<int>(pos.x % 2); }
@@ -194,6 +212,7 @@ private:
 	AutoArray<FieldComponent> field_;
 	AutoArray<int> queue_;
 	AutoArray<bool> queue_stored_;
+	std::vector<std::pair<int, FieldComponent> > history_;
 
 	Y height_;
 	X width_;
@@ -208,6 +227,7 @@ GridLoop<T>::GridLoop()
 	: field_(),
 	  queue_(),
 	  queue_stored_(),
+	  history_(),
 	  height_(0),
 	  width_(0),
 	  decided_edges_(0),
@@ -226,6 +246,7 @@ GridLoop<T>::GridLoop(Y height, X width)
 	: field_((static_cast<int>(height) * 2 + 1) * (static_cast<int>(width) * 2 + 1)),
 	  queue_((static_cast<int>(height) * 2 + 1) * (static_cast<int>(width) * 2 + 1) + 1),
 	  queue_stored_((static_cast<int>(height) * 2 + 1) * (static_cast<int>(width) * 2 + 1)),
+	  history_(),
 	  height_(height),
 	  width_(width),
 	  decided_edges_(0),
@@ -273,6 +294,7 @@ GridLoop<T>::GridLoop(const GridLoop<T> &other)
 	: field_(other.field_),
 	  queue_((static_cast<int>(other.height()) * 2 + 1) * (static_cast<int>(other.width()) * 2 + 1) + 1),
 	  queue_stored_((static_cast<int>(other.height()) * 2 + 1) * (static_cast<int>(other.width()) * 2 + 1)),
+	  history_(other.history_),
 	  height_(other.height_),
 	  width_(other.width_),
 	  decided_edges_(other.decided_edges_),
@@ -292,6 +314,7 @@ GridLoop<T>::GridLoop(GridLoop<T> &&other)
 	: field_(std::move(other.field_)),
 	  queue_(std::move(other.queue_)),
 	  queue_stored_(std::move(other.queue_stored_)),
+	  history_(std::move(other.history_)),
 	  height_(other.height_),
 	  width_(other.width_),
 	  decided_edges_(other.decided_edges_),
@@ -321,6 +344,7 @@ GridLoop<T> &GridLoop<T>::operator=(const GridLoop<T> &other)
 	queue_ = other.queue_;
 	queue_stored_ = other.queue_stored_;
 	queue_size_ = other.queue_size_;
+	history_ = other.history_;
 
 	return *this;
 }
@@ -340,6 +364,7 @@ GridLoop<T> &GridLoop<T>::operator=(GridLoop<T> &&other)
 	queue_ = std::move(other.queue_);
 	queue_stored_ = std::move(other.queue_stored_);
 	queue_size_ = other.queue_size_;
+	history_ = std::move(other.history_);
 
 	return *this;
 }
@@ -347,7 +372,7 @@ template<class T>
 GridLoop<T>::~GridLoop()
 {
 }
-template<class T> 
+template<class T>
 typename GridLoop<T>::EdgeState GridLoop<T>::GetEdge(LoopPosition edge) const
 {
 	return field_[Id(edge)].edge_status;
@@ -483,10 +508,39 @@ void GridLoop<T>::CheckAllEdge()
 	});
 }
 template <class T>
+void GridLoop<T>::AddRestorePoint()
+{
+	history_.push_back({ -1, FieldComponent() });
+}
+template <class T>
+void GridLoop<T>::Rollback()
+{
+	while (!history_.empty()) {
+		auto last = history_.back();
+		history_.pop_back();
+
+		if (last.first == kHistoryRestorePoint) break;
+		if (last.first == kHistorySetInconsistent) {
+			inconsistent_ = false;
+		} else if (last.first == kHistorySetSolved) {
+			fully_solved_ = false;
+		} else {
+			if (field_[last.first].edge_status != kEdgeUndecided && last.second.edge_status == kEdgeUndecided) {
+				--decided_edges_;
+				if (field_[last.first].edge_status == kEdgeLine) --decided_lines_;
+			}
+			field_[last.first] = last.second;
+		}
+	}
+}
+template <class T>
 void GridLoop<T>::DecideChain(unsigned int id, EdgeState status)
 {
 	unsigned int id_start = id;
 	do {
+		if (!history_.empty()) {
+			history_.push_back({ id, field_[id] });
+		}
 		field_[id].edge_status = status;
 		++decided_edges_;
 		if (status == kEdgeLine) ++decided_lines_;
@@ -557,14 +611,22 @@ void GridLoop<T>::Join(LoopPosition vertex, Direction dir1, Direction dir2)
 				SetInconsistent();
 			} else {
 				fully_solved_ = true;
+				if (!history_.empty()) {
+					history_.push_back({ kHistorySetSolved, FieldComponent() });
+				}
 				HasFullySolved();
 			}
 		}
 	}
 
-	// concatinate 2 lists
-	std::swap(field_[edge1_id].list_next_edge, field_[edge2_id].list_next_edge);
+	if (!history_.empty()) {
+		history_.push_back({ end1_edge, field_[end1_edge] });
+		history_.push_back({ end2_edge, field_[end2_edge] });
+	}
 
+	// concatinate 2 lists
+	std::swap(field_[end1_edge].list_next_edge, field_[end2_edge].list_next_edge);
+	
 	// update chain_size
 	field_[end1_edge].chain_size = field_[end2_edge].chain_size =
 		field_[edge1_id].chain_size + field_[edge2_id].chain_size;
