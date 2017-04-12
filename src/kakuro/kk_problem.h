@@ -12,7 +12,7 @@ class Problem
 public:
 	Problem();
 
-	// Initialize a problem with the empty board (each cell is initialized with kNoClue)
+	// Initialize a problem with the empty board (each cell is initialized with kEmptyCell)
 	Problem(Y height, X width);
 	Problem(const Problem &other);
 	Problem(Problem &&other);
