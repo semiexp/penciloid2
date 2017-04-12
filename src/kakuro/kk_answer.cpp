@@ -9,7 +9,7 @@ namespace kakuro
 Answer::Answer() : grid_()
 {
 }
-Answer::Answer(Y height, X width) : grid_(height, width, kNoClueValue)
+Answer::Answer(Y height, X width) : grid_(height, width, kClueCell)
 {
 }
 Answer::Answer(const Answer &other) : grid_(other.grid_)
@@ -36,16 +36,16 @@ Problem Answer::ExtractProblem() const
 			int val = GetValue(CellPosition(y, x));
 			if (val == -1) {
 				int vertical = 0;
-				for (Y y2(y); y2 < height(); ++y2) {
-					if (GetValue(CellPosition(y2, x)) == kNoClueValue) {
+				for (Y y2(y + 1); y2 < height(); ++y2) {
+					if (GetValue(CellPosition(y2, x)) == kClueCell) {
 						break;
 					} else {
 						vertical += GetValue(CellPosition(y2, x));
 					}
 				}
 				int horizontal = 0;
-				for (X x2(x); x2 < width(); ++x2) {
-					if (GetValue(CellPosition(y, x2)) == kNoClueValue) {
+				for (X x2(x + 1); x2 < width(); ++x2) {
+					if (GetValue(CellPosition(y, x2)) == kClueCell) {
 						break;
 					} else {
 						horizontal += GetValue(CellPosition(y, x2));

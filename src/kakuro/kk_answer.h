@@ -12,9 +12,11 @@ namespace kakuro
 class Answer
 {
 public:
+	static const int kClueCell = -1;
+
 	Answer();
 
-	// Initialize a problem with the empty board (each cell is initialized with kNoClueValue)
+	// Initialize a problem with the empty board (each cell is initialized with kClueCell)
 	Answer(Y height, X width);
 	Answer(const Answer &other);
 	Answer(Answer &&other);
