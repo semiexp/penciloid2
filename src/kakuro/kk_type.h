@@ -7,7 +7,7 @@ namespace kakuro
 struct Clue
 {
 	Clue() : horizontal(-1), vertical(-1) {}
-	Clue(int horizontal, int vertical) : horizontal(horizontal), vertical(vertical) {}
+	Clue(int vertical, int horizontal) : horizontal(horizontal), vertical(vertical) {}
 
 	int horizontal, vertical;
 };

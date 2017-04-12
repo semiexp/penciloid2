@@ -25,10 +25,10 @@ void KakuroFieldCheckGroupAllTest()
 	{
 		Problem problem(Y(3), X(3));
 		problem.SetClue(CellPosition(Y(0), X(0)), kNoClueCell);
-		problem.SetClue(CellPosition(Y(0), X(1)), Clue(kNoClueValue, 3));
-		problem.SetClue(CellPosition(Y(0), X(2)), Clue(kNoClueValue, 8));
-		problem.SetClue(CellPosition(Y(1), X(0)), Clue(4, kNoClueValue));
-		problem.SetClue(CellPosition(Y(2), X(0)), Clue(7, kNoClueValue));
+		problem.SetClue(CellPosition(Y(0), X(1)), Clue(3, kNoClueValue));
+		problem.SetClue(CellPosition(Y(0), X(2)), Clue(8, kNoClueValue));
+		problem.SetClue(CellPosition(Y(1), X(0)), Clue(kNoClueValue, 4));
+		problem.SetClue(CellPosition(Y(2), X(0)), Clue(kNoClueValue, 7));
 
 		Field field(problem, &dic);
 		field.CheckGroupAll();
@@ -42,10 +42,10 @@ void KakuroFieldCheckGroupAllTest()
 	{
 		Problem problem(Y(3), X(3));
 		problem.SetClue(CellPosition(Y(0), X(0)), kNoClueCell);
-		problem.SetClue(CellPosition(Y(0), X(1)), Clue(kNoClueValue, 17));
-		problem.SetClue(CellPosition(Y(0), X(2)), Clue(kNoClueValue, 12));
-		problem.SetClue(CellPosition(Y(1), X(0)), Clue(16, kNoClueValue));
-		problem.SetClue(CellPosition(Y(2), X(0)), Clue(13, kNoClueValue));
+		problem.SetClue(CellPosition(Y(0), X(1)), Clue(17, kNoClueValue));
+		problem.SetClue(CellPosition(Y(0), X(2)), Clue(12, kNoClueValue));
+		problem.SetClue(CellPosition(Y(1), X(0)), Clue(kNoClueValue, 16));
+		problem.SetClue(CellPosition(Y(2), X(0)), Clue(kNoClueValue, 13));
 
 		Field field(problem, &dic);
 		field.CheckGroupAll();
