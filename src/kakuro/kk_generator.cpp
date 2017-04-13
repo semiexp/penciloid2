@@ -26,12 +26,13 @@ double ComputeEnergy(const penciloid::kakuro::Field &field)
 	double ret = 0.0;
 	for (Y y(0); y < field.height(); ++y) {
 		for (X x(0); x < field.width(); ++x) {
-			if (field.GetCell(CellPosition(y, x)) != kakuro::Field::kCellClue && field.GetCell(CellPosition(y, x)) != kakuro::Field::kCellUndecided) {
-				ret += 1.0;
+			if (field.GetCell(CellPosition(y, x)) != kakuro::Field::kCellClue) {
+			//	ret += 1.0;
+				ret += __popcnt(field.GetCandidateBits(CellPosition(y, x)));
 			}
 		}
 	}
-	return -ret;
+	return ret;
 }
 }
 namespace penciloid
@@ -58,6 +59,11 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 			}
 		}
 	}
+	Problem problem = current_answer.ExtractProblem();
+	Field field(problem, dic);
+	field.CheckGroupAll();
+	current_energy = ComputeEnergy(field);
+
 	for (; step < max_step; ++step) {
 		std::vector<std::pair<CellPosition, int> > candidate;
 		for (Y y(0); y < height; ++y) {
