@@ -31,6 +31,7 @@ public:
 	void SetInconsistent() { inconsistent_ = true; }
 
 	int GetCell(CellPosition pos) const { return cells_.at(pos).value; }
+	int GetCandidateBits(CellPosition pos) const { return cells_.at(pos).candidates; }
 
 	void DecideCell(CellPosition cell, int value) { DecideCell(cells_.GetIndex(cell), value); }
 	void EliminateCandidate(CellPosition cell, int value) { EliminateCandidate(cells_.GetIndex(cell), value); }
