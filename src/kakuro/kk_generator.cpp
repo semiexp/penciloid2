@@ -64,8 +64,19 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 	field.CheckGroupAll();
 	current_energy = ComputeEnergy(field);
 
+	struct MoveCandidate
+	{
+		bool is_swap;
+		CellPosition pos1, pos2;
+		int val1, val2;
+
+		MoveCandidate(CellPosition pos, int val) : is_swap(false), pos1(pos), val1(val) {}
+		MoveCandidate(CellPosition pos1, int val1, CellPosition pos2, int val2) :
+			is_swap(true), pos1(pos1), pos2(pos2), val1(val1), val2(val2) {}
+	};
+
 	for (; step < max_step; ++step) {
-		std::vector<std::pair<CellPosition, int> > candidate;
+		std::vector<MoveCandidate> candidate;
 		for (Y y(0); y < height; ++y) {
 			for (X x(0); x < width; ++x) {
 				CellPosition pos(y, x);
@@ -85,7 +96,7 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 						}
 					}
 					if (isok) {
-						candidate.push_back({ pos, n });
+						candidate.push_back(MoveCandidate(pos, n));
 					}
 				}
 			}
@@ -93,34 +104,36 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 		shuffle(candidate.begin(), candidate.end(), *rnd);
 
 		for (auto c : candidate) {
-			CellPosition pos = c.first; int val = c.second;
-			int previous_val = current_answer.GetValue(pos);
-			current_answer.SetValue(pos, val);
+			if (!c.is_swap) {
+				CellPosition pos = c.pos1; int val = c.val1;
+				int previous_val = current_answer.GetValue(pos);
+				current_answer.SetValue(pos, val);
 
-			Problem problem = current_answer.ExtractProblem();
-			Field field(problem, dic);
-			field.CheckGroupAll();
-			bool transition = false;
+				Problem problem = current_answer.ExtractProblem();
+				Field field(problem, dic);
+				field.CheckGroupAll();
+				bool transition = false;
 
-			if (!field.IsInconsistent()) {
-				if (UndecidedCells(field) == 0) {
-					*ret = problem;
-					return true;
+				if (!field.IsInconsistent()) {
+					if (UndecidedCells(field) == 0) {
+						*ret = problem;
+						return true;
+					}
+					double next_energy = ComputeEnergy(field);
+					if (current_energy > next_energy) transition = true;
+					else {
+						double threshold = exp((current_energy - next_energy) / temperature);
+						if (real_dist(*rnd) < threshold) transition = true;
+					}
+
+					if (transition) current_energy = next_energy;
 				}
-				double next_energy = ComputeEnergy(field);
-				if (current_energy > next_energy) transition = true;
-				else {
-					double threshold = exp((current_energy - next_energy) / temperature);
-					if (real_dist(*rnd) < threshold) transition = true;
+
+				if (transition) {
+					break;
+				} else {
+					current_answer.SetValue(pos, previous_val);
 				}
-
-				if (transition) current_energy = next_energy;
-			}
-
-			if (transition) {
-				break;
-			} else {
-				current_answer.SetValue(pos, previous_val);
 			}
 		}
 		temperature *= 0.995;
