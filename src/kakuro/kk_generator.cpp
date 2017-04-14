@@ -2,6 +2,7 @@
 
 #include "kk_answer.h"
 #include "kk_field.h"
+#include "../common/util.h"
 
 #include <vector>
 
@@ -27,8 +28,7 @@ double ComputeEnergy(const penciloid::kakuro::Field &field)
 	for (Y y(0); y < field.height(); ++y) {
 		for (X x(0); x < field.width(); ++x) {
 			if (field.GetCell(CellPosition(y, x)) != kakuro::Field::kCellClue) {
-			//	ret += 1.0;
-				ret += __popcnt(field.GetCandidateBits(CellPosition(y, x)));
+				ret += PopCount(field.GetCandidateBits(CellPosition(y, x)));
 			}
 		}
 	}

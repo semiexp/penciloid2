@@ -1,4 +1,5 @@
 #include "kk_field.h"
+#include "../common/util.h"
 
 namespace
 {
@@ -141,7 +142,7 @@ void Field::RestrictCandidate(int cell_id, unsigned int restriction)
 		return;
 	}
 	if (cell.candidates == (cell.candidates & -static_cast<int>(cell.candidates))) {
-		DecideCell(cell_id, 1 + popcount(cell.candidates - 1));
+		DecideCell(cell_id, 1 + PopCount(cell.candidates - 1));
 	}
 }
 void Field::EliminateCandidateFromOtherCellsInGroup(int cell_id, int cand_value)
