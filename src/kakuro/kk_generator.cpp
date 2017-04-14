@@ -34,6 +34,33 @@ double ComputeEnergy(const penciloid::kakuro::Field &field)
 	}
 	return ret;
 }
+bool FindInHorizontalGroup(const penciloid::kakuro::Answer &answer, penciloid::Y y, penciloid::X x, int val)
+{
+	using namespace penciloid;
+	for (X x2(x - 1); x2 >= 0; --x2) {
+		if (answer.GetValue(CellPosition(y, x2)) == kakuro::Field::kCellClue) break;
+		if (answer.GetValue(CellPosition(y, x2)) == val) return true;
+	}
+	for (X x2(x + 1); x2 < answer.width(); ++x2) {
+		if (answer.GetValue(CellPosition(y, x2)) == kakuro::Field::kCellClue) break;
+		if (answer.GetValue(CellPosition(y, x2)) == val) return true;
+	}
+	return false;
+}
+bool FindInVerticalGroup(const penciloid::kakuro::Answer &answer, penciloid::Y y, penciloid::X x, int val)
+{
+	using namespace penciloid;
+	for (Y y2(y - 1); y2 >= 0; --y2) {
+		if (answer.GetValue(CellPosition(y2, x)) == kakuro::Field::kCellClue) break;
+		if (answer.GetValue(CellPosition(y2, x)) == val) return true;
+	}
+	for (Y y2(y + 1); y2 < answer.height(); ++y2) {
+		if (answer.GetValue(CellPosition(y2, x)) == kakuro::Field::kCellClue) break;
+		if (answer.GetValue(CellPosition(y2, x)) == val) return true;
+	}
+	return false;
+}
+
 }
 namespace penciloid
 {
@@ -99,40 +126,68 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 						candidate.push_back(MoveCandidate(pos, n));
 					}
 				}
+
+				// swap vertically
+				for (Y y2(y + 1); y2 < height; ++y2) {
+					if (current_answer.GetValue(CellPosition(y2, x)) == Answer::kClueCell) break;
+					int current_val2 = current_answer.GetValue(CellPosition(y2, x));
+					if (FindInHorizontalGroup(current_answer, y, x, current_val2) || FindInHorizontalGroup(current_answer, y2, x, current_val)) continue;
+
+					candidate.push_back(MoveCandidate(pos, current_val2, CellPosition(y2, x), current_val));
+				}
+
+				// swap horizontally
+				for (X x2(x + 1); x2 < width; ++x2) {
+					if (current_answer.GetValue(CellPosition(y, x2)) == Answer::kClueCell) break;
+					int current_val2 = current_answer.GetValue(CellPosition(y, x2));
+					if (FindInVerticalGroup(current_answer, y, x, current_val2) || FindInVerticalGroup(current_answer, y, x2, current_val)) continue;
+
+					candidate.push_back(MoveCandidate(pos, current_val2, CellPosition(y, x2), current_val));
+				}
 			}
 		}
 		shuffle(candidate.begin(), candidate.end(), *rnd);
 
 		for (auto c : candidate) {
+			int previous_val1, previous_val2;
 			if (!c.is_swap) {
-				CellPosition pos = c.pos1; int val = c.val1;
-				int previous_val = current_answer.GetValue(pos);
-				current_answer.SetValue(pos, val);
+				previous_val1 = current_answer.GetValue(c.pos1);
+				current_answer.SetValue(c.pos1, c.val1);
+			} else {
+				previous_val1 = current_answer.GetValue(c.pos1);
+				current_answer.SetValue(c.pos1, c.val1);
+				previous_val2 = current_answer.GetValue(c.pos2);
+				current_answer.SetValue(c.pos2, c.val2);
+			}
 
-				Problem problem = current_answer.ExtractProblem();
-				Field field(problem, dic);
-				field.CheckGroupAll();
-				bool transition = false;
+			Problem problem = current_answer.ExtractProblem();
+			Field field(problem, dic);
+			field.CheckGroupAll();
+			bool transition = false;
 
-				if (!field.IsInconsistent()) {
-					if (UndecidedCells(field) == 0) {
-						*ret = problem;
-						return true;
-					}
-					double next_energy = ComputeEnergy(field);
-					if (current_energy > next_energy) transition = true;
-					else {
-						double threshold = exp((current_energy - next_energy) / temperature);
-						if (real_dist(*rnd) < threshold) transition = true;
-					}
-
-					if (transition) current_energy = next_energy;
+			if (!field.IsInconsistent()) {
+				if (UndecidedCells(field) == 0) {
+					*ret = problem;
+					return true;
+				}
+				double next_energy = ComputeEnergy(field);
+				if (current_energy > next_energy) transition = true;
+				else {
+					double threshold = exp((current_energy - next_energy) / temperature);
+					if (real_dist(*rnd) < threshold) transition = true;
 				}
 
-				if (transition) {
-					break;
+				if (transition) current_energy = next_energy;
+			}
+
+			if (transition) {
+				break;
+			} else {
+				if (!c.is_swap) {
+					current_answer.SetValue(c.pos1, previous_val1);
 				} else {
-					current_answer.SetValue(pos, previous_val);
+					current_answer.SetValue(c.pos1, previous_val1);
+					current_answer.SetValue(c.pos2, previous_val2);
 				}
 			}
 		}
