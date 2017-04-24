@@ -102,7 +102,34 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 			is_swap(true), pos1(pos1), pos2(pos2), val1(val1), val2(val2) {}
 	};
 
+	Field current_field = field;
+	Grid<bool> modifiable(height, width, false);
+	bool prev_fail = false;
+
 	for (; step < max_step; ++step) {
+		for (Y y(0); y < height; ++y) {
+			for (X x(0); x < width; ++x) {
+				CellPosition pos(y, x);
+				if (current_answer.GetValue(pos) == Answer::kClueCell) continue;
+
+				bool isok = false;
+				if (current_field.GetCell(pos) == Field::kCellUndecided) isok = true;
+
+				for (Direction d : k4Neighborhood) {
+					for (CellPosition pos2 = pos + d; 0 <= pos2.y && pos2.y < height && 0 <= pos2.x && pos2.x < width; pos2 = pos2 + d) {
+						if (current_answer.GetValue(pos2) == Answer::kClueCell) {
+							break;
+						}
+						if (current_field.GetCell(pos2) == Field::kCellUndecided) {
+							isok = true;
+							break;
+						}
+					}
+					if (isok) break;
+				}
+				modifiable.at(pos) = isok;
+			}
+		}
 		std::vector<MoveCandidate> candidate;
 		for (Y y(0); y < height; ++y) {
 			for (X x(0); x < width; ++x) {
@@ -147,13 +174,19 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 			}
 		}
 		shuffle(candidate.begin(), candidate.end(), *rnd);
-
+		bool fail = true;
 		for (auto c : candidate) {
 			int previous_val1, previous_val2;
 			if (!c.is_swap) {
+				if (!modifiable.at(c.pos1)) {
+					if (!prev_fail && real_dist(*rnd) < 0.9) continue;
+				}
 				previous_val1 = current_answer.GetValue(c.pos1);
 				current_answer.SetValue(c.pos1, c.val1);
 			} else {
+				if (!modifiable.at(c.pos1) && !modifiable.at(c.pos2)) {
+					if (!prev_fail && real_dist(*rnd) < 0.9) continue;
+				}
 				previous_val1 = current_answer.GetValue(c.pos1);
 				current_answer.SetValue(c.pos1, c.val1);
 				previous_val2 = current_answer.GetValue(c.pos2);
@@ -171,8 +204,9 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 					return true;
 				}
 				double next_energy = ComputeEnergy(field);
-				if (current_energy > next_energy) transition = true;
-				else {
+				if (current_energy > next_energy) {
+					transition = true;
+				}  else {
 					double threshold = exp((current_energy - next_energy) / temperature);
 					if (real_dist(*rnd) < threshold) transition = true;
 				}
@@ -181,6 +215,8 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 			}
 
 			if (transition) {
+				current_field = field;
+				fail = false;
 				break;
 			} else {
 				if (!c.is_swap) {
@@ -191,6 +227,7 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 				}
 			}
 		}
+		prev_fail = fail;
 		temperature *= 0.995;
 	}
 
