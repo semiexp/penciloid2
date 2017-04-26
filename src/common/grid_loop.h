@@ -9,6 +9,7 @@
 #include "mini_vector.h"
 #include "grid_loop_method.h"
 #include "auto_array.h"
+#include "search_queue.h"
 
 #include<cassert>
 
@@ -135,12 +136,12 @@ public:
 	// Invoke func() with the internal queue enabled.
 	template <class F>
 	void QueuedRun(F func) {
-		if (IsQueueStarted()) func();
+		if (queue_.IsActive()) func();
 		else {
-			QueueStart();
+			queue_.Activate();
 			func();
 			QueueProcessAll();
-			QueueEnd();
+			queue_.Deactivate();
 		}
 	}
 
@@ -189,29 +190,10 @@ private:
 	void Join(LoopPosition vertex, Direction dir1, Direction dir2);
 	void InspectVertex(LoopPosition vertex);
 
-	//Queue related methods
-	bool IsQueueStarted() { return queue_top_ != -1; }
-	bool IsQueueEmpty() { return queue_top_ == queue_end_; }
-	void QueueStart() { queue_top_ = queue_end_ = 0; }
-	void QueueEnd() { queue_top_ = queue_end_ = -1; }
-	void QueuePush(int id) {
-		if (!queue_stored_[id]) {
-			queue_stored_[id] = true;
-			queue_[queue_end_++] = id;
-			if (queue_end_ == queue_size_) queue_end_ = 0;
-		}
-	}
-	int QueuePop() {
-		int ret = queue_[queue_top_++];
-		queue_stored_[ret] = false;
-		if (queue_top_ == queue_size_) queue_top_ = 0;
-		return ret;
-	}
 	void QueueProcessAll();
 
 	AutoArray<FieldComponent> field_;
-	AutoArray<int> queue_;
-	AutoArray<bool> queue_stored_;
+	SearchQueue queue_;
 	std::vector<std::pair<int, FieldComponent> > history_;
 
 	Y height_;
@@ -220,13 +202,11 @@ private:
 	bool inconsistent_, fully_solved_, abnormal_;
 
 	GridLoopMethod method_;
-	int queue_top_, queue_end_, queue_size_;
 };
 template<class T>
 GridLoop<T>::GridLoop()
 	: field_(),
 	  queue_(),
-	  queue_stored_(),
 	  history_(),
 	  height_(0),
 	  width_(0),
@@ -235,17 +215,13 @@ GridLoop<T>::GridLoop()
 	  inconsistent_(false),
 	  fully_solved_(false),
 	  abnormal_(false),
-	  method_(),
-	  queue_top_(-1),
-	  queue_end_(-1),
-	  queue_size_(0)
+	  method_()
 {
 }
 template<class T>
 GridLoop<T>::GridLoop(Y height, X width)
 	: field_((static_cast<int>(height) * 2 + 1) * (static_cast<int>(width) * 2 + 1)),
-	  queue_((static_cast<int>(height) * 2 + 1) * (static_cast<int>(width) * 2 + 1) + 1),
-	  queue_stored_((static_cast<int>(height) * 2 + 1) * (static_cast<int>(width) * 2 + 1)),
+	  queue_((static_cast<int>(height) * 2 + 1) * (static_cast<int>(width) * 2 + 1)),
 	  history_(),
 	  height_(height),
 	  width_(width),
@@ -254,14 +230,8 @@ GridLoop<T>::GridLoop(Y height, X width)
 	  inconsistent_(false),
 	  fully_solved_(false),
 	  abnormal_(false),
-	  method_(),
-	  queue_top_(-1),
-	  queue_end_(-1),
-	  queue_size_(0)
+	  method_()
 {
-	std::fill(queue_stored_.begin(), queue_stored_.end(), false);
-	queue_size_ = Id(2 * height_, 2 * width_) + 2;
-
 	for (Y y(0); y <= 2 * height_; ++y) {
 		for (X x(0); x <= 2 * width_; ++x) {
 			unsigned int id = Id(y, x);
@@ -281,19 +251,18 @@ GridLoop<T>::GridLoop(Y height, X width)
 		}
 	}
 
-	QueueStart();
+	queue_.Activate();
 	Join(LoopPosition(Y(0), X(0)), Direction(Y(1), X(0)), Direction(Y(0), X(1)));
 	Join(LoopPosition(2 * height, X(0)), Direction(Y(-1), X(0)), Direction(Y(0), X(1)));
 	Join(LoopPosition(Y(0), 2 * width), Direction(Y(1), X(0)), Direction(Y(0), X(-1)));
 	Join(LoopPosition(2 * height, 2 * width), Direction(Y(-1), X(0)), Direction(Y(0), X(-1)));
-	while (!IsQueueEmpty()) QueuePop();
-	QueueEnd();
+	while (!queue_.IsEmpty()) queue_.Pop();
+	queue_.Deactivate();
 }
 template<class T>
 GridLoop<T>::GridLoop(const GridLoop<T> &other)
 	: field_(other.field_),
-	  queue_((static_cast<int>(other.height()) * 2 + 1) * (static_cast<int>(other.width()) * 2 + 1) + 1),
-	  queue_stored_((static_cast<int>(other.height()) * 2 + 1) * (static_cast<int>(other.width()) * 2 + 1)),
+	  queue_((static_cast<int>(other.height()) * 2 + 1) * (static_cast<int>(other.width()) * 2 + 1)),
 	  history_(other.history_),
 	  height_(other.height_),
 	  width_(other.width_),
@@ -302,18 +271,13 @@ GridLoop<T>::GridLoop(const GridLoop<T> &other)
 	  inconsistent_(other.inconsistent_),
 	  fully_solved_(other.fully_solved_),
 	  abnormal_(other.abnormal_),
-	  method_(other.method_),
-	  queue_top_(-1),
-	  queue_end_(-1),
-	  queue_size_(other.queue_size_)
+	  method_(other.method_)
 {
-	std::fill(queue_stored_.begin(), queue_stored_.end(), false);
 }
 template<class T>
 GridLoop<T>::GridLoop(GridLoop<T> &&other)
 	: field_(std::move(other.field_)),
 	  queue_(std::move(other.queue_)),
-	  queue_stored_(std::move(other.queue_stored_)),
 	  history_(std::move(other.history_)),
 	  height_(other.height_),
 	  width_(other.width_),
@@ -322,10 +286,7 @@ GridLoop<T>::GridLoop(GridLoop<T> &&other)
 	  inconsistent_(other.inconsistent_),
 	  fully_solved_(other.fully_solved_),
 	  abnormal_(other.abnormal_),
-	  method_(other.method_),
-	  queue_top_(-1),
-	  queue_end_(-1),
-	  queue_size_(other.queue_size_)
+	  method_(other.method_)
 {
 }
 template<class T>
@@ -342,8 +303,6 @@ GridLoop<T> &GridLoop<T>::operator=(const GridLoop<T> &other)
 
 	field_ = other.field_;
 	queue_ = other.queue_;
-	queue_stored_ = other.queue_stored_;
-	queue_size_ = other.queue_size_;
 	history_ = other.history_;
 
 	return *this;
@@ -362,8 +321,6 @@ GridLoop<T> &GridLoop<T>::operator=(GridLoop<T> &&other)
 
 	field_ = std::move(other.field_);
 	queue_ = std::move(other.queue_);
-	queue_stored_ = std::move(other.queue_stored_);
-	queue_size_ = other.queue_size_;
 	history_ = std::move(other.history_);
 
 	return *this;
@@ -400,17 +357,17 @@ void GridLoop<T>::DecideEdge(LoopPosition edge, EdgeState status)
 		return;
 	}
 
-	if (IsQueueStarted()) {
+	if (queue_.IsActive()) {
 		DecideChain(id, status);
 		CheckNeighborhoodOfChain(id);
 	} else {
-		QueueStart();
+		queue_.Activate();
 
 		DecideChain(id, status);
 		CheckNeighborhoodOfChain(id);
 		QueueProcessAll();
 
-		QueueEnd();
+		queue_.Deactivate();
 	}
 }
 template<class T>
@@ -462,15 +419,15 @@ void GridLoop<T>::Check(LoopPosition pos)
 {
 	if (!IsPositionOnField(pos)) return;
 
-	if (IsQueueStarted()) {
-		QueuePush(Id(pos));
+	if (queue_.IsActive()) {
+		queue_.Push(Id(pos));
 	} else {
-		QueueStart();
+		queue_.Activate();
 
-		QueuePush(Id(pos));
+		queue_.Push(Id(pos));
 		QueueProcessAll();
 
-		QueueEnd();
+		queue_.Deactivate();
 	}
 }
 template <class T>
@@ -750,8 +707,8 @@ void GridLoop<T>::InspectVertex(LoopPosition vertex)
 template <class T>
 void GridLoop<T>::QueueProcessAll()
 {
-	while (!IsQueueEmpty()) {
-		int id = QueuePop();
+	while (!queue_.IsEmpty()) {
+		int id = queue_.Pop();
 		if (IsInconsistent()) continue;
 		LoopPosition pos = AsPosition(id);
 		static_cast<T*>(this)->Inspect(pos);
