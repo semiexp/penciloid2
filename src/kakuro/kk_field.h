@@ -2,6 +2,7 @@
 
 #include "kk_problem.h"
 #include "kk_dictionary.h"
+#include "../common/search_queue.h"
 
 namespace penciloid
 {
@@ -33,8 +34,8 @@ public:
 	int GetCell(CellPosition pos) const { return cells_.at(pos).value; }
 	int GetCandidateBits(CellPosition pos) const { return cells_.at(pos).candidates; }
 
-	void DecideCell(CellPosition cell, int value) { DecideCell(cells_.GetIndex(cell), value); }
-	void EliminateCandidate(CellPosition cell, int value) { EliminateCandidate(cells_.GetIndex(cell), value); }
+	void DecideCell(CellPosition cell, int value);
+	void EliminateCandidate(CellPosition cell, int value);
 
 	void CheckGroupAll();
 
@@ -68,7 +69,10 @@ private:
 
 	void CheckGroup(int group_id);
 
+	void QueueProcessAll();
+	
 	Grid<Cell> cells_;
+	SearchQueue queue_;
 	CellGroup *groups_;
 	Dictionary *dictionary_;
 	int n_groups_;
