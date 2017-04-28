@@ -34,33 +34,6 @@ double ComputeEnergy(const penciloid::kakuro::Field &field)
 	}
 	return ret;
 }
-bool FindInHorizontalGroup(const penciloid::kakuro::Answer &answer, penciloid::Y y, penciloid::X x, int val)
-{
-	using namespace penciloid;
-	for (X x2(x - 1); x2 >= 0; --x2) {
-		if (answer.GetValue(CellPosition(y, x2)) == kakuro::Field::kCellClue) break;
-		if (answer.GetValue(CellPosition(y, x2)) == val) return true;
-	}
-	for (X x2(x + 1); x2 < answer.width(); ++x2) {
-		if (answer.GetValue(CellPosition(y, x2)) == kakuro::Field::kCellClue) break;
-		if (answer.GetValue(CellPosition(y, x2)) == val) return true;
-	}
-	return false;
-}
-bool FindInVerticalGroup(const penciloid::kakuro::Answer &answer, penciloid::Y y, penciloid::X x, int val)
-{
-	using namespace penciloid;
-	for (Y y2(y - 1); y2 >= 0; --y2) {
-		if (answer.GetValue(CellPosition(y2, x)) == kakuro::Field::kCellClue) break;
-		if (answer.GetValue(CellPosition(y2, x)) == val) return true;
-	}
-	for (Y y2(y + 1); y2 < answer.height(); ++y2) {
-		if (answer.GetValue(CellPosition(y2, x)) == kakuro::Field::kCellClue) break;
-		if (answer.GetValue(CellPosition(y2, x)) == val) return true;
-	}
-	return false;
-}
-
 }
 namespace penciloid
 {
@@ -106,6 +79,47 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 	Grid<bool> modifiable(height, width, false);
 	bool prev_fail = false;
 
+	Grid<std::pair<int, int> > group_id(height, width, std::make_pair(-1, -1));
+	std::vector<std::vector<CellPosition> > group_cells;
+	std::vector<CellPosition> last_group;
+
+	int group_id_last = -1;
+	for (Y y(0); y < height; ++y) {
+		for (X x(0); x < width; ++x) {
+			if (frame.GetClue(CellPosition(y, x)) == kEmptyCell) {
+				if (x == 0 || frame.GetClue(CellPosition(y, x - 1)) != kEmptyCell) {
+					++group_id_last;
+					if (!last_group.empty()) {
+						group_cells.push_back(last_group);
+						last_group.clear();
+					}
+				}
+				group_id.at(CellPosition(y, x)).first = group_id_last;
+				last_group.push_back(CellPosition(y, x));
+			}
+		}
+	}
+	for (X x(0); x < width; ++x) {
+		for (Y y(0); y < height; ++y) {
+			if (frame.GetClue(CellPosition(y, x)) == kEmptyCell) {
+				if (y == 0 || frame.GetClue(CellPosition(y - 1, x)) != kEmptyCell) {
+					++group_id_last;
+					if (!last_group.empty()) {
+						group_cells.push_back(last_group);
+						last_group.clear();
+					}
+				}
+				group_id.at(CellPosition(y, x)).second = group_id_last;
+				last_group.push_back(CellPosition(y, x));
+			}
+		}
+	}
+	if (!last_group.empty()) {
+		group_cells.push_back(last_group);
+		last_group.empty();
+	}
+	std::vector<unsigned int> group_used_values(group_id_last + 1);
+
 	for (; step < max_step; ++step) {
 		for (Y y(0); y < height; ++y) {
 			for (X x(0); x < width; ++x) {
@@ -130,6 +144,17 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 				modifiable.at(pos) = isok;
 			}
 		}
+		std::fill(group_used_values.begin(), group_used_values.end(), 0);
+		for (Y y(0); y < height; ++y) {
+			for (X x(0); x < width; ++x) {
+				int current_val = current_answer.GetValue(CellPosition(y, x));
+				if (current_val == Answer::kClueCell) continue;
+				std::pair<int, int> grp = group_id.at(CellPosition(y, x));
+
+				group_used_values[grp.first] |= 1U << current_val;
+				group_used_values[grp.second] |= 1U << current_val;
+			}
+		}
 		std::vector<MoveCandidate> candidate;
 		for (Y y(0); y < height; ++y) {
 			for (X x(0); x < width; ++x) {
@@ -137,39 +162,33 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 				int current_val = current_answer.GetValue(pos);
 				if (current_val == Answer::kClueCell) continue;
 
-				for (int n = 1; n <= 9; ++n) if (n != current_val) {
-					bool isok = true;
-					for (Direction d : k4Neighborhood) {
-						for (CellPosition pos2 = pos + d; 0 <= pos2.y && pos2.y < height && 0 <= pos2.x && pos2.x < width; pos2 = pos2 + d) {
-							if (current_answer.GetValue(pos2) == n) {
-								isok = false;
-								break;
-							} else if (current_answer.GetValue(pos2) == Answer::kClueCell) {
-								break;
-							}
-						}
-					}
-					if (isok) {
+				unsigned int used =
+					group_used_values[group_id.at(CellPosition(y, x)).first] |
+					group_used_values[group_id.at(CellPosition(y, x)).second];
+
+				for (int n = 1; n <= 9; ++n) {
+					if (n != current_val && (used & (1U << n)) == 0) {
 						candidate.push_back(MoveCandidate(pos, n));
 					}
 				}
 
-				// swap vertically
-				for (Y y2(y + 1); y2 < height; ++y2) {
-					if (current_answer.GetValue(CellPosition(y2, x)) == Answer::kClueCell) break;
-					int current_val2 = current_answer.GetValue(CellPosition(y2, x));
-					if (FindInHorizontalGroup(current_answer, y, x, current_val2) || FindInHorizontalGroup(current_answer, y2, x, current_val)) continue;
+				int group_id1 = group_id.at(pos).first;
+				for (CellPosition pos2 : group_cells[group_id1]) {
+					if (!(y < pos2.y || x < pos2.x)) continue;
+					int current_val2 = current_answer.GetValue(pos2);
 
-					candidate.push_back(MoveCandidate(pos, current_val2, CellPosition(y2, x), current_val));
+					if ((group_used_values[group_id.at(pos).second] & (1U << current_val2)) == 0 && (group_used_values[group_id.at(pos2).second] & (1U << current_val)) == 0) {
+						candidate.push_back(MoveCandidate(pos, current_val2, pos2, current_val));
+					}
 				}
+				int group_id2 = group_id.at(pos).second;
+				for (CellPosition pos2 : group_cells[group_id2]) {
+					if (!(y < pos2.y || x < pos2.x)) continue;
+					int current_val2 = current_answer.GetValue(pos2);
 
-				// swap horizontally
-				for (X x2(x + 1); x2 < width; ++x2) {
-					if (current_answer.GetValue(CellPosition(y, x2)) == Answer::kClueCell) break;
-					int current_val2 = current_answer.GetValue(CellPosition(y, x2));
-					if (FindInVerticalGroup(current_answer, y, x, current_val2) || FindInVerticalGroup(current_answer, y, x2, current_val)) continue;
-
-					candidate.push_back(MoveCandidate(pos, current_val2, CellPosition(y, x2), current_val));
+					if ((group_used_values[group_id.at(pos).first] & (1U << current_val2)) == 0 && (group_used_values[group_id.at(pos2).first] & (1U << current_val)) == 0) {
+						candidate.push_back(MoveCandidate(pos, current_val2, pos2, current_val));
+					}
 				}
 			}
 		}
