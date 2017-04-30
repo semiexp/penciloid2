@@ -3,6 +3,7 @@
 #include "kk_answer.h"
 #include "kk_field.h"
 #include "../common/util.h"
+#include "../common/mini_vector.h"
 
 #include <vector>
 
@@ -64,16 +65,7 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 	field.CheckGroupAll();
 	current_energy = ComputeEnergy(field);
 
-	struct MoveCandidate
-	{
-		bool is_swap;
-		CellPosition pos1, pos2;
-		int val1, val2;
-
-		MoveCandidate(CellPosition pos, int val) : is_swap(false), pos1(pos), val1(val) {}
-		MoveCandidate(CellPosition pos1, int val1, CellPosition pos2, int val2) :
-			is_swap(true), pos1(pos1), pos2(pos2), val1(val1), val2(val2) {}
-	};
+	typedef MiniVector<std::pair<CellPosition, int>, 3> MoveCandidate;
 
 	Field current_field = field;
 	Grid<bool> modifiable(height, width, false);
@@ -168,7 +160,9 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 
 				for (int n = 1; n <= 9; ++n) {
 					if (n != current_val && (used & (1U << n)) == 0) {
-						candidate.push_back(MoveCandidate(pos, n));
+						MoveCandidate mv;
+						mv.push_back({ pos, n });
+						candidate.push_back(mv);
 					}
 				}
 
@@ -178,7 +172,10 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 					int current_val2 = current_answer.GetValue(pos2);
 
 					if ((group_used_values[group_id.at(pos).second] & (1U << current_val2)) == 0 && (group_used_values[group_id.at(pos2).second] & (1U << current_val)) == 0) {
-						candidate.push_back(MoveCandidate(pos, current_val2, pos2, current_val));
+						MoveCandidate mv;
+						mv.push_back({ pos, current_val2 });
+						mv.push_back({ pos2, current_val });
+						candidate.push_back(mv);
 					}
 				}
 				int group_id2 = group_id.at(pos).second;
@@ -187,29 +184,28 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 					int current_val2 = current_answer.GetValue(pos2);
 
 					if ((group_used_values[group_id.at(pos).first] & (1U << current_val2)) == 0 && (group_used_values[group_id.at(pos2).first] & (1U << current_val)) == 0) {
-						candidate.push_back(MoveCandidate(pos, current_val2, pos2, current_val));
+						MoveCandidate mv;
+						mv.push_back({ pos, current_val2 });
+						mv.push_back({ pos2, current_val });
+						candidate.push_back(mv);
 					}
 				}
 			}
 		}
 		shuffle(candidate.begin(), candidate.end(), *rnd);
 		bool fail = true;
-		for (auto c : candidate) {
-			int previous_val1, previous_val2;
-			if (!c.is_swap) {
-				if (!modifiable.at(c.pos1)) {
-					if (!prev_fail && real_dist(*rnd) < 0.9) continue;
-				}
-				previous_val1 = current_answer.GetValue(c.pos1);
-				current_answer.SetValue(c.pos1, c.val1);
-			} else {
-				if (!modifiable.at(c.pos1) && !modifiable.at(c.pos2)) {
-					if (!prev_fail && real_dist(*rnd) < 0.9) continue;
-				}
-				previous_val1 = current_answer.GetValue(c.pos1);
-				current_answer.SetValue(c.pos1, c.val1);
-				previous_val2 = current_answer.GetValue(c.pos2);
-				current_answer.SetValue(c.pos2, c.val2);
+		for (auto &c : candidate) {
+			MiniVector<int, 3> previous_vals;
+			bool has_modifiable_cell = false;
+			for (int i = 0; i < c.size(); ++i) {
+				previous_vals.push_back(current_answer.GetValue(c[i].first));
+				has_modifiable_cell |= modifiable.at(c[i].first);
+			}
+			if (!has_modifiable_cell) {
+				if (!prev_fail && real_dist(*rnd) < 0.9) continue;
+			}
+			for (int i = 0; i < c.size(); ++i) {
+				current_answer.SetValue(c[i].first, c[i].second);
 			}
 
 			Problem problem = current_answer.ExtractProblem();
@@ -238,11 +234,8 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 				fail = false;
 				break;
 			} else {
-				if (!c.is_swap) {
-					current_answer.SetValue(c.pos1, previous_val1);
-				} else {
-					current_answer.SetValue(c.pos1, previous_val1);
-					current_answer.SetValue(c.pos2, previous_val2);
+				for (int i = 0; i < c.size(); ++i) {
+					current_answer.SetValue(c[i].first, previous_vals[i]);
 				}
 			}
 		}
