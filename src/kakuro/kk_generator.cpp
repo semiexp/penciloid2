@@ -110,7 +110,8 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 		group_cells.push_back(last_group);
 		last_group.empty();
 	}
-	std::vector<unsigned int> group_used_values(group_id_last + 1);
+	const CellPosition kUnusedValue = CellPosition(Y(-1), X(-1));
+	AutoArray<CellPosition[10]> group_used_positions(group_id_last + 1);
 
 	for (; step < max_step; ++step) {
 		for (Y y(0); y < height; ++y) {
@@ -136,15 +137,17 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 				modifiable.at(pos) = isok;
 			}
 		}
-		std::fill(group_used_values.begin(), group_used_values.end(), 0);
+		for (int i = 0; i < group_id_last + 1; ++i) {
+			for (int j = 1; j <= 9; ++j) group_used_positions[i][j] = kUnusedValue;
+		}
 		for (Y y(0); y < height; ++y) {
 			for (X x(0); x < width; ++x) {
 				int current_val = current_answer.GetValue(CellPosition(y, x));
 				if (current_val == Answer::kClueCell) continue;
 				std::pair<int, int> grp = group_id.at(CellPosition(y, x));
 
-				group_used_values[grp.first] |= 1U << current_val;
-				group_used_values[grp.second] |= 1U << current_val;
+				group_used_positions[grp.first][current_val] = CellPosition(y, x);
+				group_used_positions[grp.second][current_val] = CellPosition(y, x);
 			}
 		}
 		std::vector<MoveCandidate> candidate;
@@ -154,40 +157,41 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 				int current_val = current_answer.GetValue(pos);
 				if (current_val == Answer::kClueCell) continue;
 
-				unsigned int used =
-					group_used_values[group_id.at(CellPosition(y, x)).first] |
-					group_used_values[group_id.at(CellPosition(y, x)).second];
+				int group1 = group_id.at(CellPosition(y, x)).first;
+				int group2 = group_id.at(CellPosition(y, x)).second;
+				for (int n = 1; n <= 9; ++n) if (n != current_val) {
+					CellPosition pos1 = group_used_positions[group1][n];
+					CellPosition pos2 = group_used_positions[group2][n];
 
-				for (int n = 1; n <= 9; ++n) {
-					if (n != current_val && (used & (1U << n)) == 0) {
+					if (pos1 == kUnusedValue && pos2 == kUnusedValue) {
 						MoveCandidate mv;
 						mv.push_back({ pos, n });
 						candidate.push_back(mv);
-					}
-				}
-
-				int group_id1 = group_id.at(pos).first;
-				for (CellPosition pos2 : group_cells[group_id1]) {
-					if (!(y < pos2.y || x < pos2.x)) continue;
-					int current_val2 = current_answer.GetValue(pos2);
-
-					if ((group_used_values[group_id.at(pos).second] & (1U << current_val2)) == 0 && (group_used_values[group_id.at(pos2).second] & (1U << current_val)) == 0) {
-						MoveCandidate mv;
-						mv.push_back({ pos, current_val2 });
-						mv.push_back({ pos2, current_val });
-						candidate.push_back(mv);
-					}
-				}
-				int group_id2 = group_id.at(pos).second;
-				for (CellPosition pos2 : group_cells[group_id2]) {
-					if (!(y < pos2.y || x < pos2.x)) continue;
-					int current_val2 = current_answer.GetValue(pos2);
-
-					if ((group_used_values[group_id.at(pos).first] & (1U << current_val2)) == 0 && (group_used_values[group_id.at(pos2).first] & (1U << current_val)) == 0) {
-						MoveCandidate mv;
-						mv.push_back({ pos, current_val2 });
-						mv.push_back({ pos2, current_val });
-						candidate.push_back(mv);
+					} else if (pos1 == kUnusedValue) {
+						if (group_used_positions[group_id.at(pos).first][n] == kUnusedValue
+							&& group_used_positions[group_id.at(pos2).first][current_val] == kUnusedValue) {
+							MoveCandidate mv;
+							mv.push_back({ pos, n });
+							mv.push_back({ pos2, current_val });
+							candidate.push_back(mv);
+						}
+					} else if (pos2 == kUnusedValue) {
+						if (group_used_positions[group_id.at(pos).second][n] == kUnusedValue
+							&& group_used_positions[group_id.at(pos1).second][current_val] == kUnusedValue) {
+							MoveCandidate mv;
+							mv.push_back({ pos, n });
+							mv.push_back({ pos1, current_val });
+							candidate.push_back(mv);
+						}
+					} else {
+						if (group_used_positions[group_id.at(pos1).second][current_val] == kUnusedValue
+							&& group_used_positions[group_id.at(pos2).first][current_val] == kUnusedValue) {
+							MoveCandidate mv;
+							mv.push_back({ pos, n });
+							mv.push_back({ pos1, current_val });
+							mv.push_back({ pos2, current_val });
+							candidate.push_back(mv);
+						}
 					}
 				}
 			}
