@@ -169,7 +169,8 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 						candidate.push_back(mv);
 					} else if (pos1 == kUnusedValue) {
 						if (group_used_positions[group_id.at(pos).first][n] == kUnusedValue
-							&& group_used_positions[group_id.at(pos2).first][current_val] == kUnusedValue) {
+							&& group_used_positions[group_id.at(pos2).first][current_val] == kUnusedValue
+							&& (pos.x < pos2.x || pos.y < pos2.y)) {
 							MoveCandidate mv;
 							mv.push_back({ pos, n });
 							mv.push_back({ pos2, current_val });
@@ -177,7 +178,8 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 						}
 					} else if (pos2 == kUnusedValue) {
 						if (group_used_positions[group_id.at(pos).second][n] == kUnusedValue
-							&& group_used_positions[group_id.at(pos1).second][current_val] == kUnusedValue) {
+							&& group_used_positions[group_id.at(pos1).second][current_val] == kUnusedValue
+							&& (pos.x < pos1.x || pos.y < pos1.y)) {
 							MoveCandidate mv;
 							mv.push_back({ pos, n });
 							mv.push_back({ pos1, current_val });
