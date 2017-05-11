@@ -26,8 +26,8 @@ public:
 
 	inline Y height() const { return grid_.height(); }
 	inline X width() const { return grid_.width(); }
-	inline void SetClue(CellPosition cell, Clue clue) { grid_.at(cell) = clue; }
-	inline Clue GetClue(CellPosition cell) const { return grid_.at(cell); }
+	inline void SetClue(CellPosition cell, Clue clue) { grid_(cell) = clue; }
+	inline Clue GetClue(CellPosition cell) const { return grid_(cell); }
 private:
 	Grid<Clue> grid_;
 };

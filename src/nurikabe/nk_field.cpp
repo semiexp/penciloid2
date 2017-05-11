@@ -20,11 +20,11 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width(),
 {
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
-			cells_.at(CellPosition(y, x)).group_next_cell = cells_.GetIndex(CellPosition(y, x));
+			cells_(CellPosition(y, x)).group_next_cell = cells_.GetIndex(CellPosition(y, x));
 
 			Clue c = problem.GetClue(CellPosition(y, x));
 			if (c != kNoClue) {
-				cells_.at(CellPosition(y, x)).clue = c;
+				cells_(CellPosition(y, x)).clue = c;
 			}
 		}
 	}
@@ -64,7 +64,7 @@ Field &Field::operator=(Field &&other)
 }
 void Field::DecideCell(CellPosition pos, CellState status)
 {
-	Cell &cell = cells_.at(pos);
+	Cell &cell = cells_(pos);
 	if (cell.status != kCellUndecided) {
 		if (cell.status != status) {
 			SetInconsistent();
@@ -79,7 +79,7 @@ void Field::DecideCell(CellPosition pos, CellState status)
 	cell.status = status;
 	for (Direction d : k4Neighborhood) {
 		CellPosition pos2 = pos + d;
-		if (cells_.IsPositionOnGrid(pos2) && cells_.at(pos2).status == status) {
+		if (cells_.IsPositionOnGrid(pos2) && cells_(pos2).status == status) {
 			Join(cells_.GetIndex(pos), cells_.GetIndex(pos2));
 		}
 	}
@@ -170,7 +170,7 @@ void Field::RestrictClueOfClosedGroups()
 
 			if (is_closed) {
 				int size = GetGroupSize(p_init);
-				cells_.at(pos).clue = Clue(size, size);
+				cells_(pos).clue = Clue(size, size);
 			}
 		}
 	}
@@ -443,18 +443,18 @@ void Field::ExpandWhite()
 		for (X x(0); x < width(); ++x) {
 			if (GetCell(CellPosition(y, x)) == kCellBlack) continue;
 			if (HasClueInGroup(GetIndex(CellPosition(y, x)))) {
-				data.at(CellPosition(y, x)).type = kWhiteLocal;
-				data.at(CellPosition(y, x)).master = GetRoot(GetIndex(CellPosition(y, x)));
+				data(y, x).type = kWhiteLocal;
+				data(y, x).master = GetRoot(GetIndex(CellPosition(y, x)));
 				for (Direction d : k4Neighborhood) {
 					CellPosition nb = CellPosition(y, x) + d;
 					if (cells_.IsPositionOnGrid(nb) && GetCell(nb) != kCellBlack) {
-						data.at(nb).type = kWhiteLocal;
-						data.at(nb).master = GetRoot(GetIndex(CellPosition(y, x)));
+						data(nb).type = kWhiteLocal;
+						data(nb).master = GetRoot(GetIndex(CellPosition(y, x)));
 					}
 				}
 			} else {
-				if (data.at(CellPosition(y, x)).type == kBlack) {
-					data.at(CellPosition(y, x)).type = kWhiteGlobal;
+				if (data(y, x).type == kBlack) {
+					data(y, x).type = kWhiteGlobal;
 				}
 			}
 		}
@@ -466,31 +466,31 @@ void Field::ExpandWhite()
 
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
-			CellType type = data.at(CellPosition(y, x)).type;
-			if (type == kBlack || (type == kWhiteLocal && cells_.at(CellPosition(y, x)).clue == kNoClue)) continue;
-			if (data.at(CellPosition(y, x)).id != -1) continue;
+			CellType type = data(y, x).type;
+			if (type == kBlack || (type == kWhiteLocal && cells_(y, x).clue == kNoClue)) continue;
+			if (data(y, x).id != -1) continue;
 
 			int master_id = GetIndex(CellPosition(y, x));
-			int expected_master = (type == kWhiteLocal ? data.at(CellPosition(y, x)).master : -1);
+			int expected_master = (type == kWhiteLocal ? data(y, x).master : -1);
 			q.push(CellPosition(y, x));
-			data.at(CellPosition(y, x)).id = id_next;
+			data(y, x).id = id_next;
 			group_undecided.clear();
 			while (!q.empty()) {
 				CellPosition pos = q.front(); q.pop();
-				data.at(pos).master = master_id;
+				data(pos).master = master_id;
 				if (GetCell(pos) == kCellUndecided) group_undecided.push_back(pos);
 
 				for (Direction d : k4Neighborhood) {
 					CellPosition pos2 = pos + d;
-					if (data.IsPositionOnGrid(pos2) && data.at(pos).type == data.at(pos2).type && data.at(pos2).id == -1 && (expected_master == -1 || data.at(pos2).master == expected_master)) {
+					if (data.IsPositionOnGrid(pos2) && data(pos).type == data(pos2).type && data(pos2).id == -1 && (expected_master == -1 || data(pos2).master == expected_master)) {
 						q.push(pos2);
 
-						data.at(pos2).id = id_next;
+						data(pos2).id = id_next;
 					}
 				}
 			}
 
-			Cell c = cells_.at(CellPosition(y, x));
+			Cell c = cells_(CellPosition(y, x));
 			if (c.clue != kNoClue && -c.group_parent_cell + 1 == c.clue.clue_low && c.clue.clue_low == c.clue.clue_high && group_undecided.size() == 2) {
 				for (Direction d : k4Neighborhood) {
 					CellPosition cand = group_undecided[0] + d;
@@ -527,11 +527,11 @@ void Field::ExpandWhite()
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
 			CellPosition pos(y, x);
-			if (data.at(pos).type != kWhiteLocal) continue;
+			if (data(pos).type != kWhiteLocal) continue;
 			for (Direction d : k4Neighborhood) {
 				CellPosition pos2 = pos + d;
-				if (data.IsPositionOnGrid(pos2) && data.at(pos2).type != kBlack && data.at(pos2).id != data.at(pos).id) {
-					lg_adjacency.push_back(Adjacency(GetIndex(pos), data.at(pos).master, data.at(pos2).master));
+				if (data.IsPositionOnGrid(pos2) && data(pos2).type != kBlack && data(pos2).id != data(pos).id) {
+					lg_adjacency.push_back(Adjacency(GetIndex(pos), data(pos).master, data(pos2).master));
 				}
 			}
 		}
@@ -557,10 +557,10 @@ void Field::ExpandWhite()
 	std::vector<GroupData> group_summary(id_next, GroupData());
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
-			Cell cell = cells_.at(CellPosition(y, x));
+			Cell cell = cells_(y, x);
 			if (cell.status == kCellBlack) continue;
 
-			int id = data.at(CellPosition(y, x)).id;
+			int id = data(y, x).id;
 			if (id == -1) {
 				SetInconsistent();
 				return;
@@ -596,17 +596,17 @@ void Field::ExpandWhite()
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
 			CellPosition pos(y, x);
-			if (data.at(pos).type != kWhiteLocal) continue;
-			int current_id = data.at(pos).id;
+			if (data(pos).type != kWhiteLocal) continue;
+			int current_id = data(pos).id;
 
-			if (y > 0 && data.at(pos - Direction(Y(1), X(0))).id == current_id) {
+			if (y > 0 && data(pos - Direction(Y(1), X(0))).id == current_id) {
 				graph_local.AddEdge(GetIndex(pos), GetIndex(pos - Direction(Y(1), X(0))));
 			}
-			if (x > 0 && data.at(pos - Direction(Y(0), X(1))).id == current_id) {
+			if (x > 0 && data(pos - Direction(Y(0), X(1))).id == current_id) {
 				graph_local.AddEdge(GetIndex(pos), GetIndex(pos - Direction(Y(0), X(1))));
 			}
 
-			if (cells_.at(pos).clue == kNoClue) {
+			if (cells_(pos).clue == kNoClue) {
 				graph_local.SetValue(GetIndex(pos), GroupData(
 					0, 0, 1, GetCell(pos) == kCellWhite ? 1 : 0
 				));
@@ -657,32 +657,32 @@ void Field::ExpandWhite()
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
 			CellPosition pos(y, x);
-			if (data.at(pos).type == kBlack) continue;
-			bool is_local = (data.at(pos).type == kWhiteLocal);
+			if (data(pos).type == kBlack) continue;
+			bool is_local = (data(pos).type == kWhiteLocal);
 
 			bool flg = (y == 1 && x == 2);
 			if (y > 0) {
 				CellPosition pos2 = pos + Direction(Y(-1), X(0));
-				if (data.at(pos2).type != kBlack && !(is_local && data.at(pos).id == data.at(pos2).id)) {
+				if (data(pos2).type != kBlack && !(is_local && data(pos).id == data(pos2).id)) {
 					graph_global.AddEdge(
-						is_local ? data.at(pos).master : GetIndex(pos),
-						data.at(pos2).type == kWhiteLocal ? data.at(pos2).master : GetIndex(pos2)
+						is_local ? data(pos).master : GetIndex(pos),
+						data(pos2).type == kWhiteLocal ? data(pos2).master : GetIndex(pos2)
 					);
 				}
 			}
 			if (x > 0) {
 				CellPosition pos2 = pos + Direction(Y(0), X(-1));
-				if (data.at(pos2).type != kBlack && !(is_local && data.at(pos).id == data.at(pos2).id)) {
+				if (data(pos2).type != kBlack && !(is_local && data(pos).id == data(pos2).id)) {
 					graph_global.AddEdge(
-						is_local ? data.at(pos).master : GetIndex(pos),
-						data.at(pos2).type == kWhiteLocal ? data.at(pos2).master : GetIndex(pos2)
+						is_local ? data(pos).master : GetIndex(pos),
+						data(pos2).type == kWhiteLocal ? data(pos2).master : GetIndex(pos2)
 					);
 				}
 			}
 
 			if (is_local) {
-				if (data.at(pos).master == GetIndex(pos)) {
-					graph_global.SetValue(GetIndex(pos), group_summary[data.at(pos).id]);
+				if (data(pos).master == GetIndex(pos)) {
+					graph_global.SetValue(GetIndex(pos), group_summary[data(pos).id]);
 				}
 			} else {
 				graph_global.SetValue(GetIndex(pos), GroupData(0, 0, 1, GetCell(pos) == kCellWhite ? 1 : 0));
@@ -692,7 +692,7 @@ void Field::ExpandWhite()
 	graph_global.Construct();
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
-			if (data.at(CellPosition(y, x)).type != kWhiteGlobal) continue;
+			if (data(y, x).type != kWhiteGlobal) continue;
 			std::vector<GroupData> sep = graph_global.Separate(GetIndex(CellPosition(y, x)));
 
 			for (GroupData &d : sep) {
@@ -730,12 +730,12 @@ void Field::CheckReachability()
 			int root_idx = GetRoot(GetIndex(pos));
 			Cell root_cell = cells_.at(root_idx);
 			if (GetCell(pos) == kCellWhite && root_cell.clue != kNoClue) {
-				visited.at(pos) = true;
+				visited(pos) = true;
 				int remain_max = root_cell.clue.clue_high - (-root_cell.group_parent_cell);
 				for (Direction d : k4Neighborhood) {
 					CellPosition pos2 = pos + d;
 					if (is_local.IsPositionOnGrid(pos2) && GetCell(pos2) != kCellBlack) {
-						is_local.at(pos2) = true;
+						is_local(pos2) = true;
 						q.push(QueueEntry(pos2, remain_max));
 					}
 				}
@@ -745,13 +745,13 @@ void Field::CheckReachability()
 
 	while (!q.empty()) {
 		QueueEntry cur = q.top(); q.pop();
-		if (visited.at(cur.pos)) continue;
-		visited.at(cur.pos) = true;
+		if (visited(cur.pos)) continue;
+		visited(cur.pos) = true;
 
 		if (cur.value > 1) {
 			for (Direction d : k4Neighborhood) {
 				CellPosition pos2 = cur.pos + d;
-				if (is_local.IsPositionOnGrid(pos2) && GetCell(pos2) != kCellBlack && !is_local.at(pos2)) {
+				if (is_local.IsPositionOnGrid(pos2) && GetCell(pos2) != kCellBlack && !is_local(pos2)) {
 					q.push(QueueEntry(pos2, cur.value - 1));
 				}
 			}
@@ -760,7 +760,7 @@ void Field::CheckReachability()
 
 	for (Y y(0); y < height(); ++y) {
 		for (X x(0); x < width(); ++x) {
-			if (!visited.at(CellPosition(y, x))) DecideCell(CellPosition(y, x), kCellBlack);
+			if (!visited(y, x)) DecideCell(CellPosition(y, x), kCellBlack);
 		}
 	}
 }

@@ -28,7 +28,7 @@ public:
 	~Field();
 
 	void AddClue(CellPosition cell, Clue clue);
-	inline Clue GetClue(CellPosition cell) { return field_clue_.at(cell); }
+	inline Clue GetClue(CellPosition cell) { return field_clue_(cell); }
 
 	void Inspect(LoopPosition pos);
 

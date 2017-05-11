@@ -44,7 +44,7 @@ Field::Field(const Problem &problem, Dictionary *dictionary) :
 			Clue c = problem.GetClue(CellPosition(y, x));
 			if (c == kEmptyCell) continue;
 
-			cells_.at(CellPosition(y, x)) = Cell(kCellClue);
+			cells_(CellPosition(y, x)) = Cell(kCellClue);
 			if (c.horizontal != kNoClueValue) {
 				int previous_cell_id = -1;
 				int n_cells = 0;
@@ -55,7 +55,7 @@ Field::Field(const Problem &problem, Dictionary *dictionary) :
 					previous_cell_id = cell_id;
 					++n_cells;
 				}
-				cells_.at(CellPosition(y, x + 1)).next_cell[0] = previous_cell_id;
+				cells_(CellPosition(y, x + 1)).next_cell[0] = previous_cell_id;
 				groups_[current_group_id].representative = previous_cell_id;
 				groups_[current_group_id].n_cells = n_cells;
 				groups_[current_group_id].expected_sum = c.horizontal;
@@ -71,7 +71,7 @@ Field::Field(const Problem &problem, Dictionary *dictionary) :
 					previous_cell_id = cell_id;
 					++n_cells;
 				}
-				cells_.at(CellPosition(y + 1, x)).next_cell[1] = previous_cell_id;
+				cells_(CellPosition(y + 1, x)).next_cell[1] = previous_cell_id;
 				groups_[current_group_id].representative = previous_cell_id;
 				groups_[current_group_id].n_cells = n_cells;
 				groups_[current_group_id].expected_sum = c.vertical;

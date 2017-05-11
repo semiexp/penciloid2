@@ -28,7 +28,7 @@ public:
 	X width() const { return clues_.width(); }
 
 	void AddClue(CellPosition cell, Clue clue);
-	Clue GetClue(CellPosition cell) { return clues_.at(cell); }
+	Clue GetClue(CellPosition cell) { return clues_(cell); }
 
 	void CheckNeighborhood(LoopPosition edge);
 	void Inspect(LoopPosition pos);

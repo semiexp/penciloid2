@@ -73,7 +73,7 @@ void Field::AddClue(CellPosition pos, Clue clue)
 		return;
 	}
 
-	field_clue_.at(pos) = clue;
+	field_clue_(pos) = clue;
 	ApplyTheorem(LoopPosition(pos.y * 2 + 1, pos.x * 2 + 1));
 	Check(LoopPosition(pos.y * 2 + 1, pos.x * 2 + 1));
 }

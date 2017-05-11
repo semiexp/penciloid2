@@ -19,13 +19,13 @@ Field::Field(const Problem &problem) :
 		for (X x(0); x < width(); ++x) {
 			Clue clue = problem.GetClue(CellPosition(y, x));
 			if (clue == kNoClue) {
-				mate_.at(CellPosition(y, x)) = mate_.GetIndex(CellPosition(y, x));
+				mate_(y, x) = mate_.GetIndex(CellPosition(y, x));
 			} else {
-				endpoint_.at(CellPosition(y, x)) = true;
-				mate_.at(CellPosition(y, x)) = -clue;
+				endpoint_(y, x) = true;
+				mate_(y, x) = -clue;
 			}
-			if (y == height() - 1) line_vertical_.at(CellPosition(y, x)) = kEdgeBlank;
-			if (x == width() - 1) line_horizontal_.at(CellPosition(y, x)) = kEdgeBlank;
+			if (y == height() - 1) line_vertical_(y, x) = kEdgeBlank;
+			if (x == width() - 1) line_horizontal_(y, x) = kEdgeBlank;
 		}
 	}
 }
@@ -77,7 +77,7 @@ void Field::SetHorizontalLine(CellPosition cell)
 				SetInconsistent();
 				return;
 			}
-			if (!endpoint_.at(cell + Direction(Y(-1), X(1)))) {
+			if (!endpoint_(cell + Direction(Y(-1), X(1)))) {
 				if (cell.y > 1 && cell.x < width() - 2) {
 					SetVerticalLine(cell + Direction(Y(-2), X(1)));
 					SetHorizontalLine(cell + Direction(Y(-1), X(1)));
@@ -88,7 +88,7 @@ void Field::SetHorizontalLine(CellPosition cell)
 			}
 		}
 		if (GetVerticalLine(cell + Direction(Y(-1), X(1))) == kEdgeLine) {
-			if (!endpoint_.at(cell + Direction(Y(-1), X(0)))) {
+			if (!endpoint_(cell + Direction(Y(-1), X(0)))) {
 				if (cell.y > 1 && cell.x > 0) {
 					SetVerticalLine(cell + Direction(Y(-2), X(0)));
 					SetHorizontalLine(cell + Direction(Y(-1), X(-1)));
@@ -148,7 +148,7 @@ void Field::SetVerticalLine(CellPosition cell)
 			if (IsInconsistent()) return;
 		}
 		if (cell.y < height() - 1 && GetHorizontalLine(cell + Direction(Y(1), X(-1))) == kEdgeLine) {
-			if (!endpoint_.at(cell + Direction(Y(0), X(-1)))) {
+			if (!endpoint_(cell + Direction(Y(0), X(-1)))) {
 				if (cell.y > 0 && cell.x > 1) {
 					SetVerticalLine(cell + Direction(Y(-1), X(-1)));
 					SetHorizontalLine(cell + Direction(Y(0), X(-2)));
@@ -159,7 +159,7 @@ void Field::SetVerticalLine(CellPosition cell)
 			}
 		}
 		if (cell.y < height() - 1 && GetHorizontalLine(cell + Direction(Y(1), X(0))) == kEdgeLine) {
-			if (!endpoint_.at(cell + Direction(Y(0), X(1)))) {
+			if (!endpoint_(cell + Direction(Y(0), X(1)))) {
 				if (cell.y > 0 && cell.x < width() - 1) {
 					SetVerticalLine(cell + Direction(Y(-1), X(1)));
 					SetHorizontalLine(cell + Direction(Y(0), X(1)));
@@ -229,9 +229,9 @@ void Field::Inspect(CellPosition cell)
 {
 	Y y = cell.y; X x = cell.x;
 	int n_lines = 0, n_blanks = 0;
-	bool is_end = endpoint_.at(cell);
+	bool is_end = endpoint_(cell);
 	if (!is_end) {
-		int mate = mate_.at(cell);
+		int mate = mate_(cell);
 		if (mate == kFullyConnectedCell || mate == GetIndex(cell)) return;
 	}
 	if (x == 0) ++n_blanks;
@@ -240,7 +240,7 @@ void Field::Inspect(CellPosition cell)
 		if (status == kEdgeLine) ++n_lines;
 		else if (status == kEdgeBlank) ++n_blanks;
 		else {
-			int mate1 = mate_.at(cell), mate2 = mate_.at(CellPosition(y, x - 1));
+			int mate1 = mate_(cell), mate2 = mate_(CellPosition(y, x - 1));
 			if (mate1 < 0 && mate2 < 0 && mate1 != mate2) {
 				SetHorizontalBlank(CellPosition(y, x - 1));
 				return;
@@ -253,7 +253,7 @@ void Field::Inspect(CellPosition cell)
 		if (status == kEdgeLine) ++n_lines;
 		else if (status == kEdgeBlank) ++n_blanks;
 		else {
-			int mate1 = mate_.at(cell), mate2 = mate_.at(CellPosition(y - 1, x));
+			int mate1 = mate_(cell), mate2 = mate_(CellPosition(y - 1, x));
 			if (mate1 < 0 && mate2 < 0 && mate1 != mate2) {
 				SetVerticalBlank(CellPosition(y - 1, x));
 				return;
@@ -265,7 +265,7 @@ void Field::Inspect(CellPosition cell)
 		if (status == kEdgeLine) ++n_lines;
 		else if (status == kEdgeBlank) ++n_blanks;
 		else {
-			int mate1 = mate_.at(cell), mate2 = mate_.at(CellPosition(y, x + 1));
+			int mate1 = mate_(cell), mate2 = mate_(CellPosition(y, x + 1));
 			if (mate1 < 0 && mate2 < 0 && mate1 != mate2) {
 				SetHorizontalBlank(CellPosition(y, x));
 				return;
@@ -277,7 +277,7 @@ void Field::Inspect(CellPosition cell)
 		if (status == kEdgeLine) ++n_lines;
 		else if (status == kEdgeBlank) ++n_blanks;
 		else {
-			int mate1 = mate_.at(cell), mate2 = mate_.at(CellPosition(y + 1, x));
+			int mate1 = mate_(cell), mate2 = mate_(CellPosition(y + 1, x));
 			if (mate1 < 0 && mate2 < 0 && mate1 != mate2) {
 				SetVerticalBlank(CellPosition(y, x));
 				return;

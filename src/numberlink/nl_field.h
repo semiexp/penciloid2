@@ -55,10 +55,10 @@ public:
 	}
 
 	// Get the status of the edge between <cell1> and (<cell1> + Direction(Y(0), X(1)) )
-	inline EdgeState GetHorizontalLine(CellPosition cell) const { return line_horizontal_.at(cell); }
+	inline EdgeState GetHorizontalLine(CellPosition cell) const { return line_horizontal_(cell); }
 
 	// Get the status of the edge between <cell1> and (<cell1> + Direction(Y(1), X()) )
-	inline EdgeState GetVerticalLine(CellPosition cell) const { return line_vertical_.at(cell); }
+	inline EdgeState GetVerticalLine(CellPosition cell) const { return line_vertical_(cell); }
 
 	// Set the status of the edge between <cell1> and (<cell1> + Direction(Y(0), X(1)) ) kEdgeLine / kEdgeBlack
 	void SetHorizontalLine(CellPosition cell);

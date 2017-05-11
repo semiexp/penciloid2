@@ -18,7 +18,7 @@ Field::Field(Problem &problem) : GridLoop<Field>(problem.height() - 1, problem.w
 		for (X x(0); x < width(); ++x) {
 			Clue clue = problem.GetClue(CellPosition(y, x));
 			if (clue.direction != kNoClue) {
-				cells_.at(CellPosition(y, x)) = Cell(kCellClue, clue);
+				cells_(CellPosition(y, x)) = Cell(kCellClue, clue);
 			}
 		}
 	}
@@ -70,13 +70,13 @@ Field::~Field()
 }
 void Field::DecideCell(CellPosition cell, CellState status)
 {
-	CellState current_status = cells_.at(cell).status;
+	CellState current_status = cells_(cell).status;
 	if (current_status != kCellUndecided) {
 		if (current_status != status) SetInconsistent();
 		return;
 	}
 
-	cells_.at(cell).status = status;
+	cells_(cell).status = status;
 	
 	for (Direction d : k4Neighborhood) {
 		for (CellPosition c = cell + d;; c = c + d) {
@@ -103,7 +103,7 @@ void Field::Inspect(LoopPosition pos)
 	// Check vertices (of GridLoop, which correspond to cells of Grid) only
 	if (!(pos.y % 2 == 0 && pos.x % 2 == 0)) return;
 	CellPosition cell(pos.y / 2, pos.x / 2);
-	CellState cell_status = cells_.at(cell).status;
+	CellState cell_status = cells_(cell).status;
 
 	// GridLoop -> Grid
 	int n_line = 0, n_undecided = 0;
@@ -141,9 +141,9 @@ void Field::Inspect(LoopPosition pos)
 			if (is_line) DecideCell(cell, kCellLine);
 		}
 	} else if (cell_status == kCellClue) {
-		Clue clue = cells_.at(cell).clue;
+		Clue clue = cells_(cell).clue;
 		Direction dir = GetDirectionValue(clue.direction);
-		int clue_num = cells_.at(cell).clue.clue_value;
+		int clue_num = cells_(cell).clue.clue_value;
 
 		int chain_size = 0, n_block = 0, max_extra_block = 0;
 		for (CellPosition c = cell + dir;; c = c + dir) {

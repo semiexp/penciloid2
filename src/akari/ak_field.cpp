@@ -16,11 +16,11 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width())
 	for (Y y(0); y < problem.height(); ++y) {
 		for (X x(0); x < problem.width(); ++x) {
 			if (problem.GetClue(CellPosition(y, x)) != kEmpty) {
-				cells_.at(CellPosition(y, x)).status = CELL_BLOCK;
-				cells_.at(CellPosition(y, x)).clue_number = problem.GetClue(CellPosition(y, x));
+				cells_(y, x).status = CELL_BLOCK;
+				cells_(y, x).clue_number = problem.GetClue(CellPosition(y, x));
 				++decided_cells_;
 			} else {
-				cells_.at(CellPosition(y, x)).status = CELL_UNDECIDED;
+				cells_(y, x).status = CELL_UNDECIDED;
 			}
 		}
 	}
@@ -31,9 +31,9 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width())
 		for (X x(0); x < problem.width(); ++x) {
 			if (problem.GetClue(CellPosition(y, x)) == kEmpty) {
 				if (x != 0 && problem.GetClue(CellPosition(y, x - 1)) == kEmpty) {
-					cells_.at(CellPosition(y, x)).group_horizontal_id = cells_.at(CellPosition(y, x - 1)).group_horizontal_id;
+					cells_(y, x).group_horizontal_id = cells_(y, x - 1).group_horizontal_id;
 				} else {
-					cells_.at(CellPosition(y, x)).group_horizontal_id = n_groups++;
+					cells_(y, x).group_horizontal_id = n_groups++;
 				}
 			}
 		}
@@ -44,9 +44,9 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width())
 		for (Y y(0); y < problem.height(); ++y) {
 			if (problem.GetClue(CellPosition(y, x)) == kEmpty) {
 				if (y != 0 && problem.GetClue(CellPosition(y - 1, x)) == kEmpty) {
-					cells_.at(CellPosition(y, x)).group_vertical_id = cells_.at(CellPosition(y - 1, x)).group_vertical_id;
+					cells_(y, x).group_vertical_id = cells_(y - 1, x).group_vertical_id;
 				} else {
-					cells_.at(CellPosition(y, x)).group_vertical_id = n_groups++;
+					cells_(y, x).group_vertical_id = n_groups++;
 				}
 			}
 		}
@@ -65,13 +65,13 @@ Field::Field(const Problem &problem) : cells_(problem.height(), problem.width())
 		for (X x(0); x < problem.width(); ++x) {
 			if (problem.GetClue(CellPosition(y, x)) != kEmpty) continue;
 
-			int horizontal = cells_.at(CellPosition(y, x)).group_horizontal_id;
+			int horizontal = cells_(y, x).group_horizontal_id;
 			groups_[horizontal].xor_remaining_cell_id ^= cells_.GetIndex(CellPosition(y, x));
 			if (groups_[horizontal].cell_count++ == 0) {
 				groups_[horizontal].group_top = CellPosition(y, x);
 			}
 
-			int vertical = cells_.at(CellPosition(y, x)).group_vertical_id;
+			int vertical = cells_(y, x).group_vertical_id;
 			groups_[vertical].xor_remaining_cell_id ^= cells_.GetIndex(CellPosition(y, x));
 			if (groups_[vertical].cell_count++ == 0) {
 				groups_[vertical].group_top = CellPosition(y, x);
@@ -91,16 +91,16 @@ Field::~Field()
 }
 Field::CellState Field::GetCell(CellPosition pos) const
 {
-	return cells_.at(pos).status;
+	return cells_(pos).status;
 }
 Field::CellState Field::GetCellSafe(CellPosition pos) const
 {
-	if (0 <= pos.y && pos.y < cells_.height() && 0 <= pos.x && pos.x < cells_.width()) return cells_.at(pos).status;
+	if (0 <= pos.y && pos.y < cells_.height() && 0 <= pos.x && pos.x < cells_.width()) return cells_(pos).status;
 	return CELL_BLOCK;
 }
 Clue Field::GetClueValue(CellPosition pos) const
 {
-	if (GetCell(pos) == CELL_BLOCK) return cells_.at(pos).clue_number;
+	if (GetCell(pos) == CELL_BLOCK) return cells_(pos).clue_number;
 	return kEmpty;
 }
 void Field::DecideCell(CellPosition pos, CellState status)
@@ -127,7 +127,7 @@ void Field::DecideCell(CellPosition pos, CellState status)
 		if (decided_cells_ == static_cast<int>(height()) * static_cast<int>(width())) {
 			fully_solved_ = true;
 		}
-		cells_.at(pos).status = CELL_LIGHT;
+		cells_(pos).status = CELL_LIGHT;
 
 		static const Direction kDirs[] = {
 			Direction(Y(1), X(0)),
@@ -147,14 +147,14 @@ void Field::DecideCell(CellPosition pos, CellState status)
 			fully_solved_ = true;
 		}
 		if (current_status == CELL_NO_LIGHT_NOT_LIT) {
-			cells_.at(pos).status = CELL_LIT_BY_OTHER;
+			cells_(pos).status = CELL_LIT_BY_OTHER;
 			return;
 		}
-		cells_.at(pos).status = CELL_LIT_BY_OTHER;
+		cells_(pos).status = CELL_LIT_BY_OTHER;
 		ExcludeCellFromGroups(pos);
 		CheckNeighbor(pos);
 	} else if (status == CELL_NO_LIGHT) {
-		cells_.at(pos).status = CELL_NO_LIGHT_NOT_LIT;
+		cells_(pos).status = CELL_NO_LIGHT_NOT_LIT;
 		ExcludeCellFromGroups(pos);
 		CheckNeighbor(pos);
 	}
@@ -162,9 +162,9 @@ void Field::DecideCell(CellPosition pos, CellState status)
 void Field::CheckCell(CellPosition pos)
 {
 	if (!(0 <= pos.y && pos.y < cells_.height() && 0 <= pos.x && pos.x < cells_.width())) return;
-	if (cells_.at(pos).status == CELL_BLOCK) {
+	if (cells_(pos).status == CELL_BLOCK) {
 		// check about the clue of this cell
-		int clue = cells_.at(pos).clue_number;
+		int clue = cells_(pos).clue_number;
 		if (clue < 0) return;
 
 		CheckDiagonalChain(pos);
@@ -216,8 +216,8 @@ void Field::CheckCell(CellPosition pos)
 		if (current_status == CELL_LIGHT || current_status == CELL_LIT_BY_OTHER) return;
 		
 		// needs to be lit
-		int horizontal = cells_.at(pos).group_horizontal_id;
-		int vertical = cells_.at(pos).group_vertical_id;
+		int horizontal = cells_(pos).group_horizontal_id;
+		int vertical = cells_(pos).group_vertical_id;
 
 		if (groups_[horizontal].cell_count == 0 && groups_[vertical].cell_count == 1) {
 			DecideCell(cells_.AsPosition(groups_[vertical].xor_remaining_cell_id), CELL_LIGHT);
@@ -231,7 +231,7 @@ void Field::CheckCell(CellPosition pos)
 				CellPosition rem2 = cells_.AsPosition(groups_[vertical].xor_remaining_cell_id);
 				CellPosition common(rem1.y + rem2.y - pos.y, rem1.x + rem2.x - pos.x);
 				if (GetCell(common) != CELL_BLOCK) {
-					if (cells_.at(common).group_horizontal_id == cells_.at(rem2).group_horizontal_id && cells_.at(common).group_vertical_id == cells_.at(rem1).group_vertical_id) {
+					if (cells_(common).group_horizontal_id == cells_(rem2).group_horizontal_id && cells_(common).group_vertical_id == cells_(rem1).group_vertical_id) {
 						DecideCell(common, CELL_NO_LIGHT);
 					}
 				}
@@ -315,11 +315,11 @@ void Field::ExcludeCellFromGroups(CellPosition pos)
 {
 	int id = cells_.GetIndex(pos);
 
-	int horizontal = cells_.at(pos).group_horizontal_id;
+	int horizontal = cells_(pos).group_horizontal_id;
 	--groups_[horizontal].cell_count;
 	groups_[horizontal].xor_remaining_cell_id ^= id;
 
-	int vertical = cells_.at(pos).group_vertical_id;
+	int vertical = cells_(pos).group_vertical_id;
 	--groups_[vertical].cell_count;
 	groups_[vertical].xor_remaining_cell_id ^= id;
 

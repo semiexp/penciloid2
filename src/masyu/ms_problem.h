@@ -23,8 +23,8 @@ public:
 	Y height() const { return cells_.height(); }
 	X width() const { return cells_.width(); }
 
-	void SetClue(CellPosition pos, Clue value) { cells_.at(pos) = value; }
-	Clue GetClue(CellPosition pos) const { return cells_.at(pos); }
+	void SetClue(CellPosition pos, Clue value) { cells_(pos) = value; }
+	Clue GetClue(CellPosition pos) const { return cells_(pos); }
 
 private:
 	Grid<Clue> cells_;

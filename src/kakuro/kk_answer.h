@@ -27,8 +27,8 @@ public:
 
 	inline Y height() const { return grid_.height(); }
 	inline X width() const { return grid_.width(); }
-	inline void SetValue(CellPosition cell, int clue) { grid_.at(cell) = clue; }
-	inline int GetValue(CellPosition cell) const { return grid_.at(cell); }
+	inline void SetValue(CellPosition cell, int clue) { grid_(cell) = clue; }
+	inline int GetValue(CellPosition cell) const { return grid_(cell); }
 
 	// Returns the problem one of whose answer is this <Answer>.
 	Problem ExtractProblem() const;

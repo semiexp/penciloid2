@@ -28,7 +28,7 @@ Problem::Problem(Y height, X width, const char *clues[]) : cells_(height, width,
 				dir = kClueSouth; break;
 			}
 			if (dir != kNoClue) {
-				cells_.at(CellPosition(y, x)) = Clue(dir, static_cast<int>(clues[y][x * 2 + 1] - '0'));
+				cells_(CellPosition(y, x)) = Clue(dir, static_cast<int>(clues[y][x * 2 + 1] - '0'));
 			}
 		}
 	}

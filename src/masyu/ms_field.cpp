@@ -57,7 +57,7 @@ void Field::AddClue(CellPosition cell, Clue clue)
 		}
 		return;
 	}
-	clues_.at(cell) = clue;
+	clues_(cell) = clue;
 	ApplyTheorem(LoopPosition(cell.y * 2, cell.x * 2));
 	Check(LoopPosition(cell.y * 2, cell.x * 2));
 }

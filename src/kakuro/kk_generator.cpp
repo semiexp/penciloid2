@@ -86,7 +86,7 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 						last_group.clear();
 					}
 				}
-				group_id.at(CellPosition(y, x)).first = group_id_last;
+				group_id(y, x).first = group_id_last;
 				last_group.push_back(CellPosition(y, x));
 			}
 		}
@@ -101,7 +101,7 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 						last_group.clear();
 					}
 				}
-				group_id.at(CellPosition(y, x)).second = group_id_last;
+				group_id(y, x).second = group_id_last;
 				last_group.push_back(CellPosition(y, x));
 			}
 		}
@@ -134,7 +134,7 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 					}
 					if (isok) break;
 				}
-				modifiable.at(pos) = isok;
+				modifiable(pos) = isok;
 			}
 		}
 		for (int i = 0; i < group_id_last + 1; ++i) {
@@ -144,7 +144,7 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 			for (X x(0); x < width; ++x) {
 				int current_val = current_answer.GetValue(CellPosition(y, x));
 				if (current_val == Answer::kClueCell) continue;
-				std::pair<int, int> grp = group_id.at(CellPosition(y, x));
+				std::pair<int, int> grp = group_id(y, x);
 
 				group_used_positions[grp.first][current_val] = CellPosition(y, x);
 				group_used_positions[grp.second][current_val] = CellPosition(y, x);
@@ -157,8 +157,8 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 				int current_val = current_answer.GetValue(pos);
 				if (current_val == Answer::kClueCell) continue;
 
-				int group1 = group_id.at(CellPosition(y, x)).first;
-				int group2 = group_id.at(CellPosition(y, x)).second;
+				int group1 = group_id(y, x).first;
+				int group2 = group_id(y, x).second;
 				for (int n = 1; n <= 9; ++n) if (n != current_val) {
 					CellPosition pos1 = group_used_positions[group1][n];
 					CellPosition pos2 = group_used_positions[group2][n];
@@ -168,8 +168,8 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 						mv.push_back({ pos, n });
 						candidate.push_back(mv);
 					} else if (pos1 == kUnusedValue) {
-						if (group_used_positions[group_id.at(pos).first][n] == kUnusedValue
-							&& group_used_positions[group_id.at(pos2).first][current_val] == kUnusedValue
+						if (group_used_positions[group_id(pos).first][n] == kUnusedValue
+							&& group_used_positions[group_id(pos2).first][current_val] == kUnusedValue
 							&& (pos.x < pos2.x || pos.y < pos2.y)) {
 							MoveCandidate mv;
 							mv.push_back({ pos, n });
@@ -177,8 +177,8 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 							candidate.push_back(mv);
 						}
 					} else if (pos2 == kUnusedValue) {
-						if (group_used_positions[group_id.at(pos).second][n] == kUnusedValue
-							&& group_used_positions[group_id.at(pos1).second][current_val] == kUnusedValue
+						if (group_used_positions[group_id(pos).second][n] == kUnusedValue
+							&& group_used_positions[group_id(pos1).second][current_val] == kUnusedValue
 							&& (pos.x < pos1.x || pos.y < pos1.y)) {
 							MoveCandidate mv;
 							mv.push_back({ pos, n });
@@ -186,8 +186,8 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 							candidate.push_back(mv);
 						}
 					} else {
-						if (group_used_positions[group_id.at(pos1).second][current_val] == kUnusedValue
-							&& group_used_positions[group_id.at(pos2).first][current_val] == kUnusedValue) {
+						if (group_used_positions[group_id(pos1).second][current_val] == kUnusedValue
+							&& group_used_positions[group_id(pos2).first][current_val] == kUnusedValue) {
 							MoveCandidate mv;
 							mv.push_back({ pos, n });
 							mv.push_back({ pos1, current_val });
@@ -205,7 +205,7 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 			bool has_modifiable_cell = false;
 			for (int i = 0; i < c.size(); ++i) {
 				previous_vals.push_back(current_answer.GetValue(c[i].first));
-				has_modifiable_cell |= modifiable.at(c[i].first);
+				has_modifiable_cell |= modifiable(c[i].first);
 			}
 			if (!has_modifiable_cell) {
 				if (!prev_fail && real_dist(*rnd) < 0.9) continue;

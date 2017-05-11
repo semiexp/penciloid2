@@ -31,8 +31,8 @@ public:
 	bool IsFullySolved() const { return fully_solved_; }
 	void SetInconsistent() { inconsistent_ = true; }
 
-	int GetCell(CellPosition pos) const { return cells_.at(pos).value; }
-	int GetCandidateBits(CellPosition pos) const { return cells_.at(pos).candidates; }
+	int GetCell(CellPosition pos) const { return cells_(pos).value; }
+	int GetCandidateBits(CellPosition pos) const { return cells_(pos).candidates; }
 
 	void DecideCell(CellPosition cell, int value);
 	void EliminateCandidate(CellPosition cell, int value);

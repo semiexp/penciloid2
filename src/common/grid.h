@@ -25,8 +25,11 @@ public:
 	Y height() const { return height_; }
 	X width() const { return width_; }
 
-	T &at(CellPosition pos) { return data_[GetIndex(pos)]; }
-	const T &at(CellPosition pos) const { return data_[GetIndex(pos)]; }
+	T &operator()(CellPosition pos) { return at(pos); }
+	const T &operator()(CellPosition pos) const { return at(pos); }
+	T &operator()(Y y, X x) { return at(CellPosition(y, x)); }
+	const T &operator()(Y y, X x) const { return at(CellPosition(y, x)); }
+
 	T &at(int pos) {
 		assert(0 <= pos && pos < (int)height_ * (int)width_);
 		return data_[pos];
@@ -45,6 +48,9 @@ public:
 		return CellPosition(Y(index / static_cast<int>(width_)), X(index % static_cast<int>(width_)));
 	}
 private:
+	T &at(CellPosition pos) { return data_[GetIndex(pos)]; }
+	const T &at(CellPosition pos) const { return data_[GetIndex(pos)]; }
+
 	AutoArray<T> data_;
 	Y height_;
 	X width_;

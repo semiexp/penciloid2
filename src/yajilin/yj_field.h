@@ -44,8 +44,8 @@ public:
 	X width() const { return cells_.width(); }
 
 	void DecideCell(CellPosition cell, CellState status);
-	CellState GetCellState(CellPosition cell) { return cells_.at(cell).status; }
-	Cell GetCell(CellPosition cell) { return cells_.at(cell); }
+	CellState GetCellState(CellPosition cell) { return cells_(cell).status; }
+	Cell GetCell(CellPosition cell) { return cells_(cell); }
 
 	void Inspect(LoopPosition pos);
 
