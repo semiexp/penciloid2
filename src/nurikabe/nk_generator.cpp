@@ -31,8 +31,8 @@ void UpdateClueChangeCandidate(penciloid::Grid<bool> &candidate, penciloid::nuri
 {
 	using namespace penciloid;
 	using namespace nurikabe;
-	if (!candidate.IsPositionOnGrid(pos) || field.GetCell(pos) == Field::kCellBlack || candidate.at(pos)) return;
-	candidate.at(pos) = true;
+	if (!candidate.IsPositionOnGrid(pos) || field.GetCell(pos) == Field::kCellBlack || candidate(pos)) return;
+	candidate(pos) = true;
 	for (Direction d : k4Neighborhood) {
 		UpdateClueChangeCandidate(candidate, field, pos + d);
 	}
@@ -109,7 +109,7 @@ bool GenerateByLocalSearch(Y height, X width, std::mt19937 *rnd, Problem *ret)
 				CellPosition pos(y, x);
 				Clue current_clue = current_problem.GetClue(pos);
 				if (current_clue != kNoClue) {
-					if (!clue_change_candidate.at(pos)) continue;
+					if (!clue_change_candidate(pos)) continue;
 					if (n_clue > 1) {
 						candidate.push_back({ pos, kNoClue });
 					}
