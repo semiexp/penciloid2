@@ -1,4 +1,5 @@
 #include "nl_problem.h"
+#include "nl_field.h"
 
 #include <vector>
 #include <cstring>
@@ -27,6 +28,7 @@ public:
 	inline X width() const { return width_; }
 
 	void SolveBySearch();
+	void SolveBySearch2();
 
 private:
 	void CopyFrontier(Frontier src, Frontier dest) {
@@ -35,6 +37,7 @@ private:
 	bool Join(Frontier f, int i, int j);
 
 	void Search(Y y, X x, Frontier frontier);
+	void Search2(Y y, X x, Field &field);
 
 	static const int kPoolSize = 1048576;
 

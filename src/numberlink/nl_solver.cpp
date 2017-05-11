@@ -36,7 +36,7 @@ Solver::~Solver()
 }
 void Solver::SolveBySearch()
 {
-	CellState tmp[20];
+	CellState tmp[21];
 	for (X x(0); x < problem_.width(); ++x) {
 		int clue = static_cast<int>(problem_.GetClue(CellPosition(Y(0), x)));
 		if (clue == 0) tmp[x] = x;
@@ -44,6 +44,11 @@ void Solver::SolveBySearch()
 	}
 
 	Search(Y(0), X(0), tmp);
+}
+void Solver::SolveBySearch2()
+{
+	Field field(problem_);
+	Search2(Y(0), X(0), field);
 }
 void Solver::Search(Y y, X x, Frontier frontier)
 {
@@ -65,8 +70,6 @@ void Solver::Search(Y y, X x, Frontier frontier)
 				if (a & 2) sol[y * 2 + 1][x * 2] = '|';
 			}
 		}
-		for (int i = 0; i < sol.size(); ++i) printf("%s\n", sol[i].c_str());
-		puts("");
 		return;
 	}
 
@@ -100,10 +103,9 @@ void Solver::Search(Y y, X x, Frontier frontier)
 			}
 		}
 	}
-
 	contiguous_empty_up_.at(CellPosition(y, x)) = contiguous_empty_left_.at(CellPosition(y, x)) = 0;
 
-	CellState tmp[20];
+	CellState tmp[25];
 	if (x < width() - 1) {
 		CopyFrontier(frontier, tmp);
 		if (Join(tmp, x, x + 1)) {
@@ -147,7 +149,7 @@ void Solver::Search(Y y, X x, Frontier frontier)
 	}
 	{
 		CopyFrontier(frontier, tmp);
-		contiguous_line_left_.at(CellPosition(y, x + 1)) = 0;
+		if (x < width() - 1) contiguous_line_left_.at(CellPosition(y, x + 1)) = 0;
 		if (tmp[x] == x || tmp[x] == frontier_size_) {
 			// cut here
 			answer_.at(CellPosition(y, x)) = 0;
@@ -189,6 +191,110 @@ void Solver::Search(Y y, X x, Frontier frontier)
 		}
 	}
 	answer_.at(CellPosition(y, x)) = 0;
+}
+void Solver::Search2(Y y, X x, Field &field)
+{
+	if (x == problem_.width()) {
+		x = 0;
+		++y;
+	}
+	if (y == problem_.height()) {
+		std::vector<std::string> sol(height() * 2, std::string(width() * 2, ' '));
+		for (Y y(0); y < height(); ++y) {
+			for (X x(0); x < width(); ++x) {
+				int c = static_cast<int>(problem_.GetClue(CellPosition(y, x)));
+				if (c >= 1) {
+					if (c <= 9) sol[y * 2][x * 2] = c + '0';
+					else if (c <= 36) sol[y * 2][x * 2] = c - 10 + 'a';
+				} else sol[y * 2][x * 2] = '+';
+
+				if (y != height() - 1 && field.GetVerticalLine(CellPosition(y, x)) == Field::kEdgeLine) sol[y * 2 + 1][x * 2] = '|';
+				if (x != width() - 1 && field.GetHorizontalLine(CellPosition(y, x)) == Field::kEdgeLine) sol[y * 2][x * 2 + 1] = '-';
+			}
+		}
+		return;
+	}
+	int incident_lines = 0;
+	if (problem_.GetClue(CellPosition(y, x)) != kNoClue) ++incident_lines;
+	if (y > 0 && field.GetVerticalLine(CellPosition(y - 1, x)) == Field::kEdgeLine) ++incident_lines;
+	if (x > 0 && field.GetHorizontalLine(CellPosition(y, x - 1)) == Field::kEdgeLine) ++incident_lines;
+
+	// pruning
+	if (y > 0 && x > 0) {
+		if (field.GetVerticalLine(CellPosition(y - 1, x)) == Field::kEdgeLine) {
+			for (X x2 = x - 1; x2 >= 0; --x2) {
+				if (field.GetHorizontalLine(CellPosition(y - 1, x2)) != Field::kEdgeLine) break;
+				if (!field.IsIsolatedCell(CellPosition(y, x2))) {
+					if (field.GetVerticalLine(CellPosition(y - 1, x2)) == Field::kEdgeLine) return;
+					else break;
+				}
+			}
+		}
+		if (field.GetHorizontalLine(CellPosition(y - 1, x - 1)) == Field::kEdgeLine
+			&& field.GetHorizontalLine(CellPosition(y, x - 1)) == Field::kEdgeLine
+			&& (field.GetVerticalLine(CellPosition(y - 1, x - 1)) == Field::kEdgeLine || field.GetVerticalLine(CellPosition(y - 1, x)) == Field::kEdgeLine)) {
+			return;
+		}
+		if (field.GetVerticalLine(CellPosition(y - 1, x - 1)) == Field::kEdgeLine
+			&& field.GetVerticalLine(CellPosition(y - 1, x)) == Field::kEdgeLine
+			&& (field.GetHorizontalLine(CellPosition(y - 1, x - 1)) == Field::kEdgeLine || field.GetHorizontalLine(CellPosition(y, x - 1)) == Field::kEdgeLine)) {
+			return;
+		}
+		if (field.GetVerticalLine(CellPosition(y - 1, x - 1)) == Field::kEdgeLine
+			&& field.GetHorizontalLine(CellPosition(y, x - 1)) == Field::kEdgeLine
+			&& field.IsIsolatedCell(CellPosition(y - 1, x))) {
+			return;
+		}
+		if (field.GetVerticalLine(CellPosition(y - 1, x)) == Field::kEdgeLine
+			&& field.GetHorizontalLine(CellPosition(y, x - 1)) == Field::kEdgeLine
+			&& field.IsIsolatedCell(CellPosition(y - 1, x - 1))) {
+			return;
+		}
+	}
+	if (field.GetHorizontalLine(CellPosition(y, x)) != Field::kEdgeUndecided && field.GetVerticalLine(CellPosition(y, x)) != Field::kEdgeUndecided) {
+		Search2(y, x + 1, field);
+		return;
+	}
+	if (incident_lines % 2 == 1) {
+		if (x < width() - 1) {
+			field.AddRestorePoint();
+			field.SetHorizontalLine(CellPosition(y, x));
+			field.SetVerticalBlank(CellPosition(y, x));
+			if (!field.IsInconsistent()) {
+				Search2(y, x + 1, field);
+			}
+			field.Restore();
+		}
+		if (y < height() - 1) {
+			if (x > 0 && field.GetHorizontalLine(CellPosition(y, x - 1)) == Field::kEdgeLine && field.GetVerticalLine(CellPosition(y, x - 1)) == Field::kEdgeLine) return;
+			field.AddRestorePoint();
+			field.SetHorizontalBlank(CellPosition(y, x));
+			field.SetVerticalLine(CellPosition(y, x));
+			if (!field.IsInconsistent()) {
+				Search2(y, x + 1, field);
+			}
+			field.Restore();
+		}
+	} else {
+		if (x < width() - 1 && y < height() - 1) {
+			field.AddRestorePoint();
+			field.SetHorizontalLine(CellPosition(y, x));
+			field.SetVerticalLine(CellPosition(y, x));
+			if (!field.IsInconsistent()) {
+				Search2(y, x + 1, field);
+			}
+			field.Restore();
+		}
+		{
+			field.AddRestorePoint();
+			field.SetHorizontalBlank(CellPosition(y, x));
+			field.SetVerticalBlank(CellPosition(y, x));
+			if (!field.IsInconsistent()) {
+				Search2(y, x + 1, field);
+			}
+			field.Restore();
+		}
+	}
 }
 bool Solver::Join(Frontier f, int i, int j)
 {
