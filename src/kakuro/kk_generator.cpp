@@ -40,10 +40,10 @@ namespace penciloid
 {
 namespace kakuro
 {
-bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, Problem *ret)
+bool GenerateByLocalSearch(const Grid<bool> &is_clue, Dictionary *dic, std::mt19937 *rnd, Problem *ret)
 {
-	Y height = frame.height();
-	X width = frame.width();
+	Y height = is_clue.height();
+	X width = is_clue.width();
 	Answer current_answer(height, width); double current_energy = 0.0;
 	int max_step = static_cast<int>(height) * static_cast<int>(width) * 10;
 	int step = 0;
@@ -53,7 +53,7 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 	// TODO: initial answer
 	for (Y y(0); y < height; ++y) {
 		for (X x(0); x < width; ++x) {
-			if (frame.GetClue(CellPosition(y, x)) == kEmptyCell) {
+			if (!is_clue(y, x)) {
 				current_answer.SetValue(CellPosition(y, x), 1 + (static_cast<int>(y) + static_cast<int>(x)) % 9);
 			} else {
 				current_answer.SetValue(CellPosition(y, x), Answer::kClueCell);
@@ -78,8 +78,8 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 	int group_id_last = -1;
 	for (Y y(0); y < height; ++y) {
 		for (X x(0); x < width; ++x) {
-			if (frame.GetClue(CellPosition(y, x)) == kEmptyCell) {
-				if (x == 0 || frame.GetClue(CellPosition(y, x - 1)) != kEmptyCell) {
+			if (!is_clue(y, x)) {
+				if (x == 0 || is_clue(y, x - 1)) {
 					++group_id_last;
 					if (!last_group.empty()) {
 						group_cells.push_back(last_group);
@@ -93,8 +93,8 @@ bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, P
 	}
 	for (X x(0); x < width; ++x) {
 		for (Y y(0); y < height; ++y) {
-			if (frame.GetClue(CellPosition(y, x)) == kEmptyCell) {
-				if (y == 0 || frame.GetClue(CellPosition(y - 1, x)) != kEmptyCell) {
+			if (!is_clue(y, x)) {
+				if (y == 0 || is_clue(y - 1, x)) {
 					++group_id_last;
 					if (!last_group.empty()) {
 						group_cells.push_back(last_group);

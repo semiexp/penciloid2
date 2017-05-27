@@ -10,6 +10,6 @@ namespace penciloid
 {
 namespace kakuro
 {
-bool GenerateByLocalSearch(Problem &frame, Dictionary *dic, std::mt19937 *rnd, Problem *ret);
+bool GenerateByLocalSearch(const Grid<bool> &is_clue, Dictionary *dic, std::mt19937 *rnd, Problem *ret);
 }
 }
